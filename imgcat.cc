@@ -1,26 +1,3 @@
-/*  $Id: imgcat.cc,v 1.7 2013/10/11 18:13:42 ray Exp $
- *
- *  $Log: imgcat.cc,v $
- *  Revision 1.7  2013/10/11 18:13:42  ray
- *  add video thumbnail generation
- *
- *  Revision 1.6  2013/01/03 18:19:29  ray
- *  add extension filtering
- *
- *  Revision 1.5  2013/01/02 12:07:54  ray
- *  mem leak
- *
- *  Revision 1.4  2012/12/28 16:41:52  ray
- *  hold back on busy waiting
- *
- *  Revision 1.3  2012/12/22 22:01:35  ray
- *  use thread pool
- *
- *  Revision 1.2  2011/10/30 17:42:07  ray
- *  cvs tags
- *
- */
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -44,6 +21,9 @@ typedef long long  longlong_t;
 #include <sstream>
 #include <string>
 #include <list>
+
+#include <mutex>
+#include <future>
 using namespace  std;
 
 #include <exiv2/exiv2.hpp>
@@ -59,9 +39,6 @@ using namespace  std;
 
 #include "ICCprofiles.h"
 
-#include <ThreadPool/Pool.h>
-#include <ThreadPool/Worker.h>
-#include <ThreadPool/Task.h>
 
 
 #ifdef DEBUG_LOG
@@ -489,18 +466,19 @@ void  _genthumbnail(const string& path_, const string& origpath_, const Exiv2::P
     }
 }
 
-class _TNGen : public ThreadPool::Task
+class _TNGen
 {
   public:
-    _TNGen(const ImgIdx::Ent& imgidx_, unsigned thumbsize_, ThreadPool::Worker&  w_)  throw ()
-	: _imgidx(imgidx_), _img(*_imgidx.imgs.begin()), _prevpath(_img.thumb + ".jpg"), _w(&w_),
-	  _thumbsize(thumbsize_), _completed(false)
+    _TNGen(const ImgIdx::Ent& imgidx_, unsigned thumbsize_, std::mutex& mtx_, std::condition_variable& cond_, unsigned& sem_)  throw ()
+	: _imgidx(imgidx_), _img(*_imgidx.imgs.begin()), _prevpath(_img.thumb + ".jpg"),
+	  _thumbsize(thumbsize_), _completed(false),
+          _mtx(mtx_), _cond(cond_), _sem(sem_)
     { }
 
     ~_TNGen()
-    { complete(); }
+    { }
 
-    void  run() throw()
+    void  run()
     {
 	//cout << "/" << flush;
 	DLOG("running " << _img);
@@ -576,6 +554,11 @@ class _TNGen : public ThreadPool::Task
 	gettimeofday(&_y, NULL);
 	_completed = true;
 	//cout << "\\" << flush;
+
+        _mtx.lock();
+        ++_sem;
+        _mtx.unlock();
+        _cond.notify_all();
     }
 
 
@@ -600,20 +583,6 @@ class _TNGen : public ThreadPool::Task
 	return _completed;
     }
 
-    const ThreadPool::Worker*  complete()
-    {
-	ThreadPool::Worker*  w = _w;
-	if (_w)
-	{
-	    w = _w;
-
-	    _w->join();
-	    _w->complete();
-	    _w = NULL;
-	}
-	return w;
-    }
-
     double  ms() const
     {
 	return (double)(_y - _x)/1000000;
@@ -634,15 +603,30 @@ class _TNGen : public ThreadPool::Task
     const ImgData&  _img;
     const string  _prevpath;
 
-    ThreadPool::Worker*  _w;
-
     const unsigned  _thumbsize;
 
     struct timeval  _x, _y;
 
     ostringstream  _error;
+
+    std::mutex&  _mtx;
+    std::condition_variable&  _cond;
+    unsigned&  _sem;
 };
-typedef list<_TNGen*>  Tasks;
+
+struct _Task {
+    std::future<void>  f;  // TODO - figure out
+    _TNGen*  task;
+
+    _Task(_TNGen* task_) : task(task_)
+    {
+        f = std::async(&_TNGen::run, task);
+    }
+
+    ~_Task()
+    { delete task; }
+};
+typedef list<_Task*>  Tasks;
 
 
 
@@ -785,8 +769,6 @@ int main(int argc, char **argv)
 	}
     }
 
-    ThreadPool::Pool*  tp = new ThreadPool::Pool(tpsz);
-
 
     ImgIdxs  idxs;
     bool  allok = true;
@@ -875,6 +857,8 @@ int main(int argc, char **argv)
 	// generate the html tbl
 	ostringstream  html;
 
+        std::mutex  mtx;
+        std::condition_variable  cond;
 
 	cout << "generating index.html and thumbnail previews.." << endl;
 	for (ImgIdxs::const_iterator i=idxs.begin(); i!=idxs.end(); ++i) 
@@ -914,44 +898,33 @@ int main(int argc, char **argv)
 		}
 #endif
 
-                ThreadPool::Worker*  w = tp->alloc();
-		if (w == NULL)
-		{
-		    /* gotta wait... find the first thing that was finished */
-		    DLOG("waiting for next thread/worker");
 
-		    for (Tasks::const_iterator t=tasks.begin(); t!=tasks.end(); ++t)
-		    {
-			if ( (*t)->complete() ) {
-			    break;
-			}
-		    }
+                // wait for allowable thread to be available
+                std::unique_lock<std::mutex>  lck(mtx);
+                cond.wait(lck, [&tpsz]{ return tpsz > 0;});
 
-		    if ( (w = tp->alloc()) == NULL) {
-			cerr << "ERROR: no thread worker alloc'd" << endl;
-			break;
-		    }
-		}
+		_TNGen*  task = new _TNGen(*j, thumbsize, mtx, cond, --tpsz);
+                lck.unlock();
+
 
 		/* grab the exif and thumb from the very first item which is
 		 * supposed to be the primary image
 		 */
-		tasks.push_back(new _TNGen(*j, thumbsize, *w));
-		w->run(*tasks.back());
+		tasks.push_back( new _Task(task) );
 		cout << "#" << flush;
 	    }
 
 
 	    for (Tasks::const_iterator t=tasks.begin(); t!=tasks.end(); ++t)
 	    {
-		while ( !(*t)->completed()) {
+		while ( !(*t)->task->completed()) {
 		    static const struct timespec  ts = { 0, 100000000 };
 		    nanosleep(&ts, NULL);
 		}
 
-		const ImgData&  img = (*t)->img();
-		if ( !(*t)->error().empty() ) {
-		    cerr << (*t)->error() << endl;
+		const ImgData&  img = (*t)->task->img();
+		if ( !(*t)->task->error().empty() ) {
+		    cerr << (*t)->task->error() << endl;
 		}
 
 		if (tk == 0) {
@@ -964,11 +937,11 @@ int main(int argc, char **argv)
 		if (!img.rating.empty()) {
 		    html << "[" << img.rating << "] ";
 		}
-		html << img.title << " (" << (*t)->idx().key.dt.hms << ") Exif: " << img << "\">"
-		     << "<a href=\"" << img.filename << "\"><img src=\"" << (*t)->prevpath() << "\"></a>";
+		html << img.title << " (" << (*t)->task->idx().key.dt.hms << ") Exif: " << img << "\">"
+		     << "<a href=\"" << img.filename << "\"><img src=\"" << (*t)->task->prevpath() << "\"></a>";
 
-		ImgIdx::Imgs::const_iterator  alts = (*t)->idx().imgs.begin();
-		while (alts != (*t)->idx().imgs.end()) {
+		ImgIdx::Imgs::const_iterator  alts = (*t)->task->idx().imgs.begin();
+		while (alts != (*t)->task->idx().imgs.end()) {
 		    const ImgData&  altimg = *alts++;
 		    html << "<a href=\"" << altimg.filename << "\">. </a>";
 		}
@@ -980,7 +953,7 @@ int main(int argc, char **argv)
 		}
 		cout << '.' << flush;
 		if (verbosetime) {
-		    cout << (*t)->ms();
+		    cout << (*t)->task->ms();
 		}
 
 		delete *t;
@@ -1016,7 +989,6 @@ int main(int argc, char **argv)
     for (ImgIdxs::iterator i=idxs.begin(); i!=idxs.end(); ++i) {
 	delete *i;
     }
-    delete tp;
 
     char**  pp = extn;
     while (*pp) {
