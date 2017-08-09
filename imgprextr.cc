@@ -36,9 +36,9 @@ using namespace  std;
 #include <exiv2/exiv2.hpp>
 #include <Magick++.h>
 #ifdef HAVE_SAMPLE_ICC
-#include <SampleICC/IccProfile.h>
-#include <SampleICC/IccTag.h>
-#include <SampleICC/IccUtil.h>
+#include <IccProfile.h>
+#include <IccTag.h>
+#include <IccUtil.h>
 #endif
 
 /*
