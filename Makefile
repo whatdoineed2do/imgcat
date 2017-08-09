@@ -8,12 +8,23 @@
 %.o	: %.c	;	$(CC)  -c $(CFLAGS) $<
 
 
-#DEBUGFLAGS+=-g -pg -DDBX_DEBUGGING_INFO -DXCOFF_DEBUGGING_INFO #-DDEBUG_LOG
-CFLAGS=$(DEBUGFLAGS) -I/usr/include/libxml2 -I. -I/home/ray/tools/include -DNEED_UCHAR_UINT_T
-CXXFLAGS=$(DEBUGFLAGS) -I/usr/include/ImageMagick-6 -I/usr/include/libxml2 -I. -DHAVE_SAMPLE_ICC -I/home/ray/tools -I/home/ray/tools/include -DNEED_UCHAR_UINT_T -g
-LDFLAGS=$(DEBUGFLAGS) -lexiv2 -lMagick++-6.Q16 -lMagickCore-6.Q16 -L/home/ray/tools/lib -lSampleICC -L/home/ray/tools/ThreadPool -Wl,-rpath=/home/ray/tools/ThreadPool -lThreadPool -lffmpegthumbnailer
+# uses sampleICC to perform ICC conversions; not in Fedora - get and install
+# https://www.color.org/sample.icc.xalter
+# https://sampleicc.sourceforge.net
+#
+# ./configure --prefix=$(pwd)/../SampleICC --disable-shared --enable-static
+# make install -k
 
-TARGETS=imgcat imgprextr diptych
+SAMPLEICC_HOME=SampleICC
+
+#DEBUGFLAGS+=-g -pg -DDBX_DEBUGGING_INFO -DXCOFF_DEBUGGING_INFO #-DDEBUG_LOG
+
+CXXFLAGS=$(DEBUGFLAGS) $(shell pkg-config Magick++ --cflags) $(pkg-config exiv2 --cflags) -I. -DHAVE_SAMPLE_ICC $(shell PKG_CONFIG_PATH=$(SAMPLEICC_HOME)/lib/pkgconfig pkg-config sampleicc --cflags) -DNEED_UCHAR_UINT_T -g
+
+LDFLAGS=$(DEBUGFLAGS) $(shell pkg-config Magick++ --libs) $(shell pkg-config exiv2 --libs) $(shell PKG_CONFIG_PATH=$(SAMPLEICC_HOME)/lib/pkgconfig pkg-config sampleicc --libs)
+
+
+TARGETS=imgcat imgprextr
 
 all:	objs $(TARGETS)
 objs:	ICCprofiles.o ImgKey.o ImgIdx.o ImgExifParser.o imgcat.o diptych.o
@@ -31,19 +42,14 @@ imgcat.debug:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o
 	$(CXX)  -g -DDEBUG_LOG $(DEBUGFLAGS) $(CXXFLAGS) $^ imgcat.cc $(LDFLAGS) -o $@
 
 imgcat:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o imgcat.o
-	$(CXX)  $^ $(LDFLAGS) -o $@ -lffmpegthumbnailer
-#$(CXX)  $^ ~/tmp/exiv2-0.21/src/.libs/libexiv2.a -lexpat -lz -o $@
+	$(CXX)  $^ $(LDFLAGS) -o $@ -lffmpegthumbnailer -lpthread
 
+imgcat-lp:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o imgcat.o
+	$(CXX)  $^ $(LDFLAGS) -o $@ -lffmpegthumbnailer  -L/home/ray/tools/ThreadPool -Wl,-rpath=/home/ray/tools/ThreadPool -lThreadPool -lffmpegthumbnailer
 
 imgprextr:	imgprextr.cc ICCprofiles.o
 	$(CXX)  $(CXXFLAGS) $^ $(LDFLAGS) -o $@
-#$(CXX)  $^ ~/tmp/exiv2-0.21/src/.libs/libexiv2.a -lexpat -lz -o $@
 
-diptych:		diptych.o
-	$(CXX)  $(CXXFLAGS) $^ -lMagick++-6.Q16 -lMagickCore-6.Q16 -o $@
-
-mag:		mag.cc
-	$(CXX)  $(CXXFLAGS) $^ ICCprofiles.o $(LDFLAGS) -o $@
 
 imagickICCconvert:	imagickICCconvert.cc
 	$(CXX)  $(CXXFLAGS) $^ $(LDFLAGS) -o $@
