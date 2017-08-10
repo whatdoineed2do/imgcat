@@ -643,7 +643,7 @@ int main(int argc, char **argv)
     char*  p = NULL;
 
     bool  verbosetime = false;
-    unsigned  tpsz = 16;
+    unsigned  tpsz = 8;
 
     const time_t  start = time(NULL);
 
@@ -693,7 +693,7 @@ int main(int argc, char **argv)
 	    case 'h':
 	    usage:
 	    default:
-		cout << argv[0] << " [-I " << DFLT_EXTNS << " -V " << DFLT_VEXTNS << " ]  [-t <thumbpath=.thumbs>]  [-s <thumbsize=150>]  [-w <imgs per row=8>] <dir0> <dir1> <...>" << endl;
+		cout << "usage: " << argv[0] << " [-I " << DFLT_EXTNS << " -V " << DFLT_VEXTNS << " ]  [-t <thumbpath=.thumbs>]  [-s <thumbsize=150>]  [-w <imgs per row=8>] [-T <max threads=8>] <dir0> <dir1> <...>" << endl;
 		return 1;
 	}
     }
