@@ -27,7 +27,7 @@ LDFLAGS=$(DEBUGFLAGS) $(shell pkg-config Magick++ --libs) $(shell pkg-config exi
 TARGETS=imgcat imgprextr
 
 all:	objs $(TARGETS)
-objs:	ICCprofiles.o ImgKey.o ImgIdx.o ImgExifParser.o imgcat.o diptych.o
+objs:	ICCprofiles.o ImgKey.o ImgIdx.o ImgExifParser.o imgcat.o
 
 
 ICCprofiles.o:	ICCprofiles.c ICCprofiles.h
