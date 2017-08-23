@@ -479,6 +479,18 @@ class _TNGen
     ~_TNGen()
     { }
 
+    _TNGen(const _TNGen&) = delete;
+    _TNGen& operator=(const _TNGen&) = delete;
+
+    _TNGen(_TNGen&& rhs_)
+    	: _imgidx(rhs_._imgidx), _img(rhs_._img), _prevpath(std::move(rhs_._prevpath)),
+	  _thumbsize(rhs_._thumbsize), _completed(rhs_._completed),
+          _mtx(rhs_._mtx), _cond(rhs_._cond), _sem(rhs_._sem)
+    { }
+
+    _TNGen& operator=(_TNGen&& rhs_) = delete;
+
+
     void  run()
     {
 	//cout << "/" << flush;
@@ -595,8 +607,6 @@ class _TNGen
 
 
   private:
-    _TNGen(const _TNGen&);
-    void operator=(const _TNGen&);
 
     bool  _completed;
 
@@ -621,7 +631,7 @@ struct _Task {
 
     _Task(_TNGen* task_) : task(task_)
     {
-        f = std::async(&_TNGen::run, task);
+        f = std::async(std::launch::async, &_TNGen::run, task);
     }
 
     ~_Task()
