@@ -8,12 +8,15 @@ const struct ICCprofiles  theICCprofiles[] = {
 
     { "Nikon sRGB", NKsRGB, sizeof(NKsRGB) },
     { "Nikon aRGB", NKAdobe, sizeof(NKAdobe) },
-    { "Nikon wide RGB", NKWide, sizeof(NKWide) }
+    { "Nikon wide RGB", NKWide, sizeof(NKWide) },
+
+    { "null", 0, 0 }
 };
 
 const struct ICCprofiles  theSRGBICCprofiles[] = {
     { "Nikon sRGB", NKsRGB, sizeof(NKsRGB) },
-    { "sRGB", sRGB_IEC61966_2_1, sizeof(sRGB_IEC61966_2_1) }
+    { "sRGB", sRGB_IEC61966_2_1, sizeof(sRGB_IEC61966_2_1) },
+    { "null", 0, 0 }
 };
 
 const struct ICCprofiles*  theSRGBicc        = &theICCprofiles[0];
