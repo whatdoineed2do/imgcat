@@ -22,6 +22,7 @@ typedef long long  longlong_t;
 #include <string>
 #include <list>
 
+#include <chrono>
 #include <mutex>
 #include <future>
 using namespace  std;
@@ -615,7 +616,7 @@ class _TNGen
 };
 
 struct _Task {
-    std::future<void>  f;  // TODO - figure out
+    std::future<void>  f;  // used to determe task complete
     _TNGen*  task;
 
     _Task(_TNGen* task_) : task(task_)
@@ -645,7 +646,7 @@ int main(int argc, char **argv)
     bool  verbosetime = false;
     unsigned  tpsz = 8;
 
-    const time_t  start = time(NULL);
+    const chrono::time_point<std::chrono::system_clock>  start = std::chrono::system_clock::now();
 
     int  c;
     while ( (c = getopt(argc, argv, "I:V:t:T:s:w:hv")) != EOF)
@@ -917,10 +918,7 @@ int main(int argc, char **argv)
 
 	    for (Tasks::const_iterator t=tasks.begin(); t!=tasks.end(); ++t)
 	    {
-		while ( !(*t)->task->completed()) {
-		    static const struct timespec  ts = { 0, 100000000 };
-		    nanosleep(&ts, NULL);
-		}
+		(*t)->f.get();
 
 		const ImgData&  img = (*t)->task->img();
 		if ( !(*t)->task->error().empty() ) {
@@ -984,11 +982,14 @@ int main(int argc, char **argv)
 	    }
 	}
     }
-    cout << "completed in " << time(NULL) - start << " secs" << endl;
+    const chrono::time_point<std::chrono::system_clock>  now = std::chrono::system_clock::now();
+    const chrono::duration<double>  elapsed = now - start;
+    cout << "completed in " << elapsed.count() << " secs" << endl;
 
-    for (ImgIdxs::iterator i=idxs.begin(); i!=idxs.end(); ++i) {
-	delete *i;
+    for (auto i : idxs) {
+	delete i;
     }
+    idxs.clear();
 
     char**  pp = extn;
     while (*pp) {
