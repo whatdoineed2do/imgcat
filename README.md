@@ -13,4 +13,4 @@ For RAW files, the tool will extract the embedded thumbnails from the RAW file.
 Command line util to extract largest thumbnail from (Nikon) RAW files;  adds functionality not available in `exiv2` or `exiftool` in that this tool can extract the thumbnail and perform colour space conversions (Adobe to sRGB) and also resizing of the images before writing to disk
 
 ## Dependancies
-Require `ImageMagick`, `exiv2` and `SampleICC` (local copy available) development libraries
+Require `ImageMagick`, `exiv2` and `SampleICC` (local copy available) and `ffmpegthumbnailer` development libraries
