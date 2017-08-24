@@ -504,9 +504,8 @@ class _TNGen
 	 */
 
 	// explicity want a jpg
-	//const string  prevpath = img.thumb + ".jpg";
 	const string  prevpath = _prevpath;
-	DLOG(_img.filename << "  img.type == " << img.type << "  (tiff=" << ImgData::TIFF << ",jpg= " << ImgData::JPEG << ")");
+	DLOG(_img.filename << "  img.type == " << img.type << "  (tiff=" << ImgData::TIFF << ",jpg/png/gif= " << ImgData::IMAGE<< ")");
 	try
 	{
 	    if (img.type == ImgData::TIFF)
