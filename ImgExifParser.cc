@@ -109,14 +109,36 @@ const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, c
 	}
 
 
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,26,0)
+	switch (image->imageType())
+	{
+	    case Exiv2::ImageType::nef:
+	    case Exiv2::ImageType::tiff:
+		data.type = ImgData::TIFF;
+		break;
+
+	    case Exiv2::ImageType::jpeg:
+	    case Exiv2::ImageType::jp2:
+	    case Exiv2::ImageType::png:
+	    case Exiv2::ImageType::gif:
+		data.type = ImgData::IMAGE;
+		break;
+	}
+#else
 	if (dynamic_cast<Exiv2::TiffImage*>(image.get()) ) {
 	    data.type = ImgData::TIFF;
 	}
-        else {
-	    if (dynamic_cast<Exiv2::JpegImage*>(image.get()) ) {
-		data.type = ImgData::JPEG;
+        else
+	{
+	    if (dynamic_cast<Exiv2::JpegImage*>(image.get()) ||
+	        dynamic_cast<Exiv2::PngImage *>(image.get()) ||
+	        dynamic_cast<Exiv2::GifImage *>(image.get())
+	       ) 
+	    {
+		data.type = ImgData::IMAGE;
 	    }
 	}
+#endif
 
 
 	image->readMetadata();

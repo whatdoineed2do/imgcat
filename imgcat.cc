@@ -538,21 +538,20 @@ class _TNGen
 	    }
 	    else
 	    {
-		if (img.type == ImgData::JPEG)
+		if (img.type == ImgData::IMAGE)
 		{
 		    _readgenthumbnail(img, prevpath, _thumbsize);
 		}
 		else if (img.type == ImgData::VIDEO)
 		{
 		    ffmpegthumbnailer::VideoThumbnailer videoThumbnailer(_thumbsize, true, true, 10, false);
-		    ffmpegthumbnailer::FilmStripFilter* filmStripFilter = new ffmpegthumbnailer::FilmStripFilter();
-		    videoThumbnailer.addFilter(filmStripFilter);
+		    ffmpegthumbnailer::FilmStripFilter  filmStripFilter;
+		    videoThumbnailer.addFilter(&filmStripFilter);
 
 		    videoThumbnailer.setSeekPercentage(10);
 		    char  hack[PATH_MAX+1];
 		    sprintf(hack, "%s.jpg", img.thumb.c_str());
 		    videoThumbnailer.generateThumbnail(img.filename.c_str(), Jpeg, hack);
-		    delete filmStripFilter;
 		}
 		else {
 		    _error << "unknown source file type, not attempting to generate thumbnail - " << img.filename;
@@ -644,7 +643,7 @@ typedef list<_Task*>  Tasks;
 int main(int argc, char **argv)
 {
     const char* DFLT_EXTNS = ".jpg;.jpeg;.nef;.tiff;.tif;.png;.gif";
-    const char* DFLT_VEXTNS = ".mov;.mp4;.avi";
+    const char* DFLT_VEXTNS = ".mov;.mp4;.avi;.mpg;.mpeg";
     const char*  extns  = DFLT_EXTNS;
     const char*  vextns = DFLT_VEXTNS;
 
