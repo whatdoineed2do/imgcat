@@ -10,6 +10,8 @@ For (Nikon NEF/Canon CR2/Fuji RAF) RAW files, the tool will extract the largest 
 
 To recognise other RAW formats, supported by Exiv2, update `main` and `DFLT_EXTNS` along with `ImgExifParser.cc` and the block that assigns `data.type = ImgData::EMBD_PREVIEW`
 
+Sample RAW files available https://rawsamples.ch/index.php/en/
+
 ## `imgprextr`
 
 Command line util to extract largest thumbnail from (Nikon) RAW files;  adds functionality not available in `exiv2` or `exiftool` in that this tool can extract the thumbnail and perform colour space conversions (Adobe to sRGB) and also resizing of the images before writing to disk
