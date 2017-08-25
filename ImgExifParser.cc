@@ -108,13 +108,17 @@ const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, c
 	    throw std::invalid_argument(err.str());
 	}
 
-
+        /* determine if the img has an embedded prev image
+         * http://www.exiv2.org/doc/classExiv2_1_1Image.html
+         */
 #if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,26,0)
 	switch (image->imageType())
 	{
 	    case Exiv2::ImageType::nef:
 	    case Exiv2::ImageType::tiff:
-		data.type = ImgData::TIFF;
+	    case Exiv2::ImageType::cr2:
+	    case Exiv2::ImageType::raf:
+		data.type = ImgData::EMBD_PREVIEW;
 		break;
 
 	    case Exiv2::ImageType::jpeg:
@@ -125,8 +129,12 @@ const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, c
 		break;
 	}
 #else
-	if (dynamic_cast<Exiv2::TiffImage*>(image.get()) ) {
-	    data.type = ImgData::TIFF;
+	if (dynamic_cast<Exiv2::TiffImage*>(image.get()) ||    // nef
+            dynamic_cast<Exiv2::Cr2Image *>(image.get()) ||    // canon
+            dynamic_cast<Exiv2::RafImage *>(image.get())       // fuji
+           )
+        {
+	    data.type = ImgData::EMBD_PREVIEW;
 	}
         else
 	{

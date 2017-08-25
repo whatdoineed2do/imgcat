@@ -18,7 +18,7 @@ using std::string;
 class ImgData
 {
   public:
-    enum Type { UNKNOWN, IMAGE, TIFF, VIDEO };
+    enum Type { UNKNOWN, IMAGE, EMBD_PREVIEW, VIDEO };
 
     ImgData(const char* filename_, const size_t sz_) : filename(filename_), size(sz_), type(ImgData::UNKNOWN)
     { _title(); }

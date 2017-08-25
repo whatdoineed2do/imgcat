@@ -505,10 +505,9 @@ class _TNGen
 
 	// explicity want a jpg
 	const string  prevpath = _prevpath;
-	DLOG(_img.filename << "  img.type == " << img.type << "  (tiff=" << ImgData::TIFF << ",jpg/png/gif= " << ImgData::IMAGE<< ")");
 	try
 	{
-	    if (img.type == ImgData::TIFF)
+	    if (img.type == ImgData::EMBD_PREVIEW)
 	    {
 		/* this is most likely a raw file which has embedded thumbs
 		 */
@@ -641,7 +640,7 @@ typedef list<_Task*>  Tasks;
 
 int main(int argc, char **argv)
 {
-    const char* DFLT_EXTNS = ".jpg;.jpeg;.nef;.tiff;.tif;.png;.gif";
+    const char* DFLT_EXTNS = ".jpg;.jpeg;.nef;.tiff;.tif;.png;.gif;.cr2;.raf";
     const char* DFLT_VEXTNS = ".mov;.mp4;.avi;.mpg;.mpeg";
     const char*  extns  = DFLT_EXTNS;
     const char*  vextns = DFLT_VEXTNS;

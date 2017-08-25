@@ -6,7 +6,9 @@ This is a simple multi-threaded command line util that will recursively find ima
 
 The intended use is for cataloguing large collections of images (particularly RAW files) to provide a single index in the form of a index.html; avoid the need for traditional file browsers to attempt to generate it's own thumbnails.  This is particularly suited for DVD backups where the thumbnails (ie Windows .thumbs/ dirs) cannot be generated, with the generated index and catalogue being genreated and burned to the same backup.  Instead of browsing the individual directories on the DVD (that would potentially cause redundant reads of each file to generate/extract thumbnails to display), we can browse the `index.html` and click through to required files.
 
-For RAW files, the tool will extract the embedded thumbnails from the RAW file.
+For (Nikon NEF/Canon CR2/Fuji RAF) RAW files, the tool will extract the largest embedded thumbnails from the RAW file to generate thumbnail.
+
+To recognise other RAW formats, supported by Exiv2, update `main` and `DFLT_EXTNS` along with `ImgExifParser.cc` and the block that assigns `data.type = ImgData::EMBD_PREVIEW`
 
 ## `imgprextr`
 
