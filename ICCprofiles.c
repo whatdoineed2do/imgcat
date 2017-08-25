@@ -973,21 +973,22 @@ const uchar_t  ProPhoto[] = {
 
 
 const struct ICCprofiles  theICCprofiles[] = { 
-    { "sRGB", sRGB_IEC61966_2_1, sizeof(sRGB_IEC61966_2_1) },
-    { "Adobe98", Adobe98, sizeof(Adobe98) },
-    { "ProPhoto", ProPhoto, sizeof(ProPhoto) },
+    { "sRGB IEC61966-2.1", sRGB_IEC61966_2_1, sizeof(sRGB_IEC61966_2_1) },
+    { "Adobe98",           Adobe98,           sizeof(Adobe98) },
+    { "ProPhoto",          ProPhoto,          sizeof(ProPhoto) },
 
 
-    { "Nikon sRGB", NKsRGB, sizeof(NKsRGB) },
-    { "Nikon aRGB", NKAdobe, sizeof(NKAdobe) },
-    { "Nikon wide RGB", NKWide, sizeof(NKWide) },
+    { "Nikon sRGB 4.0.0.3002",     NKsRGB, sizeof(NKsRGB) },
+    { "Nikon aRGB 4.0.0.3001",     NKAdobe, sizeof(NKAdobe) },
+    { "Nikon wide RGB 4.0.0.3001", NKWide, sizeof(NKWide) },
 
     { "null", 0, 0 }
 };
 
 const struct ICCprofiles  theSRGBICCprofiles[] = {
-    { "Nikon sRGB", NKsRGB, sizeof(NKsRGB) },
-    { "sRGB", sRGB_IEC61966_2_1, sizeof(sRGB_IEC61966_2_1) },
+    { "Nikon sRGB 4.0.0.3001", NKsRGB,            sizeof(NKsRGB) },
+    { "sRGB IEC61966-2.1",     sRGB_IEC61966_2_1, sizeof(sRGB_IEC61966_2_1) },
+
     { "null", 0, 0 }
 };
 
