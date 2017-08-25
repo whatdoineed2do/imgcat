@@ -4,7 +4,7 @@
 
 This is a simple multi-threaded command line util that will recursively find image and video files, generating thumbnails for producing an index.html to allow easy browsing.  Generated index will link to found files and can (using EXIF data) group equivalant files (ie a RAW file and a generated jpg) together under one image.
 
-The intended use is for cataloguing large collections of images (particularly RAW files) to provide a single index; avoid the need for traditional file browsers to attempt to generate it's own thumbnails.  This is particularly suited for DVD backups where the thumbnails (ie Windows .thumbs/ dirs) cannot be generated - instead of browsing the individual directories on the DVD (that would potentially cause redundant reads of each file to generate/extract thumbnails to display), we can browse the thumbnails in the `index.html`.
+The intended use is for cataloguing large collections of images (particularly RAW files) to provide a single index in the form of a index.html; avoid the need for traditional file browsers to attempt to generate it's own thumbnails.  This is particularly suited for DVD backups where the thumbnails (ie Windows .thumbs/ dirs) cannot be generated, with the generated index and catalogue being genreated and burned to the same backup.  Instead of browsing the individual directories on the DVD (that would potentially cause redundant reads of each file to generate/extract thumbnails to display), we can browse the `index.html` and click through to required files.
 
 For RAW files, the tool will extract the embedded thumbnails from the RAW file.
 
