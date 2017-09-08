@@ -521,14 +521,6 @@ int main(int argc, char **argv)
 
 	    idx.sort();
 
-	    int  tj = 0;
-	    int  tk = 0;
-
-	    ImgIdx::const_iterator  dts = idx.begin();
-
-	    advance(dts, idx.size()-1);
-	    if (dts != idx.end()) {
-	    }
 
 	    Tasks  tasks;
 	    for (ImgIdx::const_iterator j=idx.begin(); j!=idx.end(); ++j)
@@ -555,6 +547,7 @@ int main(int argc, char **argv)
 		    cerr << (*t)->task->error() << endl;
 		}
 
+                // TODO - this set of thumbs is for this idx, need to handoff, otherwise the imgthumbs contains ALL the thumbs for all dirs
                 imgthumbs.push_back((*t)->release());
                 delete *t;
 	    }
