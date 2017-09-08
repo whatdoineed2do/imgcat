@@ -97,8 +97,6 @@ std::string  ImgHtmlClassic::generate(ImgIdxs&  idxs_, const ImgThumbGens& tgs_)
                 tk = 0;
             }
             cout << '.' << flush;
-
-            delete t;
         }
         if (tk) {
             html << "</tr>";

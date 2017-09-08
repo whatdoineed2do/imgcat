@@ -602,6 +602,11 @@ int main(int argc, char **argv)
                 }
             }
         }
+
+        for (auto th : imgthumbs) {
+            delete th;
+        }
+        imgthumbs.clear();
     }
 
 
