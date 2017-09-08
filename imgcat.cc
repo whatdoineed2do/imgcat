@@ -27,12 +27,6 @@ typedef long long  longlong_t;
 #include <future>
 using namespace  std;
 
-#include <exiv2/exiv2.hpp>
-#include <Magick++.h>
-
-#include <libffmpegthumbnailer/videothumbnailer.h>
-#include <libffmpegthumbnailer/filmstripfilter.h>
-
 
 #include "Img.h"
 #include "ImgIdx.h"
