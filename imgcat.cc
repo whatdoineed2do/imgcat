@@ -37,8 +37,8 @@ using namespace  std;
 #include "Img.h"
 #include "ImgIdx.h"
 #include "ImgExifParser.h"
-
-#include "ICCprofiles.h"
+#include "ImgHtml.h"
+#include "ImgThumbGen.h"
 
 
 
@@ -48,15 +48,6 @@ using namespace  std;
 #define DLOG(x)
 #endif
 
-
-typedef list<ImgIdx*>  ImgIdxs;
-
-longlong_t  operator-(const timeval& lhs_, const timeval& rhs_)
-{
-    const longlong_t  x = lhs_.tv_sec*1000000 + lhs_.tv_usec;
-    const longlong_t  y = rhs_.tv_sec*1000000 + rhs_.tv_usec;
-    return x - y;
-}
 
 struct Istat {
     string  filename;
@@ -234,401 +225,54 @@ void  _readdir(ImgIdx& idx_, const char* thumbpath_, const char* where_, const c
 
 
 
-
-void  _genthumbnail(const string& path_, const string& origpath_, Magick::Image& img_, const unsigned sz_, const float rotate_)
+struct _Task 
 {
-    try
-    {
-	if (rotate_) {
-	    img_.rotate(rotate_);
-	}
-
-	/* make sure that the thumb is at least 'sz_'
-	 * wide
-	 */
-	ostringstream  tmp;
-	if (img_.rows() < img_.columns()) {
-	    tmp << "x" << sz_;
-	}
-	else {
-	    tmp << sz_ << "x";
-	}
-	img_.scale(tmp.str().c_str());
-
-	const size_t   r = img_.rows();
-	const size_t   c = img_.columns();
-
-	unsigned  roff = 0;
-	unsigned  coff = 0;
-
-	if (r == sz_ && c > sz_) {
-	    coff = (c - sz_)/2;
-	}
-	else {
-	    if (c == sz_ && r > sz_) {
-		roff = (r - sz_)/2;
-	    }
-	}
-
-	img_.crop( Magick::Geometry(sz_, sz_, coff, roff) );
-	img_.write(path_.c_str());
-    }
-    catch (const std::exception& ex)
-    {
-	ostringstream  err;
-	err << "failed to resize thumbnail " << origpath_ << " - " << ex.what();
-	throw range_error(err.str());
-    }
-}
-
-void  _genthumbnail(const string& path_, const string& origpath_, const void* data_, const size_t datasz_, const unsigned sz_, const float rotate_)
-{
-    try
-    {
-	DLOG("thumbnail path=" << path_ << " orig=" << origpath_);
-	Magick::Blob   blob(data_, datasz_);
-	Magick::Image  magick(blob);
-
-	_genthumbnail(path_, origpath_, magick, sz_, rotate_);
-    }
-    catch (const std::exception& ex)
-    {
-	ostringstream  err;
-	err << "failed to resize thumbnail, unable to create internal obj " << origpath_ << " - " << ex.what();
-	throw range_error(err.str());
-    }
-}
-
-
-void  _readgenthumbnail(const ImgData& img_, const string& prevpath_, const unsigned sz_)
-{
-    int  fd;
-    if ( (fd = open(img_.filename.c_str(), O_RDONLY)) < 0) {
-	cerr << "failed to open source file to generate thumbnail: " << img_.filename << " - " << strerror(errno) << endl;
-    }
-    else
-    {
-	errno = 0;
-	char*  buf = new char[img_.size];
-	size_t  n;
-	if ( (n = read(fd, buf, img_.size)) != img_.size) {
-	    cerr << "failed to read source file to generate thumbnail: " << img_.filename << " (read " << n << "/" << img_.size << ") - " << strerror(errno) << endl;
-	}
-	else {
-	    _genthumbnail(prevpath_, img_.filename, buf, img_.size, sz_, img_.rotate);
-	}
-	delete []  buf;
-	close(fd);
-    }
-}
-
-
-
-class _Buf
-{
-  public:
-    _Buf() : buf(NULL), sz(0), bufsz(0) { }
-    _Buf(size_t sz_) : buf(NULL), sz(0), bufsz(0) { alloc(sz_); }
-
-    ~_Buf() { free(); }
-
-    uchar_t*  buf;
-    size_t    bufsz;
-    size_t    sz;
-
-    void  alloc(size_t sz_)
-    {
-	if (sz_ > sz) {
-	    delete [] buf;
-	    sz = sz_;
-	    bufsz = sz;
-	    buf = new uchar_t[sz];
-	}
-	memset(buf, 0, sz);
-    }
-
-    void  free()
-    {
-	delete []  buf;
-	buf = NULL;
-	sz = 0;
-	bufsz = 0;
-    }
-
-    const uchar_t*  copy(uchar_t* buf_, size_t sz_)
-    {
-	alloc(sz_);
-	memcpy(buf, buf_, sz_);
-	bufsz = sz_;
-	return buf;
-    }
-
-    void  clear()
-    {
-	memset(buf, 0, sz);
-    }
-
-  private:
-    _Buf(const _Buf&);
-    void operator=(const _Buf&);
-};
-
-void  _genthumbnail(const string& path_, const string& origpath_, const Exiv2::PreviewImage& preview_, const Exiv2::ExifData& exif_, const unsigned sz_, const float rotate_)
-{
-    const char*  iccproftag = "Exif.Image.InterColorProfile";
-
-    static _Buf  buf(1024);
-
-    bool  convertICC = false;
-
-    Exiv2::ExifData::const_iterator  d;
-    if ( (d = exif_.findKey(Exiv2::ExifKey(iccproftag)) ) == exif_.end())
-    {
-	bool  justdump = true;
-
-	DLOG(origpath_ << "  no embedded icc");
-
-	/* no embedded ICC so can't do any conversion, just dump the preview
-	 * image if its not a Nikon RAW with the colr space set
-	 */
-	if ( (d = exif_.findKey(Exiv2::ExifKey("Exif.Nikon3.ColorSpace")) ) != exif_.end()) 
-	{
-	    /* found the nikon tag that tells us 0=srgb, 1=argb but need to check if
-	     * this is as-shot with no further mods (ie colorspace conv)
-	     */
-	    DLOG(origpath_ << "  colourspace=" << d->toLong());
-	    if (d->toLong() == 2)
-	    {
-		// it was shot as aRGB - check the orig vs mod times
-		string  orig;
-		string  mod;
-
-		DLOG(origpath_ << "  shot as aRGB");
-		if ( (d = exif_.findKey(Exiv2::ExifKey("Exif.Image.DateTime")) ) != exif_.end()) {
-		    mod = d->toString();
-		}
-		if ( (d = exif_.findKey(Exiv2::ExifKey("Exif.Photo.DateTimeOriginal")) ) != exif_.end()) {
-		    orig = d->toString();
-		}
-
-		if (orig == mod) {
-		    // ok, we'll assume this is really still in aRGB
-		    justdump = false;
-		    DLOG(origpath_ << "  no mods, will convert from aRGB");
-		}
-	    }
-	}
-
-	if (justdump) {
-	    buf.alloc(theNksRGBicc->length);
-	    memcpy(buf.buf, theNksRGBicc->profile, theNksRGBicc->length);
-	}
-	else {
-	    buf.alloc(theNkaRGBicc->length);
-	    memcpy(buf.buf, theNkaRGBicc->profile, theNkaRGBicc->length);
-	}
-    }
-    else
-    {
-	/* take the embedded ICC */
-	buf.alloc(d->size());
-	d->copy(buf.buf, Exiv2::invalidByteOrder);
-
-	DLOG(origpath_ << "     embedded icc");
-    }
-
-    const ICCprofiles*  p = theSRGBICCprofiles;
-    while (p->profile)
-    {
-	if (p->length == buf.bufsz && memcmp(p->profile, buf.buf, p->length) == 0) {
-	    break;
-	}
-	++p;
-    }
-
-    if (p->profile)
-    {
-	DLOG(origpath_ << "  already sRGB");
-
-	/* already a known sRGB, no conversion needed just dump the preview */
-	_genthumbnail(path_, origpath_, preview_.pData(), preview_.size(), sz_, rotate_);
-    }
-    else
-    {
-	DLOG(origpath_ << "      not sRGB");
-
-	static  const Magick::Blob  outicc(theSRGBICCprofiles[0].profile, theSRGBICCprofiles[0].length);
-
-	Magick::Image  img(Magick::Blob( preview_.pData(), preview_.size() ));
-	img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
-	img.profile("ICC", outicc);
-
-	_genthumbnail(path_, origpath_, img, sz_, rotate_);
-    }
-}
-
-class _TNGen
-{
-  public:
-    _TNGen(const ImgIdx::Ent& imgidx_, unsigned thumbsize_, std::mutex& mtx_, std::condition_variable& cond_, unsigned& sem_)  throw ()
-	: _imgidx(imgidx_), _img(*_imgidx.imgs.begin()), _prevpath(_img.thumb + ".jpg"),
-	  _thumbsize(thumbsize_), _completed(false),
-          _mtx(mtx_), _cond(cond_), _sem(sem_)
-    { }
-
-    ~_TNGen()
-    { }
-
-    _TNGen(const _TNGen&) = delete;
-    _TNGen& operator=(const _TNGen&) = delete;
-
-    _TNGen(_TNGen&& rhs_)
-    	: _imgidx(rhs_._imgidx), _img(rhs_._img), _prevpath(std::move(rhs_._prevpath)),
-	  _thumbsize(rhs_._thumbsize), _completed(rhs_._completed),
-          _mtx(rhs_._mtx), _cond(rhs_._cond), _sem(rhs_._sem)
-    { }
-
-    _TNGen& operator=(_TNGen&& rhs_) = delete;
-
-
-    void  run()
-    {
-	//cout << "/" << flush;
-	DLOG("running " << _img);
-
-	gettimeofday(&_x, NULL);
-	const ImgData&  img = _img;
-
-	/* grab the exif and thumb from the very first item which is
-	 * supposed to be the primary image
-	 */
-
-	// explicity want a jpg
-	const string  prevpath = _prevpath;
-	try
-	{
-	    if (img.type == ImgData::EMBD_PREVIEW)
-	    {
-		/* this is most likely a raw file which has embedded thumbs
-		 */
-		try
-		{
-		    Exiv2::Image::AutoPtr  orig = Exiv2::ImageFactory::open(img.filename);
-		    orig->readMetadata();
-		    Exiv2::PreviewManager  prevldr(*orig);
-		    Exiv2::PreviewPropertiesList  prevs = prevldr.getPreviewProperties();
-		    if (prevs.empty()) {
-			//cout << "no preview - " << img.filename << endl;
-			_readgenthumbnail(img, prevpath, _thumbsize);
-		    }
-		    else
-		    {
-			// get the largest, convert to sRGB if possible and scale
-			const Exiv2::PreviewImage  preview = prevldr.getPreviewImage(prevs.back());
-
-			_genthumbnail(prevpath, img.filename, preview, orig->exifData(), _thumbsize, img.rotate);
-		    }
-		}
-		catch (const Exiv2::AnyError& e)
-		{
-		    _error << "unable to extract thumbnail from " << img.filename << " - " << e;
-		}
-	    }
-	    else
-	    {
-		if (img.type == ImgData::IMAGE)
-		{
-		    _readgenthumbnail(img, prevpath, _thumbsize);
-		}
-		else if (img.type == ImgData::VIDEO)
-		{
-		    ffmpegthumbnailer::VideoThumbnailer videoThumbnailer(_thumbsize, true, true, 10, false);
-		    ffmpegthumbnailer::FilmStripFilter  filmStripFilter;
-		    videoThumbnailer.addFilter(&filmStripFilter);
-
-		    videoThumbnailer.setSeekPercentage(10);
-		    char  hack[PATH_MAX+1];
-		    sprintf(hack, "%s.jpg", img.thumb.c_str());
-		    videoThumbnailer.generateThumbnail(img.filename.c_str(), Jpeg, hack);
-		}
-		else {
-		    _error << "unknown source file type, not attempting to generate thumbnail - " << img.filename;
-		}
-	    }
-	}
-	catch (const exception& e)
-	{
-	    _error << e.what();
-	}
-
-	gettimeofday(&_y, NULL);
-	_completed = true;
-	//cout << "\\" << flush;
-
-        _mtx.lock();
-        ++_sem;
-        _mtx.unlock();
-        _cond.notify_all();
-    }
-
-
-    const ImgIdx::Ent&  idx() const
-    {
-	return _imgidx;
-    }
-
-    const ImgData&  img() const
-    {
-	return _img;
-    }
-
-    const string  prevpath() const
-    {
-	return _prevpath;
-    }
-
-
-    bool  completed() const
-    {
-	return _completed;
-    }
-
-    double  ms() const
-    {
-	return (double)(_y - _x)/1000000;
-    }
-
-
-    const string  error() const
-    { return _error.str(); }
-
-
-  private:
-
-    bool  _completed;
-
-    const ImgIdx::Ent&  _imgidx;
-    const ImgData&  _img;
-    const string  _prevpath;
-
-    const unsigned  _thumbsize;
-
-    struct timeval  _x, _y;
-
-    ostringstream  _error;
+    std::future<void>  f;  // used to determe task complete
+    ImgThumbGen*  task;
 
     std::mutex&  _mtx;
     std::condition_variable&  _cond;
-    unsigned&  _sem;
-};
+    unsigned*  _sem;
 
-struct _Task {
-    std::future<void>  f;  // used to determe task complete
-    _TNGen*  task;
 
-    _Task(_TNGen* task_) : task(task_)
+    _Task(ImgThumbGen* task_, std::mutex& mtx_, std::condition_variable& cond_, unsigned& sem_)
+        : task(task_), _mtx(mtx_), _cond(cond_), _sem(&sem_)
     {
-        f = std::async(std::launch::async, &_TNGen::run, task);
+        f = std::async(std::launch::async, &_Task::run, this);
+    }
+
+    void run()
+    {
+        if (_sem == NULL || task == NULL) {
+            return;
+        }
+
+
+        if (task )
+        {
+            task->generate();
+
+            _mtx.lock();
+            ++(*_sem);
+            _mtx.unlock();
+            _cond.notify_all();
+
+            _sem = NULL;
+        }
+    }
+
+    ImgThumbGen*  release()
+    {
+        ImgThumbGen*  byebye = task;
+        // TODO - theres a potential race here
+        if (_sem) {
+            _mtx.lock();
+            ++(*_sem);
+            _mtx.unlock();
+            _cond.notify_all();
+        }
+        task = NULL;
+        return byebye;
     }
 
     ~_Task()
@@ -646,17 +290,19 @@ int main(int argc, char **argv)
     const char*  vextns = DFLT_VEXTNS;
 
     const char*  thumbpath = ".thumbs";
-    unsigned  thumbsize = 150;
+    unsigned  thumbsize = 300;
     int  width = 8;
     char*  p = NULL;
 
     bool  verbosetime = false;
     unsigned  tpsz = 8;
 
+    ImgHtml*  htmlgen = NULL;
+
     const chrono::time_point<std::chrono::system_clock>  start = std::chrono::system_clock::now();
 
     int  c;
-    while ( (c = getopt(argc, argv, "I:V:t:T:s:w:hv")) != EOF)
+    while ( (c = getopt(argc, argv, "I:V:t:T:s:w:H:hv")) != EOF)
     {
 	switch (c)
 	{
@@ -698,6 +344,12 @@ int main(int argc, char **argv)
 		verbosetime = true;
 	    } break;
 
+            case 'H':
+            {
+                if ( (htmlgen = ImgHtml::create(optarg)) == NULL) {
+                }
+            } break;
+
 	    case 'h':
 	    usage:
 	    default:
@@ -706,6 +358,9 @@ int main(int argc, char **argv)
 	}
     }
 
+    if (htmlgen == NULL) {
+        htmlgen = ImgHtml::create(NULL);  // ask for the default
+    }
 
 
     // go and validate/split the extns we care about
@@ -854,26 +509,16 @@ int main(int argc, char **argv)
 
     if (allok)
     {
-	mode_t  umsk = umask(0);
-	umask(umsk);
-
-	int  fd;
-	if ( (fd = open("index.html", O_WRONLY | O_CREAT | O_TRUNC, 0666 & ~umsk)) < 0) {
-	    cerr << "failed to create index.html - " << strerror(errno) << " - will use stdout" << endl;
-	}
-
-	// generate the html tbl
-	ostringstream  html;
-
         std::mutex  mtx;
         std::condition_variable  cond;
 
-	cout << "generating index.html and thumbnail previews.." << endl;
+        ImgThumbGens  imgthumbs;
+
+	cout << "generating thumbnail previews.." << endl;
 	for (ImgIdxs::const_iterator i=idxs.begin(); i!=idxs.end(); ++i) 
 	{
 	    ImgIdx&  idx = **i;
 	    cout << "  working on [" << setw(3) << idx.size() << "]  " << idx.id << "  " << flush;
-	    html << "<h2>/<a href=\"" << idx.id << "\">" << idx.id << "</a></h2>";
 
 	    if (idx.empty()) {
 		cout << '\n';
@@ -887,38 +532,23 @@ int main(int argc, char **argv)
 
 	    ImgIdx::const_iterator  dts = idx.begin();
 
-	    html << "<p><sup>" << dts->key.dt.hms;
-
 	    advance(dts, idx.size()-1);
 	    if (dts != idx.end()) {
-		html << " .. " << dts->key.dt.hms;
 	    }
-	    html << "</sup></p>"
-	         << "<table cellpadding=0 cellspacing=2 frame=border>";
 
 	    Tasks  tasks;
 	    for (ImgIdx::const_iterator j=idx.begin(); j!=idx.end(); ++j)
 	    {
-#if 0
-		cout << j->key << " => " << j->imgs.size() << endl;
-		for (ImgIdx::Imgs::const_iterator k=j->imgs.begin(); k!=j->imgs.end(); ++k) {
-		    cout << "  " << *k << " => " << k->thumb << endl;
-		}
-#endif
-
-
                 // wait for allowable thread to be available
                 std::unique_lock<std::mutex>  lck(mtx);
                 cond.wait(lck, [&tpsz]{ return tpsz > 0;});
 
-		_TNGen*  task = new _TNGen(*j, thumbsize, mtx, cond, --tpsz);
-                lck.unlock();
-
-
 		/* grab the exif and thumb from the very first item which is
 		 * supposed to be the primary image
 		 */
-		tasks.push_back( new _Task(task) );
+		tasks.push_back( new _Task(new ImgThumbGen(*j, thumbsize), mtx, cond, --tpsz) );
+
+                lck.unlock();
 		cout << "#" << flush;
 	    }
 
@@ -927,68 +557,54 @@ int main(int argc, char **argv)
 	    {
 		(*t)->f.get();
 
-		const ImgData&  img = (*t)->task->img();
 		if ( !(*t)->task->error().empty() ) {
 		    cerr << (*t)->task->error() << endl;
 		}
 
-		if (tk == 0) {
-		     html << "<tr height=" << thumbsize << " align=center valign=middle>";
-		}
-
-		// insert the caption for the cell
-		html << "<td width=" << thumbsize 
-		     << " title=\"";
-		if (!img.rating.empty()) {
-		    html << "[" << img.rating << "] ";
-		}
-		html << img.title << " (" << (*t)->task->idx().key.dt.hms << ") Exif: " << img << "\">"
-		     << "<a href=\"" << img.filename << "\"><img src=\"" << (*t)->task->prevpath() << "\"></a>";
-
-		ImgIdx::Imgs::const_iterator  alts = (*t)->task->idx().imgs.begin();
-		while (alts != (*t)->task->idx().imgs.end()) {
-		    const ImgData&  altimg = *alts++;
-		    html << "<a href=\"" << altimg.filename << "\">. </a>";
-		}
-		html << "</td>";
-		    
-		if (++tk == width) {
-		    html << "</tr>\n";
-		    tk = 0;
-		}
-		cout << '.' << flush;
-		if (verbosetime) {
-		    cout << (*t)->task->ms();
-		}
-
-		delete *t;
+                imgthumbs.push_back((*t)->release());
+                delete *t;
 	    }
-	    if (tk) {
-		html << "</tr>";
-	    }
-	    html << "</table>\n\n";
 	    cout << endl;
 	}
-
-	const string  out = html.str();
-	if (fd) {
-	    if ( write(fd, out.c_str(), out.size()) != out.size()) {
-		cerr << "failed to write all data to index.html - " << strerror(errno) << endl;
-		allok = false;
-	    }
-	    close(fd);
-	}
-	else {
-	    cout << out << endl;
-	}
-	
+    	
 	if (!ignored.empty()) {
 	    cout << "ignored " << ignored.size() << " images:\n";
-	    for (strings::const_iterator i=ignored.begin(); i!=ignored.end(); ++i) {
-		cout << "  " << *i << endl;
+	    for (const auto i : ignored) {
+		cout << "  " << i << endl;
 	    }
 	}
+
+        cout << "generating html output" << endl;
+        {
+            mode_t  umsk = umask(0);
+            umask(umsk);
+
+            // generate the html tbl
+            const std::string  out = htmlgen->generate(idxs, imgthumbs);
+            if (out.size() == 0) {
+                cerr << "generated output is empty!" << endl;
+            }
+            else
+            {
+
+                int  fd;
+                if ( (fd = open("index.html", O_WRONLY | O_CREAT | O_TRUNC, 0666 & ~umsk)) < 0) {
+                    cerr << "failed to create index.html - " << strerror(errno) << " - will use stdout" << endl;
+                    cout << out << endl;
+                }
+                else
+                {
+                    if ( write(fd, out.c_str(), out.size()) != out.size()) {
+                        cerr << "failed to write all data to index.html - " << strerror(errno) << endl;
+                        cout << out << endl;
+                    }
+                    close(fd);
+                }
+            }
+        }
     }
+
+
     const chrono::time_point<std::chrono::system_clock>  now = std::chrono::system_clock::now();
     const chrono::duration<double>  elapsed = now - start;
     cout << "completed in " << elapsed.count() << " secs" << endl;
@@ -997,6 +613,7 @@ int main(int argc, char **argv)
 	delete i;
     }
     idxs.clear();
+    delete htmlgen;
 
     char**  pp = extn;
     while (*pp) {

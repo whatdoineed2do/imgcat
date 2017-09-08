@@ -3,8 +3,8 @@
 /*  $Id: ImgIdx.h,v 1.1 2011/10/30 17:33:53 ray Exp $
  */
 
-#ifndef IMG_TREE_H
-#define IMG_TREE_H
+#ifndef IMG_IDX_H
+#define IMG_IDX_H
 
 #pragma ident  "@(#)$Id: ImgIdx.h,v 1.1 2011/10/30 17:33:53 ray Exp $"
 
@@ -72,5 +72,7 @@ class ImgIdx
 
     ImgIdx::Idx  _idx;
 };
+
+typedef list<ImgIdx*>  ImgIdxs;
 
 #endif
