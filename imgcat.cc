@@ -507,6 +507,7 @@ int main(int argc, char **argv)
         std::condition_variable  cond;
 
         ImgThumbGens  imgthumbs;
+        ImgHtml::Payloads  htmlpayloads;
 
 	cout << "generating thumbnail previews.." << endl;
 	for (ImgIdxs::const_iterator i=idxs.begin(); i!=idxs.end(); ++i) 
@@ -539,6 +540,8 @@ int main(int argc, char **argv)
 	    }
 
 
+            htmlpayloads.push_back(ImgHtml::Payload(idx));
+
 	    for (Tasks::const_iterator t=tasks.begin(); t!=tasks.end(); ++t)
 	    {
 		(*t)->f.get();
@@ -547,8 +550,12 @@ int main(int argc, char **argv)
 		    cerr << (*t)->task->error() << endl;
 		}
 
-                // TODO - this set of thumbs is for this idx, need to handoff, otherwise the imgthumbs contains ALL the thumbs for all dirs
-                imgthumbs.push_back((*t)->release());
+                /* this set of thumbs is for this idx, need to handoff otherwise
+                 * the imgthumbs contains ALL the thumbs for all dirs
+                 */
+                ImgThumbGen*  itg = (*t)->release();
+                htmlpayloads.back().thumbs.push_back(itg);
+                imgthumbs.push_back(itg);
                 delete *t;
 	    }
 	    cout << endl;
@@ -567,7 +574,7 @@ int main(int argc, char **argv)
             umask(umsk);
 
             // generate the html tbl
-            const std::string  out = htmlgen->generate(idxs, imgthumbs);
+            const std::string  out = htmlgen->generate(htmlpayloads);
             if (out.size() == 0) {
                 cerr << "generated output is empty!" << endl;
             }

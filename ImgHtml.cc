@@ -36,13 +36,16 @@ ImgHtml*  ImgHtml::create(const char* type_)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-std::string  ImgHtmlClassic::generate(ImgIdxs&  idxs_, const ImgThumbGens& tgs_)
+std::string  ImgHtmlClassic::generate(ImgHtml::Payloads& payloads_)
 {
     std::ostringstream  html;
 
-    for (ImgIdxs::const_iterator i=idxs_.begin(); i!=idxs_.end(); ++i) 
+    for (auto& p : payloads_)
     {
-        ImgIdx&  idx = **i;
+        ImgIdx&        idx    = p.idx;
+        ImgThumbGens&  thumbs = p.thumbs;
+        
+
         cout << "  working on [" << setw(3) << idx.size() << "]  " << idx.id << "  " << flush;
         html << "<h2>/<a href=\"" << idx.id << "\">" << idx.id << "</a></h2>";
 
@@ -68,7 +71,7 @@ std::string  ImgHtmlClassic::generate(ImgIdxs&  idxs_, const ImgThumbGens& tgs_)
              << "<table cellpadding=0 cellspacing=2 frame=border>";
 
         
-        for (auto t : tgs_)
+        for (auto& t : thumbs)
         {
             const ImgData&  img = t->img();
 
@@ -109,7 +112,7 @@ std::string  ImgHtmlClassic::generate(ImgIdxs&  idxs_, const ImgThumbGens& tgs_)
 }
 
 
-std::string  ImgHtmlFlexbox::generate(ImgIdxs&  idxs_, const ImgThumbGens& tgs_)
+std::string  ImgHtmlFlexbox::generate(ImgHtml::Payloads& payloads_)
 {
     std::ostringstream  html;
     //return std::move(html.str());

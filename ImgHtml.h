@@ -2,6 +2,7 @@
 #define IMG_HTML_H
 
 #include <memory>
+#include <list>
 
 #include "ImgIdx.h"
 #include "ImgThumbGen.h"
@@ -17,8 +18,17 @@ class ImgHtml
      ImgHtml(const ImgHtml&&) = delete;
      ImgHtml& operator=(const ImgHtml&&) = delete;
 
+     struct Payload {
+         Payload(ImgIdx& idx_) : idx(idx_) { }
+         Payload(Payload&& rhs_) : idx(rhs_.idx), thumbs(std::move(rhs_.thumbs)) { }
 
-     virtual std::string  generate(ImgIdxs&, const ImgThumbGens&) = 0;
+         ImgIdx& idx;
+         ImgThumbGens thumbs;  // dont own 
+     };
+     typedef std::list<ImgHtml::Payload>  Payloads;
+
+
+     virtual std::string  generate(Payloads&) = 0;
 
      //static std::unique_ptr<ImgHtml>  create(const char* type_)  throw (std::range_error);
      static ImgHtml*  create(const char* type_)  throw (std::range_error);
@@ -34,7 +44,7 @@ struct ImgHtmlClassic : public ImgHtml
 
     ImgHtmlClassic() = default;
 
-    std::string  generate(ImgIdxs&, const ImgThumbGens&)  override;
+    std::string  generate(ImgHtml::Payloads&)  override;
 };
 
 struct ImgHtmlFlexbox : public ImgHtml
@@ -43,7 +53,7 @@ struct ImgHtmlFlexbox : public ImgHtml
 
     ImgHtmlFlexbox() = default;
 
-    std::string  generate(ImgIdxs&, const ImgThumbGens&)  override;
+    std::string  generate(ImgHtml::Payloads&)  override;
 };
 
 #endif
