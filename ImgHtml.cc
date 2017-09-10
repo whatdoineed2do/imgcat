@@ -244,9 +244,9 @@ a:hover {\
             };
             P*  p = all;
             while (p->category) {
-                html << "<p1>" << p->category << ":[ ";
+                html << "<p1>";
                 for (const auto&  si : p->stat) {
-                    html << si.first << " #" << si.second << " ";
+                    html << "<b>" << si.first << "</b> #" << si.second << " ";
                 }
                 html << "]</p1><br>\n";
                 ++p;
