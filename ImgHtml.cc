@@ -248,7 +248,7 @@ a:hover {\
                 for (const auto&  si : p->stat) {
                     html << "<b>" << si.first << "</b> #" << si.second << " ";
                 }
-                html << "]</p1><br>\n";
+                html << "</p1><br>\n";
                 ++p;
             }
         }
