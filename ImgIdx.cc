@@ -39,6 +39,7 @@ ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_)  throw ()
     iterator p;
     if ( (p = find(k_)) == end()) {
 	p = _idx.insert(_idx.end(), ImgIdx::Ent(k_));
+
     }
     return p->imgs;
 }
@@ -62,15 +63,20 @@ void  ImgIdx::sort()  throw ()
 }
 
 
-#if 0
-void  ImgIdx::push_back(const ImgKey& k_, const ImgData& d_)
+/* summarise the stats based on what we know at this point .. we can't do it in
+ * the operator[] as we dont add anyhting at that point, its just creating the entry
+ * ... maybe that needs to change
+ */
+ImgIdx::Stats  ImgIdx::stats()
 {
-    iterator  i;
-    if ( (i = find(k_)) == end()) {
-	// this needs to be better - sort but on what?
-	i = _idx.insert(_idx.end(), ImgIdx::Ent(k_));
+    ImgIdx::Stats  stats;
+    for (const_iterator i=begin(); i!=end(); ++i)
+    {
+        for (const auto&  k : i->imgs) {
+            stats.camera[k.camera]++;
+            stats.lens[k.lens]++;
+            stats.focallen[k.focallen]++;
+        }
     }
-
-    i->imgs.push_back(d_);
+    return stats;
 }
-#endif

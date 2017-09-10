@@ -171,6 +171,15 @@ p {\
   text-align: right;\
   color: white;\
   margin: 0;\
+  font-size: 90%;\
+}\
+p1 {\
+  background: #333;\
+  padding-left: 5px;\
+  text-align: left;\
+  color: white;\
+  margin: 0;\
+  font-size: 80%;\
 }\
 img {\
   width: 100%;\
@@ -219,8 +228,31 @@ a:hover {\
         if (dts != idx.end()) {
             html << " .. " << dts->key.dt.hms;
         }
-        html << "</p>\n"
-             << "<div class=flex-container>\n";
+        html << "</p>\n";
+
+        const ImgIdx::Stats  stats = idx.stats();
+        {
+            struct P {
+                const char*  category;
+                const ImgIdx::Stats::_Stat&  stat;
+            }
+            all[] = {
+                { "cameras",    stats.camera },
+                { "lenses",     stats.lens },
+                { "focal lens", stats.focallen },
+                { NULL,         stats.camera },
+            };
+            P*  p = all;
+            while (p->category) {
+                html << "<p1>" << p->category << ":[ ";
+                for (const auto&  si : p->stat) {
+                    html << si.first << " #" << si.second << " ";
+                }
+                html << "]</p1><br>\n";
+                ++p;
+            }
+        }
+        html << "<div class=flex-container>\n";
         
         for (auto& t : thumbs)
         {

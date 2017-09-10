@@ -9,7 +9,8 @@
 #pragma ident  "@(#)$Id: ImgIdx.h,v 1.1 2011/10/30 17:33:53 ray Exp $"
 
 #include <list>
-using namespace  std;
+#include <string>
+#include <unordered_map>
 
 #include "ImgKey.h"
 #include "ImgData.h"
@@ -21,7 +22,7 @@ using namespace  std;
 class ImgIdx
 {
   public:
-    typedef list<ImgData>  Imgs;
+    typedef std::list<ImgData>  Imgs;
     struct Ent {
 	Ent(const ImgKey& key_) : key(key_) { }
 	Ent(const Ent& rhs_) : key(rhs_.key), imgs(rhs_.imgs) { }
@@ -32,7 +33,15 @@ class ImgIdx
 	static bool sortop(const ImgIdx::Ent& l_, const ImgIdx::Ent& r_)
 	{ return l_.key < r_.key; }
     };
-    typedef list<ImgIdx::Ent>  Idx;
+    typedef std::list<ImgIdx::Ent>  Idx;
+
+    struct Stats {
+        typedef std::unordered_map<std::string, unsigned>  _Stat;
+
+        _Stat  camera;
+        _Stat  lens;
+        _Stat  focallen;
+    };
 
     typedef Idx::iterator        iterator;
     typedef Idx::const_iterator  const_iterator;
@@ -62,8 +71,9 @@ class ImgIdx
 
 
     void  sort()  throw();
+    ImgIdx::Stats  stats();
 
-    const string  id;
+    const std::string  id;
 
 
   private:
@@ -73,6 +83,6 @@ class ImgIdx
     ImgIdx::Idx  _idx;
 };
 
-typedef list<ImgIdx*>  ImgIdxs;
+typedef std::list<ImgIdx*>  ImgIdxs;
 
 #endif
