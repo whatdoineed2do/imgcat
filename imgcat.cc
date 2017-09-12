@@ -595,20 +595,22 @@ int main(int argc, char **argv)
             const std::string  out = htmlgen->generate(htmlpayloads);
             if (out.size() == 0) {
                 cerr << "generated output is empty!" << endl;
+		allok = false;
             }
             else
             {
-
                 int  fd;
                 if ( (fd = open("index.html", O_WRONLY | O_CREAT | O_TRUNC, 0666 & ~umsk)) < 0) {
                     cerr << "failed to create index.html - " << strerror(errno) << " - will use stdout" << endl;
                     cout << out << endl;
+		    allok = false;
                 }
                 else
                 {
                     if ( write(fd, out.c_str(), out.size()) != out.size()) {
                         cerr << "failed to write all data to index.html - " << strerror(errno) << endl;
                         cout << out << endl;
+			allok = false;
                     }
                     close(fd);
                 }

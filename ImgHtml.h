@@ -47,13 +47,41 @@ struct ImgHtmlClassic : public ImgHtml
     std::string  generate(ImgHtml::Payloads&)  override;
 };
 
-struct ImgHtmlFlexbox : public ImgHtml
+class ImgHtmlFlexbox : public ImgHtml
 {
-    static constexpr const char*  ID = "flexbox";
-
+  public:
     ImgHtmlFlexbox() = default;
+    virtual ~ImgHtmlFlexbox() = default;
 
-    std::string  generate(ImgHtml::Payloads&)  override;
+    std::string  generate(ImgHtml::Payloads&)  final;
+
+  protected:
+    virtual const char*  _jsblock() = 0;
 };
+
+class ImgHtmlFlexboxSlide : public ImgHtmlFlexbox
+{
+  public:
+    static constexpr const char*  ID = "flexbox-slide";
+
+    ImgHtmlFlexboxSlide() = default;
+    virtual ~ImgHtmlFlexboxSlide() = default;
+
+  private:
+    const char*  _jsblock()  override;
+};
+
+class ImgHtmlFlexboxHide : public ImgHtmlFlexbox
+{
+  public:
+    static constexpr const char*  ID = "flexbox-hide";
+
+    ImgHtmlFlexboxHide() = default;
+    virtual ~ImgHtmlFlexboxHide() = default;
+
+  private:
+    const char*  _jsblock()  override;
+};
+
 
 #endif

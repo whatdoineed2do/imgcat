@@ -17,8 +17,9 @@ ImgHtml*  ImgHtml::create(const char* type_)
     };
 
     _HtmlGenerators  htmlgens[] = {
-        { ImgHtmlFlexbox::ID, []() { return (ImgHtml*)new ImgHtmlFlexbox(); } },
-        { ImgHtmlClassic::ID, []() { return (ImgHtml*)new ImgHtmlClassic(); } },
+        { ImgHtmlFlexboxSlide::ID, []() { return (ImgHtml*)new ImgHtmlFlexboxSlide(); } },
+        { ImgHtmlFlexboxHide::ID,  []() { return (ImgHtml*)new ImgHtmlFlexboxHide(); } },
+        { ImgHtmlClassic::ID,      []() { return (ImgHtml*)new ImgHtmlClassic(); } },
         { nullptr, nullptr }
     };
 
@@ -273,18 +274,13 @@ li.dropdown {\
 </style>\n";
 
 
-    static const char*  JS_DOC_RDY = "$(document).ready(function(){\n  $('.show_hide').showHide({\n    speed: 1000,\n    easing: '', \n    changeText: 1,\n    showText: '[+]',\n    hideText: '[-]'\n  });\n});\n";
-    static const char*  JS_SHOW_HIDE = "(function ($) { \n $.fn.showHide = function (options) {\n   //default vars for the plugin\n   var defaults = {\n    speed: 1000,\n    easing: '',\n    changeText: 0,\n    showText: 'Show',\n    hideText: 'Hide'\n   };\n   var options = $.extend(defaults, options);\n\n   $(this).click(function () {  \n    $('.toggleDiv').slideUp(options.speed, options.easing);     \n    var toggleClick = $(this);\n    var toggleDiv = $(this).attr('rel');\n    $(toggleDiv).slideToggle(options.speed, options.easing, function() {\n      if(options.changeText==1){\n        $(toggleDiv).is(\":visible\") ? toggleClick.text(options.hideText) : toggleClick.text(options.showText);\n      }\n    });\n\n    return false;\n   });\n  };\n})(jQuery);\n";
-
-
     std::ostringstream  html;
     std::ostringstream  nav;
     std::ostringstream  body;
 
     html << hdr
          << "<script>\n" << JS_JQUERY_214 << "</script>\n"
-         << "<script>\n" << JS_SHOW_HIDE << "</script>\n"
-         << "<script>\n" << JS_DOC_RDY << "</script>\n"
+	 << _jsblock() << "\n"
 	 << "</head>\n<body>\n\n"
 	 << "<div class=\"ul.topnav\" style=\"width: 100%; position:fixed; top:0;\">"
 	 << "<ul>"
@@ -390,4 +386,18 @@ li.dropdown {\
          << "</div>  <!-- padding -->\n"
          << "</body></html>";
     return std::move(html.str());
+}
+
+const char*  ImgHtmlFlexboxSlide::_jsblock()
+{
+    static const char*  js = "<script>$(function() {\n  var $window = $(window), $document = $(document),\n    transitionSupported = typeof document.body.style.transitionProperty === \"string\", // detect CSS transition support\n    scrollTime = 1; // scroll time in seconds\n\n  $(document).on(\"click\", \"a[href*=#]:not([href=#])\", function(e) {\n    var target, avail, scroll, deltaScroll;\n\n    if (location.pathname.replace(/^\\//, \"\") == this.pathname.replace(/^\\//, \"\") && location.hostname == this.hostname) {\n      target = $(this.hash);\n      target = target.length ? target : $(\"[id=\" + this.hash.slice(1) + \"]\");\n\n      if (target.length) {\n\tavail = $document.height() - $window.height();\n\n\tif (avail > 0) {\n\t  scroll = target.offset().top;\n\n\t  if (scroll > avail) {\n\t    scroll = avail;\n\t  }\n\t} else {\n\t  scroll = 0;\n\t}\n\n\tdeltaScroll = $window.scrollTop() - scroll;\n\n\t// if we don't have to scroll because we're already at the right scrolling level,\n\tif (!deltaScroll) {\n\t  return; // do nothing\n\t}\n\n\te.preventDefault();\n\n\tif (transitionSupported) {\n\t  $(\"html\").css({\n\t    \"margin-top\": deltaScroll + \"px\",\n\t    \"transition\": scrollTime + \"s ease-in-out\"\n\t  }).data(\"transitioning\", scroll);\n\t} else {\n\t  $(\"html, body\").stop(true, true) // stop potential other jQuery animation (assuming we're the only one doing it)\n\t    .animate({\n\t      scrollTop: scroll + \"px\"\n\t    }, scrollTime * 1000);\n\n\t  return;\n\t}\n      }\n    }\n  });\n\n  if (transitionSupported) {\n    $(\"html\").on(\"transitionend webkitTransitionEnd msTransitionEnd oTransitionEnd\", function(e) {\n      var $this = $(this),\n\tscroll = $this.data(\"transitioning\");\n\n      if (e.target === e.currentTarget && scroll) {\n\t$this.removeAttr(\"style\").removeData(\"transitioning\");\n\n\t$(\"html, body\").scrollTop(scroll);\n      }\n    });\n  }\n});\n</script>\n";
+    return js;
+}
+
+const char*  ImgHtmlFlexboxHide::_jsblock()
+{
+    static const char*  js  = "<script>(function ($) { \n $.fn.showHide = function (options) {\n   //default vars for the plugin\n   var defaults = {\n    speed: 1000,\n    easing: '',\n    changeText: 0,\n    showText: 'Show',\n    hideText: 'Hide'\n   };\n   var options = $.extend(defaults, options);\n\n   $(this).click(function () {  \n    $('.toggleDiv').slideUp(options.speed, options.easing);     \n    var toggleClick = $(this);\n    var toggleDiv = $(this).attr('rel');\n    $(toggleDiv).slideToggle(options.speed, options.easing, function() {\n      if(options.changeText==1){\n        $(toggleDiv).is(\":visible\") ? toggleClick.text(options.hideText) : toggleClick.text(options.showText);\n      }\n    });\n\n    return false;\n   });\n  };\n})(jQuery);</script>\n\
+    <script>$(document).ready(function(){\n  $('.show_hide').showHide({\n    speed: 1000,\n    easing: '', \n    changeText: 1,\n    showText: '[+]',\n    hideText: '[-]'\n  });\n});</script>";
+
+    return js;
 }
