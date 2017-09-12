@@ -339,7 +339,7 @@ li.dropdown {\
             while (p->category) {
                 body << "  <p1>";
                 for (const auto&  si : p->stat) {
-                    body << "<b>" << si.first << "</b> #" << si.second << " ";
+                    body << "<b>" << (si.first.empty() ? "???" : si.first.c_str()) << "</b> #" << si.second << " ";
                 }
                 body << "  </p1><br>\n";
                 ++p;
