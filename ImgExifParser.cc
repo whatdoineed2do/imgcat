@@ -9,8 +9,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <errno.h>
 #include <strings.h>
+
+#include <sstream>
 
 #include <exiv2/exiv2.hpp>
 
@@ -35,6 +38,12 @@ const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, c
 	}
     }
 #endif
+
+    if (access(filename_, R_OK) < 0) {
+	std::ostringstream  err;
+	err << strerror(errno);
+	throw std::invalid_argument(err.str());
+    }
 
     typedef Exiv2::ExifData::const_iterator (*EasyAccessFct)(const Exiv2::ExifData& ed);
 

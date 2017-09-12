@@ -68,7 +68,6 @@ struct Istat {
 };
 
 typedef list<Istat>  Istats;
-typedef list<string>  strings;
 
 
 bool  _filterextn(const char** extn_, const char* path_)
@@ -429,7 +428,19 @@ int main(int argc, char **argv)
 
     ImgIdxs  idxs;
     bool  allok = true;
-    strings  ignored;
+    struct _Ignored {
+	const std::string  file;
+	const std::string  reason;
+
+	_Ignored(const std::string& file_, std::string&& reason_) : file(file_), reason(std::move(reason_)) { }
+	_Ignored(const std::string& file_, const char* reason_) : file(file_), reason(reason_) { }
+	_Ignored(_Ignored& rhs_) : file(rhs_.file), reason(rhs_.reason) { }
+	_Ignored(_Ignored&& rhs_) : file(std::move(rhs_.file)), reason(std::move(rhs_.reason)) { }
+
+	_Ignored& operator=(_Ignored&) = delete;
+	_Ignored& operator=(_Ignored&&) = delete;
+    };
+    list<_Ignored>  ignored;
     uint_t  ttlfiles = 0;
     while (optind < argc)
     {
@@ -463,7 +474,7 @@ int main(int argc, char **argv)
 		}
 		catch (const invalid_argument& ex)
 		{
-		    ignored.push_back(i->filename);
+		    ignored.emplace_back(i->filename, ex.what());
 		}
 	    }
 
@@ -471,6 +482,13 @@ int main(int argc, char **argv)
 	    {
 		try
 		{
+		    if (access(i->filename.c_str(), R_OK) < 0) {
+			std::ostringstream  err;
+			err << strerror(errno);
+			ignored.emplace_back(i->filename, err.str());
+			continue;
+		    }
+
 		    ImgData  imgdata(i->filename.c_str(), i->st.st_size);
 		    imgdata.type = ImgData::VIDEO;
 		    ostringstream  tmp;
@@ -482,7 +500,7 @@ int main(int argc, char **argv)
 		catch (const exception& ex)
 		{
 		    DLOG("failed to parse - " << ex.what());
-		    ignored.push_back(i->filename);
+		    ignored.emplace_back(i->filename, ex.what());
 		}
 	    }
 	    ttlfiles += imgfilenames.size();
@@ -562,9 +580,9 @@ int main(int argc, char **argv)
 	}
     	
 	if (!ignored.empty()) {
-	    cout << "ignored " << ignored.size() << " images:\n";
-	    for (const auto i : ignored) {
-		cout << "  " << i << endl;
+	    cout << "ignored " << ignored.size() << " files:\n";
+	    for (const auto& i : ignored) {
+		cout << "  " << i.file << " - " << i.reason << endl;
 	    }
 	}
 
