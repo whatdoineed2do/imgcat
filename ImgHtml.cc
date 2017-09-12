@@ -218,9 +218,59 @@ ul.topnav li a\
 \
 ul.topnav li a.active { background-color: grey; }\
 \
+ul {\
+  font-size: 80%;\
+  list-style-type: none;\
+  margin: 0;\
+  padding: 0;\
+  overflow: hidden;\
+  background-color: #333;\
+  }\
+\
+li {\
+  float: left;\
+}\
+\
+li a, .dropbtn {\
+  display: inline-block;\
+  color: white;\
+  text-align: center;\
+  padding: 3px 4px;\
+  text-decoration: none;\
+}\
+\
+li a:hover, .dropdown:hover .dropbtn {\
+  background-color: #333;\
+}\
+\
+li.dropdown {\
+  display: inline-block;\
+}\
+\
+.dropdown-content {\
+  display: none;\
+  position: absolute;\
+  min-width: 160px;\
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);\
+  z-index: 1;\
+}\
+\
+.dropdown-content a {\
+  padding: 2px 6px;\
+  text-decoration: none;\
+  display: block;\
+  text-align: left;\
+}\
+\
+.dropdown-content a:hover {background-color: #f1f1f1}\
+\
+.dropdown:hover .dropdown-content {\
+  display: block;\
+}\n\
 @media screen and (max-width: 400px) {\
-  ul.topnav li { float: none; } \
-}\n</style>\n";
+  ul li { float: none; } \
+}\
+</style>\n";
 
 
     static const char*  JS_DOC_RDY = "$(document).ready(function(){\n  $('.show_hide').showHide({\n    speed: 1000,\n    easing: '', \n    changeText: 1,\n    showText: '[+]',\n    hideText: '[-]'\n  });\n});\n";
@@ -228,14 +278,18 @@ ul.topnav li a.active { background-color: grey; }\
 
 
     std::ostringstream  html;
+    std::ostringstream  nav;
+    std::ostringstream  body;
 
     html << hdr
          << "<script>\n" << JS_JQUERY_214 << "</script>\n"
          << "<script>\n" << JS_SHOW_HIDE << "</script>\n"
          << "<script>\n" << JS_DOC_RDY << "</script>\n"
 	 << "</head>\n<body>\n\n"
-	 << "<ul class=topnav><li><a class=\"imgcat\">Image Catalogue</a></li></ul>\n"
-	 << "<div style=\"padding: 20px 8px;\">";
+	 << "<div class=\"ul.topnav\" style=\"width: 100%; position:fixed; top:0;\">"
+	 << "<ul>"
+	 <<   "<li class=\"dropdown\"><a href=\"#top\" class=\"dropbtn\">Image Catalogue</a>\n"
+	 <<     "<div class=\"dropdown-content\">";
 
     unsigned  pblck = 0;
     for (auto& p : payloads_)
@@ -245,7 +299,7 @@ ul.topnav li a.active { background-color: grey; }\
         
         cout << "  working on [" << setw(3) << idx.size() << "]  " << idx.id << "  " << flush;
 
-        html << "<h2>/<a href=\"" << idx.id << "\">" << idx.id << "</a>"
+        body << "<h2>/<a href=\"" << idx.id << "\">" << idx.id << "</a>"
 	     << "<sup><a href=\"#\" class=\"show_hide\" rel=\"#photo_block" << pblck << "\">[-]</sup></a>"
 	     << "</h2>\n";
 
@@ -259,14 +313,15 @@ ul.topnav li a.active { background-color: grey; }\
 
         ImgIdx::const_iterator  dts = idx.begin();
 
-	html << "  <div id=\"photo_block" << pblck << "\">\n";
+	nav << "  <a href=\"#photo_block" << pblck << "\">" << idx.id << "</a>";
+	body << "  <div id=\"photo_block" << pblck << "\">\n";
 	++pblck;
-        html << "  <p>" << dts->key.dt.hms;
+        body << "  <p>" << dts->key.dt.hms;
         advance(dts, idx.size()-1);
         if (dts != idx.end()) {
-            html << " .. " << dts->key.dt.hms;
+            body << " .. " << dts->key.dt.hms;
         }
-        html << "</p>\n";
+        body << "</p>\n";
 
         const ImgIdx::Stats  stats = idx.stats();
         {
@@ -282,50 +337,57 @@ ul.topnav li a.active { background-color: grey; }\
             };
             P*  p = all;
             while (p->category) {
-                html << "  <p1>";
+                body << "  <p1>";
                 for (const auto&  si : p->stat) {
-                    html << "<b>" << si.first << "</b> #" << si.second << " ";
+                    body << "<b>" << si.first << "</b> #" << si.second << " ";
                 }
-                html << "  </p1><br>\n";
+                body << "  </p1><br>\n";
                 ++p;
             }
         }
-        html << " <div class=flex-container>\n";
+        body << " <div class=flex-container>\n";
         
         for (auto& t : thumbs)
         {
             const ImgData&  img = t->img();
 
             // insert the caption for the cell
-            html << "  <div class=flex-item  title=\"";
+            body << "  <div class=flex-item  title=\"";
             if (!img.rating.empty()) {
-                html << "[" << img.rating << "] ";
+                body << "[" << img.rating << "] ";
             }
-            html << img.title << "  (" << t->idx().key.dt.hms << ")\n"
+            body << img.title << "  (" << t->idx().key.dt.hms << ")\n"
                  << "Exif: " << img << "\">\n"
                  << "  <a href=\"" << img.filename << "\"><img src=\"" << t->prevpath() << "\"></a>";
 
             if (t->idx().imgs.size() > 1)
             {
-                html << "    <div class=bottom-left>";
+                body << "    <div class=bottom-left>";
                 ImgIdx::Imgs::const_iterator  alts = t->idx().imgs.begin();
                 while (alts != t->idx().imgs.end()) {
                     const ImgData&  altimg = *alts++;
-                    html << "<a href=\"" << altimg.filename << "\"># </a>";
+                    body << "<a href=\"" << altimg.filename << "\"># </a>";
                 }
-                html << "\n"
+                body << "\n"
 		     << "    </div>  <!-- bottom-left -->\n";
             }
-            html << "  </div>  <!-- flex item -->\n";
+            body << "  </div>  <!-- flex item -->\n";
                 
             cout << '.' << flush;
         }
-        html << " </div>  <!-- flex container -->\n"
+        body << " </div>  <!-- flex container -->\n"
 	     << "</div>  <!-- photo block -->\n";
         cout << endl;
     }
 
-    html << "</div>  <!-- padding -->\n"
+    html << nav.str()
+	 <<     "</div>"
+	 <<   "</li>"
+	 << "</ul>"
+	 << "</div>"
+	 << "<div id=\"top\" style=\"padding: 20px 8px;\">"
+         << body.str()
+         << "</div>  <!-- padding -->\n"
          << "</body></html>";
     return std::move(html.str());
 }
