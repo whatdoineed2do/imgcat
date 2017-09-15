@@ -284,7 +284,7 @@ li.dropdown {\
 	 << "</head>\n<body>\n\n"
 	 << "<div class=\"ul.topnav\" style=\"width: 100%; position:fixed; top:0;\">"
 	 << "<ul>"
-	 <<   "<li class=\"dropdown\"><a href=\"#top\" class=\"dropbtn\">Image Catalogue</a>\n"
+	 <<   "<li class=\"dropdown\"><a href=\"#top\" class=\"dropbtn\"><b>Image Catalogue</b></a>\n"
 	 <<     "<div class=\"dropdown-content\">";
 
     unsigned  pblck = 0;
@@ -294,6 +294,10 @@ li.dropdown {\
         ImgThumbGens&  thumbs = p.thumbs;
         
         cout << "  working on [" << setw(3) << idx.size() << "]  " << idx.id << "  " << flush;
+
+	nav << "  <a href=\"#photo_block" << pblck << "\">" << idx.id << "</a>";
+	body << "<div id=\"photo_block" << pblck << "\">\n";
+	++pblck;
 
         body << "<h2>/<a href=\"" << idx.id << "\">" << idx.id << "</a>"
 	     << "<sup><a href=\"#\" class=\"show_hide\" rel=\"#photo_block" << pblck << "\">[-]</sup></a>"
@@ -306,18 +310,25 @@ li.dropdown {\
 
         idx.sort();
 
+        for (ImgIdx::const_iterator  dtsf=idx.begin(); dtsf!=idx.end(); ++dtsf)
+        {
+            if (dtsf->key.dt.hms.empty()) {
+                continue;
+            }
+            body << "  <p>" << dtsf->key.dt.hms;
 
-        ImgIdx::const_iterator  dts = idx.begin();
+            for (ImgIdx::const_reverse_iterator  dts=idx.crbegin(); dts!=idx.crend(); ++dts) {
+                if (dts->key.dt.hms.empty()) {
+                    continue;
+                }
 
-	nav << "  <a href=\"#photo_block" << pblck << "\">" << idx.id << "</a>";
-	body << "  <div id=\"photo_block" << pblck << "\">\n";
-	++pblck;
-        body << "  <p>" << dts->key.dt.hms;
-        advance(dts, idx.size()-1);
-        if (dts != idx.end()) {
-            body << " .. " << dts->key.dt.hms;
+                body << " .. " << dts->key.dt.hms;
+                break;
+            }
+
+            body << "</p>\n";
+            break;
         }
-        body << "</p>\n";
 
         const ImgIdx::Stats  stats = idx.stats();
         {
