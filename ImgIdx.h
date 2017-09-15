@@ -52,6 +52,23 @@ class ImgIdx
     iterator        end()          { return _idx.end();   }
     const_iterator  end() const    { return _idx.end();   }
 
+
+    typedef Idx::reverse_iterator        reverse_iterator;
+    typedef Idx::const_reverse_iterator  const_reverse_iterator;
+
+    reverse_iterator        rbegin()         { return _idx.rbegin(); }
+    const_reverse_iterator  crbegin() const  { return _idx.crbegin(); }
+
+    reverse_iterator        rend()           { return _idx.rend();   }
+    const_reverse_iterator  crend() const    { return _idx.crend();   }
+
+    auto&        front()        { return _idx.front(); }
+    const auto&  front() const  { return _idx.front(); }
+
+    auto&        back()        { return _idx.back(); }
+    const auto&  back() const  { return _idx.back(); }
+
+
     bool  empty() const
     { return _idx.empty(); }
     
