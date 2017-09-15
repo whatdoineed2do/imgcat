@@ -96,8 +96,36 @@ std::string  ImgHtmlClassic::generate(ImgHtml::Payloads& payloads_)
             // insert the caption for the cell
             html << "<td width=" << t->thumbsize 
                  << " title=\"";
-            if (!img.rating.empty()) {
-                html << "[" << img.rating << "] ";
+            if (!img.rating.empty())
+            {
+                const string&  s = img.rating;
+
+                long  l = -1;
+
+                if ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+')) {
+                }
+                else
+                {
+                   char*  p;
+                   l = strtol(s.c_str(), &p, 10);
+                   if (*p == NULL) {
+                       if (l > 5) {
+                           // shouldnt happen
+                           l = -1;
+                       }
+                   }
+                }
+
+                if (l < 0) {
+                    html << s;
+                }
+                else {
+                    while (l-- > 0) {
+                        html << '*';
+                    }
+                }
+                html << '\n';
+
             }
             html << img.title << " (" << t->idx().key.dt.hms << ")\nExif: " << img << "\">"
                  << "<a href=\"" << img.filename << "\"><img src=\"" << t->prevpath() << "\"></a>";
@@ -360,11 +388,47 @@ li.dropdown {\
 
             // insert the caption for the cell
             body << "  <div class=flex-item  title=\"";
-            if (!img.rating.empty()) {
-                body << "[" << img.rating << "] ";
+            if (!img.rating.empty())
+            {
+                const string&  s = img.rating;
+
+                long  l = -1;
+
+                if ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+')) {
+                }
+                else
+                {
+                   char*  p;
+                   l = strtol(s.c_str(), &p, 10);
+                   if (*p == NULL) {
+                       if (l > 5) {
+                           // shouldnt happen
+                           l = -1;
+                       }
+                   }
+                }
+
+                if (l < 0) {
+                    body << '[' << s << ']';
+                }
+                else
+                {
+                    body << '[';
+                    long  l1 = 5-l;
+                    while (l1-- > 0) {
+                        body << '-';
+                    }
+                    while (l-- > 0) {
+                        body << '*';
+                    }
+                    body << ']';
+                }
+                body << '\n';
             }
-            body << img.title << "  (" << t->idx().key.dt.hms << ")\n"
-                 << "Exif: " << img << "\">\n"
+
+
+            body << img.title << "  " << t->idx().key.dt.hms << "\n"
+                 << img << "\">\n"
                  << "  <a href=\"" << img.filename << "\"><img src=\"" << t->prevpath() << "\"></a>";
 
             if (t->idx().imgs.size() > 1)
