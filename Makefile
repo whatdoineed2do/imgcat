@@ -17,7 +17,7 @@
 
 SAMPLEICC_HOME=SampleICC
 
-DEBUGFLAGS+=-ggdb  -DDBX_DEBUGGING_INFO -DXCOFF_DEBUGGING_INFO #-DDEBUG_LOG
+#DEBUGFLAGS+=-ggdb  -DDBX_DEBUGGING_INFO -DXCOFF_DEBUGGING_INFO #-DDEBUG_LOG
 
 CXXFLAGS=$(DEBUGFLAGS) $(shell pkg-config Magick++ --cflags) $(pkg-config exiv2 --cflags) -I. -DHAVE_SAMPLE_ICC $(shell PKG_CONFIG_PATH=$(SAMPLEICC_HOME)/lib/pkgconfig pkg-config sampleicc --cflags) -DNEED_UCHAR_UINT_T -g -Wno-deprecated
 
@@ -30,15 +30,17 @@ all:	objs $(TARGETS)
 objs:	ICCprofiles.o ImgKey.o ImgIdx.o ImgExifParser.o ImgThumbGen.o ImgHtml.o imgcat.o
 
 
-ICCprofiles.o:	ICCprofiles.c ICCprofiles.h
+# g++ -MM *c
+#
+ICCprofiles.o:		ICCprofiles.c ICCprofiles.h
+imgcat.o:		imgcat.cc Img.h ImgKey.h ImgData.h ImgIdx.h ImgExifParser.h ImgHtml.h ImgThumbGen.h
+ImgExifParser.o:	ImgExifParser.cc ImgExifParser.h Img.h ImgKey.h ImgData.h
+ImgHtml.o:		ImgHtml.cc ImgHtml.h ImgIdx.h ImgKey.h ImgData.h ImgThumbGen.h
+ImgIdx.o:		ImgIdx.cc ImgIdx.h ImgKey.h ImgData.h
+ImgKey.o:		ImgKey.cc ImgKey.h
+imgprextr.o:		imgprextr.cc ICCprofiles.h
+ImgThumbGen.o:		ImgThumbGen.cc ImgThumbGen.h ImgIdx.h ImgKey.h ImgData.h ICCprofiles.h
 
-imgcat.o:	imgcat.cc ICCprofiles.h ImgData.h ImgExifParser.h Img.h ImgIdx.h ImgKey.h ImgThumbGen.h
-ImgExifParser.o:	ImgData.h ImgExifParser.cc ImgExifParser.h Img.h ImgKey.h
-ImgIdx.o:	ImgData.h ImgIdx.cc ImgIdx.h ImgKey.h
-ImgKey.o:	ImgKey.cc ImgKey.h
-imgprextr.o:	imgprextr.cc
-ImgHtml.o:	ImgHtml.cc ImgHtml.h ImgIdx.h
-ImgThumbGen.o:	ImgThumbGen.cc ImgThumbGen.h ImgIdx.h
 
 imgcat.debug:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o
 	$(CXX)  -g -DDEBUG_LOG $(DEBUGFLAGS) $(CXXFLAGS) $^ imgcat.cc $(LDFLAGS) -o $@
