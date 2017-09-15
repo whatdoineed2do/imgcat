@@ -390,6 +390,8 @@ li.dropdown {\
     html << nav.str()
 	 <<     "</div>"
 	 <<   "</li>"
+         <<   "<li><a href=\"#\" id=\"prev\">Prev</a></li>"
+         <<   "<li><a href=\"#\" id=\"next\">Next</a></li>"
 	 << "</ul>"
 	 << "</div>"
 	 << "<div id=\"top\" style=\"padding: 20px 8px;\">"
@@ -401,7 +403,8 @@ li.dropdown {\
 
 const char*  ImgHtmlFlexboxSlide::_jsblock()
 {
-    static const char*  js = "<script>\n$(function() {\n// Select all links with hashes\n$('a[href*=\"\\\\#\"]')\n  // Remove links that don't actually link to anything\n  .not('[href=\"\\\\#\"]')\n  .not('[href=\"\\\\#0\"]')\n  .click(function(event) {\n    // On-page links\n    if (\n      location.pathname.replace(/^\\//, '') == this.pathname.replace(/^\\//, '')\n      &&\n      location.hostname == this.hostname\n    ) {\n      // Figure out element to scroll to\n      var target = $(this.hash);\n      target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');\n      // Does a scroll target exist?\n      if (target.length) {\n        // Only prevent default if animation is actually gonna happen\n        event.preventDefault();\n        $('html, body').animate({\n          scrollTop: target.offset().top\n        }, 1000, function() {\n          // Callback after animation\n          // Must change focus!\n          var $target = $(target);\n          $target.focus();\n          if ($target.is(\":focus\")) { // Checking if the target was focused\n            return false;\n          } else {\n            $target.attr('tabindex','-1'); // Adding tabindex for elements not focusable\n            $target.focus(); // Set focus again\n          };\n        });\n      }\n    }\n  });\n});\n</script>";
+    static const char*  js = "<script>\n$(function() {\n// Select all links with hashes\n$('a[href*=\"\\\\#\"]')\n  // Remove links that don't actually link to anything\n  .not('[href=\"\\\\#\"]')\n  .not('[href=\"\\\\#0\"]')\n  .click(function(event) {\n    // On-page links\n    if (\n      location.pathname.replace(/^\\//, '') == this.pathname.replace(/^\\//, '')\n      &&\n      location.hostname == this.hostname\n    ) {\n      // Figure out element to scroll to\n      var target = $(this.hash);\n      target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');\n      // Does a scroll target exist?\n      if (target.length) {\n        // Only prevent default if animation is actually gonna happen\n        event.preventDefault();\n        $('html, body').animate({\n          scrollTop: target.offset().top\n        }, 1000, function() {\n          // Callback after animation\n          // Must change focus!\n          var $target = $(target);\n          $target.focus();\n          if ($target.is(\":focus\")) { // Checking if the target was focused\n            return false;\n          } else {\n            $target.attr('tabindex','-1'); // Adding tabindex for elements not focusable\n            $target.focus(); // Set focus again\n          };\n        });\n      }\n    }\n  });\n});\n</script>\
+<script>\n$(document).ready(function() {\n  var i = 0;\n  var len = $('div[id^=\"photo_block\"]').length;\n\n  $('#next').click(function() {\n      i = ++i % len;\n      var target = \"#photo_block\" + i;\n      $('html,body').animate({scrollTop: $(target).offset().top}, 1000)\n      return false;\n  });\n\n  $('#prev').click(function() {\n      if (!i) i = len;\n      --i;\n      var target = \"#photo_block\" + i;\n      $('html,body').animate({scrollTop: $(target).offset().top}, 1000)\n      return false;\n  });\n});\n</script>\n";
     return js;
 }
 
