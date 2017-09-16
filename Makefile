@@ -58,6 +58,8 @@ imgprextr:	imgprextr.cc ICCprofiles.o
 imagickICCconvert:	imagickICCconvert.cc
 	$(CXX)  $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
+avinfo:	avinfo.cc
+	$(CXX)  $(DEBUGFLAGS) -fpermissive $(shell pkg-config --cflags libavformat) $^ $(shell pkg-config --libs libavformat) $(shell pkg-config --libs libavutil) -o $@
 
 clean:
 	rm -fr *.o core.* $(TARGETS) 
