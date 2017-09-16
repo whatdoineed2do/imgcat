@@ -120,7 +120,32 @@ class ImgData
 inline
 std::ostream&  operator<<(std::ostream& os_, const ImgData& obj_)
 {
-    return os_ << obj_.camera << " " << obj_.sn << " (#" << obj_.shuttercnt << ") " << obj_.lens << " (" << obj_.focallen << ")  " << obj_.prog << " ISO" << obj_.iso << " " << obj_.shutter << " " << obj_.aperture << " " << obj_.wb << " WB " << obj_.dpi << "dpi";
+    struct Pf {
+	const string& s;
+	const char* pre;
+	const char* suf;
+    }
+    pf[] = {
+	{ obj_.camera,     NULL, NULL },
+	{ obj_.sn,         NULL, NULL },
+	{ obj_.shuttercnt, "(#", ")" },
+	{ obj_.lens,       NULL, NULL },
+	{ obj_.focallen,   NULL, NULL },
+	{ obj_.prog,       NULL, NULL },
+	{ obj_.iso,        NULL, "ISO" },
+	{ obj_.shutter,    NULL, NULL },
+	{ obj_.aperture,   NULL, NULL },
+	{ obj_.wb,         NULL, " WB" }
+	//{ obj_.dpi, NULL, "dpi" }
+    };
+
+    for (short i=0; i<sizeof(pf)/sizeof(struct Pf); ++i) {
+	if (pf[i].s.empty()) {
+	    continue;
+	}
+	os_ << (pf[i].pre ? pf[i].pre : "") << pf[i].s << (pf[i].suf ? pf[i].suf : "") << "  ";
+    }
+    return os_;
 }
 
 #endif
