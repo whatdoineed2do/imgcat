@@ -60,7 +60,19 @@ int main(int argc, char* argv[])
 
 	codec_ctx = fmt_ctx->streams[vidstream]->codec;
 	std::cout << "  width=" << codec_ctx->width << std::endl
-	          << " height=" << codec_ctx->height << std::endl;
+	          << " height=" << codec_ctx->height << std::endl
+		  << " avfps=" << av_q2d(codec_ctx->framerate) << std::endl;
+
+	const char*  toi[] = {
+	    "major_brand", "model", "date", "creation_time",
+	    NULL
+	};
+	const char**  pt = toi;
+	while (*pt) {
+	    tag = av_dict_get(fmt_ctx->metadata, *pt, tag, AV_DICT_IGNORE_SUFFIX);
+	    std::cout << "  " << *pt << "=" << (tag ? tag->value : "<n/a>") << std::endl;
+	    ++pt;
+	}
 
 	avformat_close_input(&fmt_ctx);
     }
