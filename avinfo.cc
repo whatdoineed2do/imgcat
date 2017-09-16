@@ -38,7 +38,9 @@ int main(int argc, char* argv[])
     {
 	const char*  filename = *pp++;
 	if ((ret = avformat_open_input(&fmt_ctx, filename, NULL, NULL))) {
-	    std::cerr << "failed avformat_open_input - " << filename << std::endl;
+	    char averr[256];
+	    av_strerror(ret, averr, sizeof(averr));
+	    std::cerr << "failed avformat_open_input - " << filename << averr << std::endl;
 	    continue;
 	}
 
