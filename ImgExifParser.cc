@@ -159,6 +159,11 @@ const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, c
 
 
 	image->readMetadata();
+	{
+	    ostringstream  os;
+	    os << image->pixelWidth() << 'x' << image->pixelHeight();
+	    data.xy = std::move(os.str());
+	}
 	const Exiv2::ExifData&  ed = image->exifData();
 	if (ed.empty())
 	{

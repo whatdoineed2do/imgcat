@@ -428,6 +428,7 @@ li.dropdown {\
 
 
             body << img.title << "  " << t->idx().key.dt.hms << "\n"
+		 << img.xy << "\n"
                  << img << "\">\n"
                  << "  <a href=\"" << img.filename << "\"><img src=\"" << t->prevpath() << "\"></a>";
 
