@@ -456,8 +456,8 @@ li.dropdown {\
     html << nav.str()
 	 <<     "</div>"
 	 <<   "</li>"
-         <<   "<li><a href=\"#\" id=\"prev\">&#8613 Prev</a></li>"
-         <<   "<li><a href=\"#\" id=\"next\">Next &#8615</a></li>"
+         <<   "<li><a href=\"#\" id=\"prev\">&#8593 Prev</a></li>"
+         <<   "<li><a href=\"#\" id=\"next\">Next &#8595</a></li>"
 	 << "</ul>"
 	 << "</div>"
 	 << "<div id=\"top\" style=\"padding: 20px 8px;\">"
