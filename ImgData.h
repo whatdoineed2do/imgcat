@@ -24,21 +24,7 @@ class ImgData
     { _title(); }
 
 
-    #if 0
-    ImgData(const char* filename_, const ImgData::Type type_, const string& mimetype_, const size_t size_, const char* thumb_,
-	    const string&  xy_,
-	    const string& dpi_, const double rotate_, const string& moddate_,
-	    const string&  camera_, const string& sn_, const string&  lens_, const string&  focallen_, const string&  shuttercnt_,
-	    const string&  prog_, const string&  shutter_, const string&  aperture_, const string&  iso_, const string&  wb_, 
-	    const string&  rating_)  throw ()
-	: filename(filename_), type(type_), mimetype(mimetype_), size(size_), thumb(thumb_ ? thumb_ : ""),
-	  xy(xy_), dpi(dpi_), rotate(rotate_), moddate(moddate_),
-	  camera(camera_), sn(sn_), lens(lens_), focallen(focallen_), shuttercnt(shuttercnt_),
-	  prog(prog_), shutter(shutter_), aperture(aperture_), iso(iso_), wb(wb_), 
-	  rating(rating_)
-    { _title(); }
-    #endif
-
+    
     ImgData(const ImgData&  rhs_)
 	: filename(rhs_.filename), title(rhs_.title), type(rhs_.type), mimetype(rhs_.mimetype), size(rhs_.size), thumb(rhs_.thumb), 
 	  xy(rhs_.xy), moddate(rhs_.moddate), rating(rhs_.rating),
@@ -95,15 +81,20 @@ class ImgData
     ImgData::MetaImg  metaimg;
 
     struct MetaVid {
-	MetaVid() = default;
+	MetaVid() : duration(0), framerate(0) { }
+
 	MetaVid(const MetaVid& rhs_) :
             container(rhs_.container),
-	    model(rhs_.model)
+	    model(rhs_.model),
+	    duration(rhs_.duration),
+	    framerate(rhs_.framerate)
 	{}
 	MetaVid& operator-(const MetaVid&) = delete;
 
-        string container;
-	string model;
+        string  container;
+	string  model;
+	time_t  duration;
+	float   framerate;
     };
     ImgData::MetaVid  metavid;
 
