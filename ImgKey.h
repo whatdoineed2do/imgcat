@@ -41,7 +41,14 @@ class ImgKey
 
 	Dt(const time_t& t_)  throw (std::invalid_argument)
 	    : _hms(t_)
-	{ }
+	{
+	    struct tm  tm;
+	    localtime_r(&_hms, &tm);
+	    char  tmp[21];
+	    memset(tmp, 0, sizeof(tmp));
+	    strftime(tmp, 19, "%Y:%m:%d %T", &tm);
+	    hms = tmp;
+	}
 
 	Dt(const Dt& rhs_) : hms(rhs_.hms), ms(rhs_.ms), _hms(rhs_._hms)  { }
 
