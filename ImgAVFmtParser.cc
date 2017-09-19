@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sstream>
+#include <iostream>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -86,7 +87,7 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
 	std::string&  s;
     }
     toi[] = {
-	{ "major_brand",   imgdata.metavid.container },
+	//{ "major_brand",   imgdata.metavid.container },
 	{ "model",         imgdata.metavid.model },
 	{ "date",          imgdata.moddate },
 	{ "creation_time", imgdata.moddate },
@@ -108,5 +109,18 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
 
     avformat_close_input(&avfmt);
 #endif
-    return Img(ImgKey(st_.st_ino, st_.st_mtime), imgdata);
+    time_t  t = st_.st_mtime;
+    if (!imgdata.moddate.empty()) {
+	// should be ISO8601 - "2013-06-19T14:46:34.000000Z" or 2013-07-18T09:11:58+0100
+	char tmp[20];
+	strncpy(tmp, imgdata.moddate.c_str(), 19);
+	tmp[19] = NULL;
+        struct tm  tm;
+	memset(&tm, 0, sizeof(tm));
+	if ( strptime(tmp, "%Y-%m-%dT%T", &tm)) {
+	    t = mktime(&tm);
+	}
+    }
+
+    return Img(ImgKey(st_.st_ino, t), imgdata);
 }
