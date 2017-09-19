@@ -58,18 +58,18 @@ const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, c
 	EasyAccessFct find;
 	string*       target;
     } eatags[] = {
-	{ "  ISO speed",            Exiv2::isoSpeed,     &data.iso      },
-	{ "  Exposure mode",        Exiv2::exposureMode, &data.prog     },
+	{ "  ISO speed",            Exiv2::isoSpeed,     &data.metaimg.iso      },
+	{ "  Exposure mode",        Exiv2::exposureMode, &data.metaimg.prog     },
 	//{ "  Image quality",        Exiv2::imageQuality, NULL         },
-	{ "  White balance",        Exiv2::whiteBalance, &data.wb       },
-	{ "  Lens name",            Exiv2::lensName,     &data.lens     },
+	{ "  White balance",        Exiv2::whiteBalance, &data.metaimg.wb       },
+	{ "  Lens name",            Exiv2::lensName,     &data.metaimg.lens     },
 	//{ "  Metering mode",        Exiv2::meteringMode, NULL         },
 	{ "  Camera make",          Exiv2::make,         &mftr          },
-	{ "  Camera model",         Exiv2::model,        &data.camera   },   // KEY2
-	{ "  Exposure time",        Exiv2::exposureTime, &data.shutter  },
-	{ "  FNumber",              Exiv2::fNumber,      &data.aperture },
-	{ "  Camera serial number", Exiv2::serialNumber, &data.sn       },   // KEY1
-	{ "  Focal length",         Exiv2::focalLength,  &data.focallen },
+	{ "  Camera model",         Exiv2::model,        &data.metaimg.camera   },   // KEY2
+	{ "  Exposure time",        Exiv2::exposureTime, &data.metaimg.shutter  },
+	{ "  FNumber",              Exiv2::fNumber,      &data.metaimg.aperture },
+	{ "  Camera serial number", Exiv2::serialNumber, &data.metaimg.sn       },   // KEY1
+	{ "  Focal length",         Exiv2::focalLength,  &data.metaimg.focallen },
 	{ NULL, NULL, NULL }
     };
 
@@ -89,9 +89,9 @@ const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, c
 	{ "  Date Orig",         "Exif.Photo.DateTimeOriginal",   &dtorg, NULL, NULL },   // KEY3
 	{ "  SubSec Orig",       "Exif.Photo.SubSecTimeOriginal", &dtorgsub, NULL, NULL }, // KEY4
 
-	{ "  Shutter Count",     "Exif.Nikon3.ShutterCount", &data.shuttercnt, NULL, NULL },
+	{ "  Shutter Count",     "Exif.Nikon3.ShutterCount", &data.metaimg.shuttercnt, NULL, NULL },
 
-	{ "  resolution",        "Exif.Image.XResolution", &data.dpi, NULL, NULL },
+	{ "  resolution",        "Exif.Image.XResolution", &data.metaimg.dpi, NULL, NULL },
 	{ "  orientation",       "Exif.Image.Orientation", NULL, NULL, &orientation },
 
 	{ NULL, NULL, NULL, NULL, NULL }
@@ -228,7 +228,7 @@ const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, c
 	    case 1:
 	    default: orientation = 0;
 	}
-	data.rotate = orientation;
+	data.metaimg.rotate = orientation;
 
 	const Exiv2::XmpData&  xmp = image->xmpData();
 	Exiv2::XmpData::const_iterator  xp;
@@ -249,17 +249,17 @@ const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, c
 	    }
 
 	    ostringstream  id;
-	    if (data.sn.empty() && data.shuttercnt.empty()) {
+	    if (data.metaimg.sn.empty() && data.metaimg.shuttercnt.empty()) {
 		id << st_.st_dev << "-" << st_.st_ino;
 	    }
 	    else {
 		// this should incl the model too
-		id << data.sn << '-' << data.shuttercnt;
+		id << data.metaimg.sn << '-' << data.metaimg.shuttercnt;
 	    }
 	    data.thumb.append(id.str());
 	}
 
-	return Img(ImgKey(mftr.c_str(), data.camera.c_str(), data.sn.c_str(), dtorg.c_str(), dtorgsub.c_str()), data);
+	return Img(ImgKey(mftr.c_str(), data.metaimg.camera.c_str(), data.metaimg.sn.c_str(), dtorg.c_str(), dtorgsub.c_str()), data);
     }
     catch (const Exiv2::AnyError& e)
     {

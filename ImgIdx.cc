@@ -73,9 +73,9 @@ ImgIdx::Stats  ImgIdx::stats()
     for (const_iterator i=begin(); i!=end(); ++i)
     {
         for (const auto&  k : i->imgs) {
-            stats.camera[k.camera]++;
-            stats.lens[k.lens]++;
-            stats.focallen[k.focallen]++;
+            stats.camera[k.metaimg.camera]++;
+            stats.lens[k.metaimg.lens]++;
+            stats.focallen[k.metaimg.focallen]++;
         }
     }
     return stats;

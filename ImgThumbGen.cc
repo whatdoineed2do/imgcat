@@ -43,7 +43,7 @@ void  ImgThumbGen::generate()
                     // get the largest, convert to sRGB if possible and scale
                     const Exiv2::PreviewImage  preview = prevldr.getPreviewImage(prevs.back());
 
-                    _genthumbnail(prevpath, img.filename, preview, orig->exifData(), thumbsize, img.rotate);
+                    _genthumbnail(prevpath, img.filename, preview, orig->exifData(), thumbsize, img.metaimg.rotate);
                 }
             }
             catch (const Exiv2::AnyError& e)
@@ -164,7 +164,7 @@ void  ImgThumbGen::_readgenthumbnail(const ImgData& img_, const std::string& pre
 	    cerr << "failed to read source file to generate thumbnail: " << img_.filename << " (read " << n << "/" << img_.size << ") - " << strerror(errno) << endl;
 	}
 	else {
-	    _genthumbnail(prevpath_, img_.filename, buf, img_.size, sz_, img_.rotate);
+	    _genthumbnail(prevpath_, img_.filename, buf, img_.size, sz_, img_.metaimg.rotate);
 	}
 	delete []  buf;
 	close(fd);

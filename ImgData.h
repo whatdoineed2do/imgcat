@@ -10,7 +10,7 @@
 
 #include <sys/types.h>
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 using std::string;
 
@@ -24,8 +24,10 @@ class ImgData
     { _title(); }
 
 
+    #if 0
     ImgData(const char* filename_, const ImgData::Type type_, const string& mimetype_, const size_t size_, const char* thumb_,
-	    const string&  xy_, const string& dpi_, const double rotate_, const string& moddate_,
+	    const string&  xy_,
+	    const string& dpi_, const double rotate_, const string& moddate_,
 	    const string&  camera_, const string& sn_, const string&  lens_, const string&  focallen_, const string&  shuttercnt_,
 	    const string&  prog_, const string&  shutter_, const string&  aperture_, const string&  iso_, const string&  wb_, 
 	    const string&  rating_)  throw ()
@@ -35,13 +37,12 @@ class ImgData
 	  prog(prog_), shutter(shutter_), aperture(aperture_), iso(iso_), wb(wb_), 
 	  rating(rating_)
     { _title(); }
+    #endif
 
     ImgData(const ImgData&  rhs_)
-	: filename(rhs_.filename), title(rhs_.title), type(rhs_.type), mimetype(rhs_.mimetype), size(rhs_.size), thumb(rhs_.thumb),
-	  xy(rhs_.xy), dpi(rhs_.dpi), rotate(rhs_.rotate), moddate(rhs_.moddate),
-	  camera(rhs_.camera), sn(rhs_.sn), lens(rhs_.lens), focallen(rhs_.focallen), shuttercnt(rhs_.shuttercnt),
-	  prog(rhs_.prog), shutter(rhs_.shutter), aperture(rhs_.aperture), iso(rhs_.iso), wb(rhs_.wb), 
-	  rating(rhs_.rating)
+	: filename(rhs_.filename), title(rhs_.title), type(rhs_.type), mimetype(rhs_.mimetype), size(rhs_.size), thumb(rhs_.thumb), 
+	  xy(rhs_.xy), moddate(rhs_.moddate), rating(rhs_.rating),
+	  metaimg(rhs_.metaimg), metavid(rhs_.metavid)
     { }
 
     string  filename;
@@ -54,31 +55,64 @@ class ImgData
 
     string  xy;        // dimensions
 
-    string  dpi;
-    double  rotate;
-
     string  moddate;  // may be empty or reset to empty
-
-    string  camera;
-    string  sn;
-    string  lens;
-    string  focallen;
-    string  shuttercnt;
-
-    string  prog;      // PASM
-    string  shutter;
-    string  aperture;
-    string  iso;
-    string  wb;
-
     string  rating;
+
+    struct MetaImg {
+        MetaImg() = default;
+	MetaImg(const MetaImg& rhs_) :
+	    dpi(rhs_.dpi),
+	    rotate(rhs_.rotate),
+	    camera(rhs_.camera),
+	    sn(rhs_.sn),
+	    lens(rhs_.lens),
+	    focallen(rhs_.focallen),
+	    shuttercnt(rhs_.shuttercnt),
+	    prog(rhs_.prog),
+	    shutter(rhs_.shutter),
+	    aperture(rhs_.aperture),
+	    iso(rhs_.iso),
+	    wb(rhs_.wb)
+	{ }
+	MetaImg& operator=(const MetaImg&) = delete;
+
+	string  dpi;
+	double  rotate;
+
+
+	string  camera;
+	string  sn;
+	string  lens;
+	string  focallen;
+	string  shuttercnt;
+
+	string  prog;      // PASM
+	string  shutter;
+	string  aperture;
+	string  iso;
+	string  wb;
+    };
+    ImgData::MetaImg  metaimg;
+
+    struct MetaVid {
+	MetaVid() = default;
+	MetaVid(const MetaVid& rhs_) :
+            container(rhs_.container),
+	    model(rhs_.model)
+	{}
+	MetaVid& operator-(const MetaVid&) = delete;
+
+        string container;
+	string model;
+    };
+    ImgData::MetaVid  metavid;
 
     bool  operator==(const ImgData& rhs_) const
     {
 	return 
-	       camera   == rhs_.camera &&
-	       sn       == rhs_.sn &&
-	       lens     == rhs_.lens;
+	       metaimg.camera   == rhs_.metaimg.camera &&
+	       metaimg.sn       == rhs_.metaimg.sn &&
+	       metaimg.lens     == rhs_.metaimg.lens;
     }
 
     bool  operator!=(const ImgData& rhs_) const
@@ -97,7 +131,6 @@ class ImgData
 	{
 	    if (!rhs_.moddate.empty()) {
 		b = moddate < rhs_.moddate;
-		//cout << filename << " vs " << rhs_.filename << "  " << moddate << " < " << rhs_.moddate << " = " << b << endl;
 	    }
 	}
 
@@ -117,35 +150,6 @@ class ImgData
 };
 
 
-inline
-std::ostream&  operator<<(std::ostream& os_, const ImgData& obj_)
-{
-    struct Pf {
-	const string& s;
-	const char* pre;
-	const char* suf;
-    }
-    pf[] = {
-	{ obj_.camera,     NULL, NULL },
-	{ obj_.sn,         NULL, NULL },
-	{ obj_.shuttercnt, "(#", ")" },
-	{ obj_.lens,       NULL, NULL },
-	{ obj_.focallen,   NULL, NULL },
-	{ obj_.prog,       NULL, NULL },
-	{ obj_.iso,        NULL, "ISO" },
-	{ obj_.shutter,    NULL, NULL },
-	{ obj_.aperture,   NULL, NULL },
-	{ obj_.wb,         NULL, " WB" }
-	//{ obj_.dpi, NULL, "dpi" }
-    };
-
-    for (short i=0; i<sizeof(pf)/sizeof(struct Pf); ++i) {
-	if (pf[i].s.empty()) {
-	    continue;
-	}
-	os_ << (pf[i].pre ? pf[i].pre : "") << pf[i].s << (pf[i].suf ? pf[i].suf : "") << "  ";
-    }
-    return os_;
-}
+std::ostream&  operator<<(std::ostream& os_, const ImgData& obj_);
 
 #endif

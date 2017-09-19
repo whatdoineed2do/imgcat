@@ -27,12 +27,13 @@ LDFLAGS=$(DEBUGFLAGS) $(shell pkg-config Magick++ --libs) $(shell pkg-config exi
 TARGETS=imgcat imgprextr
 
 all:	objs $(TARGETS)
-objs:	ICCprofiles.o ImgKey.o ImgIdx.o ImgExifParser.o ImgThumbGen.o ImgHtml.o imgcat.o
+objs:	ICCprofiles.o ImgData.o ImgKey.o ImgIdx.o ImgExifParser.o ImgThumbGen.o ImgHtml.o imgcat.o
 
 
 # g++ -MM *c
 #
 ICCprofiles.o:		ICCprofiles.c ICCprofiles.h
+ImgData.o:		ImgData.cc ImgData.h
 imgcat.o:		imgcat.cc Img.h ImgKey.h ImgData.h ImgIdx.h ImgExifParser.h ImgHtml.h ImgThumbGen.h
 ImgExifParser.o:	ImgExifParser.cc ImgExifParser.h Img.h ImgKey.h ImgData.h
 ImgHtml.o:		ImgHtml.cc ImgHtml.h ImgIdx.h ImgKey.h ImgData.h ImgThumbGen.h
@@ -42,10 +43,10 @@ imgprextr.o:		imgprextr.cc ICCprofiles.h
 ImgThumbGen.o:		ImgThumbGen.cc ImgThumbGen.h ImgIdx.h ImgKey.h ImgData.h ICCprofiles.h
 
 
-imgcat.debug:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o
+imgcat.debug:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o ImgData.o
 	$(CXX)  -g -DDEBUG_LOG $(DEBUGFLAGS) $(CXXFLAGS) $^ imgcat.cc $(LDFLAGS) -o $@
 
-imgcat:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o imgcat.o ImgHtml.o ImgThumbGen.o
+imgcat:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o imgcat.o ImgHtml.o ImgThumbGen.o ImgData.o
 	$(CXX)  $^ $(LDFLAGS) -o $@ -lffmpegthumbnailer -lpthread
 
 imgcat-lp:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o imgcat.o
