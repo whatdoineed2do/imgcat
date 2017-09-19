@@ -46,7 +46,7 @@ class ImgKey
 	    localtime_r(&_hms, &tm);
 	    char  tmp[21];
 	    memset(tmp, 0, sizeof(tmp));
-	    strftime(tmp, 19, "%Y:%m:%d %T", &tm);
+	    strftime(tmp, 20, "%Y:%m:%d %T", &tm);
 	    hms = tmp;
 	}
 
