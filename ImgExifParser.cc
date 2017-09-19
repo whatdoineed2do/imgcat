@@ -18,33 +18,9 @@
 #include <exiv2/exiv2.hpp>
 
 
-const Img  ImgExifParser::parse(const char* filename_, const struct stat& st_, const char* thumbpath_)
+const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, const char* thumbpath_) const
     throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error)
 {
-#if 0
-    if (thumbpath_)
-    {
-	ostringstream  err;
-
-	struct stat  st;
-	if (stat(thumbpath_, &st) < 0) {
-	    err << "unable to validate thumbpath '" << thumbpath_ << "' - " << strerror(errno);
-	    throw invalid_argument(err.str());
-	}
-
-	if ( ! (st.st_mode & (S_IFDIR | S_IWUSR)) ) {
-	    err << "invalid thumbpath '" << thumbpath_ << "'";
-	    throw invalid_argument(err.str());
-	}
-    }
-#endif
-
-    if (access(filename_, R_OK) < 0) {
-	std::ostringstream  err;
-	err << strerror(errno);
-	throw std::invalid_argument(err.str());
-    }
-
     typedef Exiv2::ExifData::const_iterator (*EasyAccessFct)(const Exiv2::ExifData& ed);
 
     ImgData  data(filename_, st_.st_size);

@@ -4,15 +4,16 @@
 #ifndef IMG_EXIF_PARSER_H
 #define IMG_EXIF_PARSER_H
 
-struct stat;
+#include "ImgMetaParser.h"
 
-#include <stdexcept>
-#include "Img.h"
-
-namespace ImgExifParser
+class ImgExifParser : public ImgMetaParser
 {
-    const Img  parse(const char* filename_, const struct stat&, const char* thumbpath_)  
-	 throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error);
+  public:
+    ImgExifParser() = default;
+
+  private:
+    const Img  _parse(const char* filename_, const struct stat&, const char* thumbpath_)  const
+	 throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error)  override final; 
 };
 
 #endif

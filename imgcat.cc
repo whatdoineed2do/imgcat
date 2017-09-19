@@ -31,6 +31,7 @@ using namespace  std;
 #include "Img.h"
 #include "ImgIdx.h"
 #include "ImgExifParser.h"
+#include "ImgAVFmtParser.h"
 #include "ImgHtml.h"
 #include "ImgThumbGen.h"
 
@@ -102,7 +103,8 @@ bool  _filterextn(const char** extn_, const char* path_)
 }
 
 
-void  _readdir(Istats& files_, Istats& vfiles_, const char* where_, const char** extn_, const char** vextn_)  throw (invalid_argument)
+void  _readdir(Istats& files_, Istats& vfiles_,
+	       const char* where_, const char** extn_, const char** vextn_)  throw (invalid_argument)
 {
     DIR*  d;
     if ( (d = opendir(where_)) == NULL) {
@@ -162,7 +164,7 @@ void  _readdir(Istats& files_, Istats& vfiles_, const char* where_, const char**
     closedir(d);
 }
 
-void  _readdir(ImgIdx& idx_, const char* thumbpath_, const char* where_, const char**  extn_)  throw (invalid_argument)
+void  _readdir(const ImgMetaParser& metaparser_, ImgIdx& idx_, const char* thumbpath_, const char* where_, const char**  extn_)  throw (invalid_argument)
 {
     DIR*  d;
     if ( (d = opendir(where_)) == NULL) {
@@ -195,13 +197,13 @@ void  _readdir(ImgIdx& idx_, const char* thumbpath_, const char* where_, const c
 	try
 	{
 	    if (st.st_mode & S_IFDIR) {
-		_readdir(idx_, thumbpath_, path, extn_);
+		_readdir(metaparser_, idx_, thumbpath_, path, extn_);
 	    }
 	    else
 	    {
 		DLOG(path);
 		if (st.st_mode & S_IFREG && _filterextn(extn_, path)) {
-		    const Img  img = ImgExifParser::parse(path, st, thumbpath_);
+		    const Img  img = metaparser_.parse(path, st, thumbpath_);
 		    idx_[img.key].push_back(img.data);
 		}
 	    }
@@ -440,6 +442,10 @@ int main(int argc, char **argv)
 	_Ignored& operator=(_Ignored&) = delete;
 	_Ignored& operator=(_Ignored&&) = delete;
     };
+
+    ImgExifParser   exifparser;
+    ImgAVFmtParser  avfmtparser;
+
     list<_Ignored>  ignored;
     uint_t  ttlfiles = 0;
     while (optind < argc)
@@ -469,7 +475,7 @@ int main(int argc, char **argv)
 	    {
 		try
 		{
-		    const Img  img = ImgExifParser::parse(i->filename.c_str(), i->st, thumbpath);
+		    const Img  img = exifparser.parse(i->filename.c_str(), i->st, thumbpath);
 		    (*idxs.back())[img.key].push_back(img.data);
 		}
 		catch (const invalid_argument& ex)
@@ -482,28 +488,16 @@ int main(int argc, char **argv)
 	    {
 		try
 		{
-		    if (access(i->filename.c_str(), R_OK) < 0) {
-			std::ostringstream  err;
-			err << strerror(errno);
-			ignored.emplace_back(i->filename, err.str());
-			continue;
-		    }
-
-		    ImgData  imgdata(i->filename.c_str(), i->st.st_size);
-		    imgdata.type = ImgData::VIDEO;
-		    ostringstream  tmp;
-		    tmp << thumbpath << "/" << i->st.st_dev << "-" << i->st.st_ino;
-		    imgdata.thumb = tmp.str();
-		    Img  img(ImgKey(i->st.st_ino, i->st.st_mtime), imgdata);
-		    (*idxs.back())[img.key].push_back(imgdata);
+		    const Img  img = avfmtparser.parse(i->filename.c_str(), i->st, thumbpath);
+		    (*idxs.back())[img.key].push_back(img.data);
 		}
 		catch (const exception& ex)
 		{
-		    DLOG("failed to parse - " << ex.what());
+		    DLOG("failed to video parse - " << ex.what());
 		    ignored.emplace_back(i->filename, ex.what());
 		}
 	    }
-	    ttlfiles += imgfilenames.size();
+	    ttlfiles += imgfilenames.size() + vidfilenames.size();
 
 	    if (verbosetime) {
 		gettimeofday(&tvC, NULL);

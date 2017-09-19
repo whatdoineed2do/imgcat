@@ -4,6 +4,23 @@
 #include <sys/stat.h>
 #include <sstream>
 
+extern "C" {
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libavutil/dict.h>
+}
+
+
+bool  ImgAVFmtParser::_initd = false;
+
+ImgAVFmtParser::ImgAVFmtParser()
+{
+    if (!ImgAVFmtParser::_initd) {
+	av_register_all();
+	ImgAVFmtParser::_initd = true;
+    }
+}
+
 
 const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_, const char* thumbpath_) const
      throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error)
@@ -15,4 +32,3 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
     imgdata.thumb = tmp.str();
     return Img(ImgKey(st_.st_ino, st_.st_mtime), imgdata);
 }
-
