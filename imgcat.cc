@@ -348,7 +348,9 @@ int main(int argc, char **argv)
 	    case 'h':
 	    usage:
 	    default:
-		cout << "usage: " << argv[0] << " [-I " << DFLT_EXTNS << " -V " << DFLT_VEXTNS << " ]  [-t <thumbpath=.thumbs>]  [-s <thumbsize=150>]  [-w <imgs per row=8>] [-T <max threads=8>] <dir0> <dir1> <...>" << endl;
+		cout << "usage: " << argv[0] << " [-I " << DFLT_EXTNS << " -V " << DFLT_VEXTNS << " ]  [-t <thumbpath=.thumbs>]  [-s <thumbsize=150>]  [-T <max threads=" << tpsz << ">]  [-H <html output, try 'help'] <dir0> <dir1> <...>" << endl
+                     << "\n"
+                     << "use MAGICK_TMPDIR= to are suitably free disk if default /tmp or /var/tmp dirs get full" << endl;
 		return 1;
 	}
     }
