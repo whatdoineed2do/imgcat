@@ -1,5 +1,6 @@
 #include "ImgData.h"
 #include <iostream>
+#include <iomanip>
 
 std::ostream&  operator<<(std::ostream& os_, const ImgData& obj_)
 {
@@ -34,19 +35,18 @@ std::ostream&  operator<<(std::ostream& os_, const ImgData& obj_)
     }
 
     if (obj_.metavid.duration > 0) {
-	os_ << obj_.metavid.duration << "secs  ";
-	const time_t&  t = obj_.metavid.duration;
+	const auto&  d = obj_.metavid.duration;
 
-#if 0
-	struct Dhms {
-	    short  sec;
-	    short  min;
-	    short   hr;
-	    short  day;
-	};
-	Dhms  dhms;
-	memset(&dhms, 0, sizeof(dhms));
-#endif
+	short  secs = d%60;
+	short  mins = d/60;
+	int    hrs = 0;
+	if (d  > 3599) {
+	    hrs = d/3600;
+	    mins = d%hrs;
+	    os_ << std::setfill('0') << std::setw(2) <<  hrs << ':';
+	}
+	os_ << std::setfill('0') << std::setw(2) << mins << ':'
+	    << std::setfill('0') << std::setw(2) << secs << "  ";
     }
     if (obj_.metavid.framerate > 0) {
 	os_ << obj_.metavid.framerate << "fps  ";
