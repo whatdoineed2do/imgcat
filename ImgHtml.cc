@@ -286,7 +286,8 @@ li.dropdown {\
 }\
 \
 .dropdown-content a {\
-  padding: 2px 6px;\
+  padding: 2px 8px;\
+  background-color: #333;\
   text-decoration: none;\
   display: block;\
   text-align: left;\
