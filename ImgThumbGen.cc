@@ -3,13 +3,20 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <Magick++/Exception.h>
 #include <libffmpegthumbnailer/videothumbnailer.h>
 #include <libffmpegthumbnailer/filmstripfilter.h>
 
 #include "ICCprofiles.h"
 
 
-#define DLOG(x) 
+#ifdef DEBUG_LOG
+#include <iostream>
+#define DLOG(x)  std::cout << __FILE__ << ",line " << __LINE__ << " DEBUG:  " << x << std::endl;
+#else
+#define DLOG(x)
+#endif
+
 
 
 void  ImgThumbGen::generate()
@@ -130,15 +137,37 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
     }
 }
 
-void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& origpath_, const void* data_, const size_t datasz_, const unsigned sz_, const float rotate_)
+void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& origpath_,
+                                 const void* data_, const size_t datasz_, const unsigned sz_, const float rotate_)
 {
     try
     {
 	DLOG("thumbnail path=" << path_ << " orig=" << origpath_);
-	Magick::Blob   blob(data_, datasz_);
-	Magick::Image  magick(blob);
+        short  mgkretries = 3;
+        while (mgkretries-- > 0)
+        {
+            try
+            {
+                Magick::Blob   blob(data_, datasz_);
+                Magick::Image  magick(blob);
 
-	_genthumbnail(path_, origpath_, magick, sz_, rotate_);
+                _genthumbnail(path_, origpath_, magick, sz_, rotate_);
+                break;
+            }
+            catch (const Magick::ErrorCache& ex) 
+            {
+                DLOG("IM cache error, orig=" << origpath_ << " - " << ex.what());
+                if (mgkretries == 0) {
+                    throw;
+                }
+                sleep(1);
+            }
+            catch (const Magick::Exception& ex)
+            {
+                DLOG("unexpected IM exception, orig=" << origpath_ << " typeid=" << typeid(ex).name() << " - " << ex.what());
+                throw;
+            }
+        }
     }
     catch (const std::exception& ex)
     {
@@ -223,7 +252,9 @@ class _Buf
     void operator=(const _Buf&);
 };
 
-void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& origpath_, const Exiv2::PreviewImage& preview_, const Exiv2::ExifData& exif_, const unsigned sz_, const float rotate_)
+void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& origpath_,
+                                 const Exiv2::PreviewImage& preview_, const Exiv2::ExifData& exif_, const unsigned sz_,
+                                 const float rotate_)
 {
     const char*  iccproftag = "Exif.Image.InterColorProfile";
 
@@ -309,10 +340,32 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
 
 	static  const Magick::Blob  outicc(theSRGBICCprofiles[0].profile, theSRGBICCprofiles[0].length);
 
-	Magick::Image  img(Magick::Blob( preview_.pData(), preview_.size() ));
-	img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
-	img.profile("ICC", outicc);
+        short  mgkretries = 5;
+        while (mgkretries-- > 0)
+        {
+            try
+            {
+                Magick::Image  img(Magick::Blob( preview_.pData(), preview_.size() ));
+                img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
+                img.profile("ICC", outicc);
 
-	_genthumbnail(path_, origpath_, img, sz_, rotate_);
+                _genthumbnail(path_, origpath_, img, sz_, rotate_);
+                break;
+            }
+            catch (const Magick::ErrorCache& ex)
+            {
+                DLOG("IM cache error, orig=" << origpath_ << " - " << ex.what());
+                if (mgkretries == 0) {
+                    throw;
+                }
+                sleep(1);
+            }
+            catch (const Magick::Exception& ex)
+            {
+                // most likely Magick: ColorspaceColorProfileMismatch 
+                DLOG("unexpected IM exception, orig=" << origpath_ << " typeid=" << typeid(ex).name() << " - " << ex.what());
+                throw;
+            }
+        }
     }
 }
