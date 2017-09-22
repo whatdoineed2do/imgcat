@@ -339,12 +339,13 @@ li.dropdown {\
 
         idx.sort();
 
+        body << "  <p>ttl=<b>" << idx.size() << "</b>";
         for (ImgIdx::const_iterator  dtsf=idx.begin(); dtsf!=idx.end(); ++dtsf)
         {
             if (dtsf->key.dt.hms.empty()) {
                 continue;
             }
-            body << "  <p>" << dtsf->key.dt.hms;
+            body << ",  " << dtsf->key.dt.hms;
 
             for (ImgIdx::const_reverse_iterator  dts=idx.crbegin(); dts!=idx.crend(); ++dts) {
                 if (dts->key.dt.hms.empty()) {
@@ -355,9 +356,9 @@ li.dropdown {\
                 break;
             }
 
-            body << "</p>\n";
             break;
         }
+        body << "</p>\n";
 
         const ImgIdx::Stats  stats = idx.stats();
         {
