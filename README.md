@@ -1,6 +1,6 @@
 # imgcat / imgprextr
 
-## `imgcat`
+## `imgcat` Image Cateloguer
 
 This is a simple multi-threaded command line util that will recursively find image and video files, generating thumbnails for producing an index.html to allow easy browsing.  Generated index will link to found files and can (using EXIF data) group equivalant files (ie a RAW file and a generated jpg) together under one image.
 
@@ -8,6 +8,9 @@ The intended use is for cataloguing large collections of images (particularly RA
 
 For (Nikon NEF/Canon CR2/Fuji RAF) RAW files, the tool will extract the largest embedded thumbnails from the RAW file to generate thumbnail.
 
+The (default) generated HTML is responsive and uses `flexbox` to fit rows of images to browser size with `jquery` providing functionality for navigation between index directories (via `j`/`k` or `left`/`right` arrows) and (XMP) rated files can be display-toggled via `r` or `0`-`5`.
+
+#### Extending for other formats
 To recognise other RAW formats, supported by Exiv2, update `main` and `DFLT_EXTNS` along with `ImgExifParser.cc` and the block that assigns `data.type = ImgData::EMBD_PREVIEW`
 
 Sample RAW files available https://rawsamples.ch/index.php/en/
@@ -17,4 +20,4 @@ Sample RAW files available https://rawsamples.ch/index.php/en/
 Command line util to extract largest thumbnail from (Nikon) RAW files;  adds functionality not available in `exiv2` or `exiftool` in that this tool can extract the thumbnail and perform colour space conversions (Adobe to sRGB) and also resizing of the images before writing to disk
 
 ## Dependancies
-Require `ImageMagick`, `exiv2` and `SampleICC` (local copy available) and `ffmpegthumbnailer` development libraries
+Require `ImageMagick`, `exiv2` and `SampleICC` (local copy available) and `ffmpegthumbnailer` and `libavformat` (from `ffmpeg`) development libraries
