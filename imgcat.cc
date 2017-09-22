@@ -245,7 +245,12 @@ struct _Task
 
         if (task )
         {
-            task->generate();
+            try
+            {
+                task->generate();
+            }
+            catch (const std::exception& ex)
+            { }
 
             _mtx.lock();
             ++(*_sem);
