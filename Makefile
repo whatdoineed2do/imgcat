@@ -19,7 +19,7 @@ SAMPLEICC_HOME=SampleICC
 
 #DEBUGFLAGS+=-ggdb  -DDBX_DEBUGGING_INFO -DXCOFF_DEBUGGING_INFO #-DDEBUG_LOG
 
-CXXFLAGS=$(DEBUGFLAGS) $(shell pkg-config Magick++ --cflags) $(pkg-config exiv2 --cflags) -I. -DHAVE_SAMPLE_ICC $(shell PKG_CONFIG_PATH=$(SAMPLEICC_HOME)/lib/pkgconfig pkg-config sampleicc --cflags) $(shell pkg-config --cflags libavformat) -DNEED_UCHAR_UINT_T -g -Wno-deprecated
+CXXFLAGS=$(DEBUGFLAGS) $(shell pkg-config Magick++ --cflags) $(pkg-config exiv2 --cflags) -I. -DHAVE_SAMPLE_ICC $(shell PKG_CONFIG_PATH=$(SAMPLEICC_HOME)/lib/pkgconfig pkg-config sampleicc --cflags) $(shell pkg-config --cflags libavformat) -DNEED_UCHAR_UINT_T -Wno-deprecated
 
 LDFLAGS=$(DEBUGFLAGS) $(shell pkg-config Magick++ --libs) $(shell pkg-config exiv2 --libs) $(shell PKG_CONFIG_PATH=$(SAMPLEICC_HOME)/lib/pkgconfig pkg-config sampleicc --libs) $(shell pkg-config --libs libavformat) $(shell pkg-config --libs libavutil)
 
