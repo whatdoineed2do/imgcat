@@ -313,6 +313,8 @@ int main(int argc, char* const argv[])
     const ICCprofiles*  tgtICC     = NULL;  // used to determine if ICC conversions req'd
     uchar_t*            nonSRGBicc = NULL;  // buf for non internal sRGB ICC
 
+    Magick::InitializeMagick("");
+
     Magick::Geometry  target;
 
     char c;
@@ -661,6 +663,7 @@ thumbpatherr:
 
     delete [] nonSRGBicc;
     delete outicc;
+    Magick::TerminateMagick();
 
     return 0;
 }
