@@ -54,7 +54,7 @@ imgcat-lp:		ImgKey.o ImgIdx.o ImgExifParser.o ICCprofiles.o imgcat.o
 	$(CXX)  $^ $(LDFLAGS) -o $@ -lffmpegthumbnailer  -L/home/ray/tools/ThreadPool -Wl,-rpath=/home/ray/tools/ThreadPool -lThreadPool -lffmpegthumbnailer
 
 imgprextr:	imgprextr.cc ICCprofiles.o
-	$(CXX)  $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+	$(CXX)  -fopenmp -pthread $(CXXFLAGS) $^ $(LDFLAGS) -lpthread -o $@
 
 
 imagickICCconvert:	imagickICCconvert.cc
