@@ -1,13 +1,15 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
-AM_CXXFLAGS = $(IMAGEMAGICK_CFLAGS) $(EXIV_CFLAGS) $(SAMPLEICC_CFLAGS) $(AVFORMAT_CFLAGS) $(AVUTIL_CFLAGS) $(FFMPEGTHUMB_CFLAGS) -DNEED_UCHAR_UINT_T -Wno-deprecated
-AM_LDFLAGS = $(IMAGEMAGICK_LDFLAGS) $(EXIV_LDFLAGS) $(SAMPLEICC_LDFLAGS) $(AVFORMAT_LDFLAGS) $(AVUTIL_LDFLAGS) $(FFMPEGTHUMB_LDFLAGS)
+AM_CPPFLAGS = -DHAVE_SAMPLE_ICC -DNEED_UCHAR_UINT_T
+AM_CXXFLAGS = $(IMAGEMAGICK_CFLAGS) $(EXIV_CFLAGS) $(SAMPLEICC_CFLAGS) -Wno-deprecated
+AM_LDFLAGS = $(IMAGEMAGICK_LIBS) $(EXIV_LIBS) $(SAMPLEICC_LIBS)
+
 
 bin_PROGRAMS = imgcat imgprextr
 
-imgcat_CPPFLAGS = -I$(top_srcdir)/lib
-imgcat_CXXFLAGS = $(AM_CXXFLAGS)
-imgcat_LDFLAGS = $(AM_LDFLAGS)
+imgcat_CPPFLAGS = $(AM_CPPFLAGS)
+imgcat_CXXFLAGS = $(AM_CXXFLAGS) $(AVFORMAT_CFLAGS) $(AVUTIL_CFLAGS) $(FFMPEGTHUMB_CFLAGS)
+imgcat_LDFLAGS = $(AM_LDFLAGS) $(AVFORMAT_LIBS) $(AVUTIL_LIBS) $(FFMPEGTHUMB_LIBS)
 imgcat_LDADD =
 imgcat_SOURCES = \
     ICCprofiles.c ICCprofiles.h \
@@ -16,12 +18,13 @@ imgcat_SOURCES = \
     ImgMetaParser.cc ImgMetaParser.h Img.h ImgKey.h ImgData.h \
     ImgExifParser.cc ImgExifParser.h ImgMetaParser.h Img.h ImgKey.h ImgData.h \
     ImgHtml.cc ImgHtml.h ImgIdx.h ImgKey.h ImgData.h ImgThumbGen.h \
+    ImgAVFmtParser.cc \
     ImgIdx.cc ImgIdx.h ImgKey.h ImgData.h \
     ImgKey.cc ImgKey.h \
     ImgThumbGen.cc ImgThumbGen.h ImgIdx.h ImgKey.h ImgData.h ICCprofiles.h
 
 
-imgprextr_CPPFLAGS = -I$(top_srcdir)/lib
+imgprextr_CPPFLAGS = $(AM_CPPFLAGS)
 imgprextr_CXXFLAGS = $(AM_CXXFLAGS)
 imgprextr_LDFLAGS = $(AM_LDFLAGS)
 imgprextr_LDADD =
