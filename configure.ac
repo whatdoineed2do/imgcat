@@ -14,6 +14,7 @@ PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES(IMAGEMAGICK, [Magick++             >= 6.9.9],
 		  EVIX,        [exiv2                >= 0.25],
 		  AVFORMAT,    [libavformat          >= 57.71.100],
+		  AVUTIL,      [libavutil            >= 55.58.100],
 		  FFMPEGTHUMB, [libffmpegthumbnailer >= 2.2.0],
 		  SAMPLEICC,   [sampleicc            >= 1.6.8])
 
@@ -34,5 +35,4 @@ fi
 AC_OUTPUT([
 Makefile
 src/Makefile
-tests/Makefile
 ])
