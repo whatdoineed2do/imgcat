@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
 AM_CPPFLAGS = -DHAVE_SAMPLE_ICC -DNEED_UCHAR_UINT_T
 AM_CXXFLAGS = $(IMAGEMAGICK_CFLAGS) $(EXIV_CFLAGS) $(SAMPLEICC_CFLAGS) -Wno-deprecated
-AM_LDFLAGS = $(IMAGEMAGICK_LIBS) $(EXIV_LIBS) $(SAMPLEICC_LIBS)
+AM_LDFLAGS = $(IMAGEMAGICK_LIBS) $(EXIV_LIBS) 
 
 
 bin_PROGRAMS = imgcat imgprextr
@@ -10,7 +10,7 @@ bin_PROGRAMS = imgcat imgprextr
 imgcat_CPPFLAGS = $(AM_CPPFLAGS)
 imgcat_CXXFLAGS = $(AM_CXXFLAGS) $(AVFORMAT_CFLAGS) $(AVUTIL_CFLAGS) $(FFMPEGTHUMB_CFLAGS)
 imgcat_LDFLAGS = $(AM_LDFLAGS) $(AVFORMAT_LIBS) $(AVUTIL_LIBS) $(FFMPEGTHUMB_LIBS)
-imgcat_LDADD =
+imgcat_LDADD = $(SAMPLEICC_LIBS)
 imgcat_SOURCES = \
     ICCprofiles.c ICCprofiles.h \
     ImgData.cc ImgData.h \
@@ -27,7 +27,7 @@ imgcat_SOURCES = \
 imgprextr_CPPFLAGS = $(AM_CPPFLAGS)
 imgprextr_CXXFLAGS = $(AM_CXXFLAGS)
 imgprextr_LDFLAGS = $(AM_LDFLAGS)
-imgprextr_LDADD =
+imgprextr_LDADD = $(SAMPLEICC_LIBS)
 imgprextr_SOURCES = \
     ICCprofiles.c ICCprofiles.h \
     imgprextr.cc
