@@ -11,12 +11,12 @@ AC_HEADER_STDC
 AC_PROG_INSTALL
 PKG_PROG_PKG_CONFIG
 
-PKG_CHECK_MODULES(IMAGEMAGICK, [Magick++             >= 6.9.9],
-		  EVIX,        [exiv2                >= 0.25],
-		  AVFORMAT,    [libavformat          >= 57.71.100],
-		  AVUTIL,      [libavutil            >= 55.58.100],
-		  FFMPEGTHUMB, [libffmpegthumbnailer >= 2.2.0],
-		  SAMPLEICC,   [sampleicc            >= 1.6.8])
+PKG_CHECK_MODULES(IMAGEMAGICK, [Magick++             >= 6.9.9])
+PKG_CHECK_MODULES(EVIX,        [exiv2                >= 0.25])
+PKG_CHECK_MODULES(AVFORMAT,    [libavformat          >= 57.71.100])
+PKG_CHECK_MODULES(AVUTIL,      [libavutil            >= 55.58.100])
+PKG_CHECK_MODULES(FFMPEGTHUMB, [libffmpegthumbnailer >= 2.2.0])
+PKG_CHECK_MODULES(SAMPLEICC,   [sampleicc            >= 1.6.8])
 
 AC_ARG_ENABLE([debug-code],
 	[AS_HELP_STRING([--enable-debug],
