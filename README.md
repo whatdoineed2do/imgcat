@@ -21,3 +21,20 @@ Command line util to extract largest thumbnail from (Nikon) RAW files;  adds fun
 
 ## Dependancies
 Require `ImageMagick`, `exiv2` and `SampleICC` (local copy available) and `ffmpegthumbnailer` and `libavformat` (from `ffmpeg`) development libraries
+
+### Building local SampleICC
+If your distribution/host does not have SampleICC (ie Fedora) you can compile the one in this repo.  I would build this locally as a static archive
+
+```
+git clone ... /tmp/imgcat
+
+gzip -d < contrib/SampleICC-1.6.8.tar.gz | tar xf -
+cd SampleICC-1.6.8 && ./bootstrap && \
+    ./configure --prefix=/tmp/imgcat/SampleICC --disable-shared --enable-static && \
+    make install
+```
+When configuring this repo:
+```
+cd /tmp/imgcat
+PKG_CONFIG_PATH=./SampleICC/lib/pkgconfig ./configure && make
+```
