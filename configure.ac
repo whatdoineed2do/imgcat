@@ -1,5 +1,5 @@
 AC_PREREQ(2.64)
-AC_INIT([audiotag], [1.1.4], [https://github.com/whatdoineed2do/imgcat/issues], [https://github.com/whatdoineed2do/imgcat], [whatdoineed2do@nospam-github.com])
+AC_INIT([imgcat], [1.1.4], [https://github.com/whatdoineed2do/imgcat/issues], [https://github.com/whatdoineed2do/imgcat], [whatdoineed2do@nospam-github.com])
 AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 AC_CONFIG_SRCDIR([src/])
