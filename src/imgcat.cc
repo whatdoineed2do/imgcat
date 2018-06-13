@@ -25,7 +25,6 @@ typedef long long  longlong_t;
 #include <chrono>
 #include <mutex>
 #include <future>
-using namespace  std;
 
 
 #include "Img.h"
@@ -38,14 +37,14 @@ using namespace  std;
 
 
 #ifdef DEBUG_LOG
-#define DLOG(x)  cout << "DEBUG:  " << x << endl;
+#define DLOG(x)  std::cout << "DEBUG:  " << x << std::endl;
 #else
 #define DLOG(x)
 #endif
 
 
 struct Istat {
-    string  filename;
+    std::string  filename;
     struct stat  st;
 
     Istat(const char* filename_, const struct stat& st_) : filename(filename_)
@@ -68,7 +67,7 @@ struct Istat {
     }
 };
 
-typedef list<Istat>  Istats;
+typedef std::list<Istat>  Istats;
 
 
 bool  _filterextn(const char** extn_, const char* path_)
@@ -104,13 +103,13 @@ bool  _filterextn(const char** extn_, const char* path_)
 
 
 void  _readdir(Istats& files_, Istats& vfiles_,
-	       const char* where_, const char** extn_, const char** vextn_)  throw (invalid_argument)
+	       const char* where_, const char** extn_, const char** vextn_)  throw (std::invalid_argument)
 {
     DIR*  d;
     if ( (d = opendir(where_)) == NULL) {
-	ostringstream  err;
+	std::ostringstream  err;
 	err << "failed to open '" << where_ << "' - " << strerror(errno);
-	throw invalid_argument(err.str());
+	throw std::invalid_argument(err.str());
     }
 
     char  path[PATH_MAX];
@@ -131,9 +130,9 @@ void  _readdir(Istats& files_, Istats& vfiles_,
 	{
 	    free(dent);
 
-	    ostringstream  err;
+	    std::ostringstream  err;
 	    err << "failed to stat '" << path << "' - " << strerror(errno);
-	    throw invalid_argument(err.str());
+	    throw std::invalid_argument(err.str());
 	}
 
 	try
@@ -164,13 +163,13 @@ void  _readdir(Istats& files_, Istats& vfiles_,
     closedir(d);
 }
 
-void  _readdir(const ImgMetaParser& metaparser_, ImgIdx& idx_, const char* thumbpath_, const char* where_, const char**  extn_)  throw (invalid_argument)
+void  _readdir(const ImgMetaParser& metaparser_, ImgIdx& idx_, const char* thumbpath_, const char* where_, const char**  extn_)  throw (std::invalid_argument)
 {
     DIR*  d;
     if ( (d = opendir(where_)) == NULL) {
-	ostringstream  err;
+	std::ostringstream  err;
 	err << "failed to open '" << where_ << "' - " << strerror(errno);
-	throw invalid_argument(err.str());
+	throw std::invalid_argument(err.str());
     }
 
     char  path[PATH_MAX];
@@ -189,9 +188,9 @@ void  _readdir(const ImgMetaParser& metaparser_, ImgIdx& idx_, const char* thumb
 	{
 	    free(dent);
 
-	    ostringstream  err;
+	    std::ostringstream  err;
 	    err << "failed to stat '" << path << "' - " << strerror(errno);
-	    throw invalid_argument(err.str());
+	    throw std::invalid_argument(err.str());
 	}
 
 	try
@@ -278,7 +277,7 @@ struct _Task
     ~_Task()
     { delete task; }
 };
-typedef list<_Task*>  Tasks;
+typedef std::list<_Task*>  Tasks;
 
 
 
@@ -299,7 +298,7 @@ int main(int argc, char **argv)
 
     ImgHtml*  htmlgen = NULL;
 
-    const chrono::time_point<std::chrono::system_clock>  start = std::chrono::system_clock::now();
+    const std::chrono::time_point<std::chrono::system_clock>  start = std::chrono::system_clock::now();
 
     int  c;
     while ( (c = getopt(argc, argv, "I:V:t:T:s:w:H:hv")) != EOF)
@@ -353,9 +352,9 @@ int main(int argc, char **argv)
 	    case 'h':
 	    usage:
 	    default:
-		cout << "usage: " << argv[0] << " [-I " << DFLT_EXTNS << " -V " << DFLT_VEXTNS << " ]  [-t <thumbpath=.thumbs>]  [-s <thumbsize=150>]  [-T <max threads=" << tpsz << ">]  [-H <html output, try 'help'] <dir0> <dir1> <...>" << endl
+		std::cout << "usage: " << argv[0] << " [-I " << DFLT_EXTNS << " -V " << DFLT_VEXTNS << " ]  [-t <thumbpath=.thumbs>]  [-s <thumbsize=150>]  [-T <max threads=" << tpsz << ">]  [-H <html output, try 'help'] <dir0> <dir1> <...>" << std::endl
                      << "\n"
-                     << "use MAGICK_TMPDIR= to are suitably free disk if default /tmp or /var/tmp dirs get full" << endl;
+                     << "use MAGICK_TMPDIR= to are suitably free disk if default /tmp or /var/tmp dirs get full" << std::endl;
 		return 1;
 	}
     }
@@ -396,7 +395,7 @@ int main(int argc, char **argv)
 	    }
 
 	    if (n == 0) {
-		cout << "considering all files" << endl;
+		std::cout << "considering all files" << std::endl;
 	    }
 	    else
 	    {
@@ -428,7 +427,7 @@ int main(int argc, char **argv)
 	    if (errno == EEXIST && access(thumbpath, W_OK) == 0) {
 	    }
 	    else {
-		cerr << "invalid thumbpath '" << thumbpath << "' - " << strerror(errno) << endl;
+		std::cerr << "invalid thumbpath '" << thumbpath << "' - " << strerror(errno) << std::endl;
 		goto usage;
 	    }
 	}
@@ -453,7 +452,7 @@ int main(int argc, char **argv)
     ImgExifParser   exifparser;
     ImgAVFmtParser  avfmtparser;
 
-    list<_Ignored>  ignored;
+    std::list<_Ignored>  ignored;
     uint_t  ttlfiles = 0;
     while (optind < argc)
     {
@@ -485,7 +484,7 @@ int main(int argc, char **argv)
 		    const Img  img = exifparser.parse(i->filename.c_str(), i->st, thumbpath);
 		    (*idxs.back())[img.key].push_back(img.data);
 		}
-		catch (const invalid_argument& ex)
+		catch (const std::invalid_argument& ex)
 		{
 		    ignored.emplace_back(i->filename, ex.what());
 		}
@@ -498,7 +497,7 @@ int main(int argc, char **argv)
 		    const Img  img = avfmtparser.parse(i->filename.c_str(), i->st, thumbpath);
 		    (*idxs.back())[img.key].push_back(img.data);
 		}
-		catch (const exception& ex)
+		catch (const std::exception& ex)
 		{
 		    DLOG("failed to video parse - " << ex.what());
 		    ignored.emplace_back(i->filename, ex.what());
@@ -508,17 +507,17 @@ int main(int argc, char **argv)
 
 	    if (verbosetime) {
 		gettimeofday(&tvC, NULL);
-		cout << dir << " -> " << imgfilenames.size() << " files, " << " read=" << (double)(tvB - tvA)/1000000 << ", parse=" << (double)(tvC - tvB)/1000000 << endl;
+		std::cout << dir << " -> " << imgfilenames.size() << " files, " << " read=" << (double)(tvB - tvA)/1000000 << ", parse=" << (double)(tvC - tvB)/1000000 << std::endl;
 	    }
 	}
-	catch (const exception& ex)
+	catch (const std::exception& ex)
 	{
-	    cerr << "failed to process all entries in '" << dir << "' - " << ex.what() << endl;
+	    std::cerr << "failed to process all entries in '" << dir << "' - " << ex.what() << std::endl;
 	    allok = false;
 	    break;
 	}
     }
-    cout << "scanned " << ttlfiles << " imgs from " << idxs.size() << " dirs" << endl;
+    std::cout << "scanned " << ttlfiles << " imgs from " << idxs.size() << " dirs" << std::endl;
 
     if (allok)
     {
@@ -528,14 +527,14 @@ int main(int argc, char **argv)
         ImgThumbGens  imgthumbs;
         ImgHtml::Payloads  htmlpayloads;
 
-	cout << "generating thumbnail previews.." << endl;
+	std::cout << "generating thumbnail previews.." << std::endl;
 	for (ImgIdxs::const_iterator i=idxs.begin(); i!=idxs.end(); ++i) 
 	{
 	    ImgIdx&  idx = **i;
-	    cout << "  working on [" << setw(3) << idx.size() << "]  " << idx.id << "  " << flush;
+	    std::cout << "  working on [" << std::setw(3) << idx.size() << "]  " << idx.id << "  " << std::flush;
 
 	    if (idx.empty()) {
-		cout << '\n';
+		std::cout << '\n';
 		continue;
 	    }
 
@@ -555,7 +554,7 @@ int main(int argc, char **argv)
 		tasks.push_back( new _Task(new ImgThumbGen(*j, thumbsize), mtx, cond, --tpsz) );
 
                 lck.unlock();
-		cout << "#" << flush;
+		std::cout << "#" << std::flush;
 	    }
 
 
@@ -566,7 +565,7 @@ int main(int argc, char **argv)
 		(*t)->f.get();
 
 		if ( !(*t)->task->error().empty() ) {
-		    cerr << (*t)->task->error() << endl;
+		    std::cerr << (*t)->task->error() << std::endl;
 		}
 
                 /* this set of thumbs is for this idx, need to handoff otherwise
@@ -577,17 +576,17 @@ int main(int argc, char **argv)
                 imgthumbs.push_back(itg);
                 delete *t;
 	    }
-	    cout << endl;
+	    std::cout << std::endl;
 	}
     	
 	if (!ignored.empty()) {
-	    cout << "ignored " << ignored.size() << " files:\n";
+	    std::cout << "ignored " << ignored.size() << " files:\n";
 	    for (const auto& i : ignored) {
-		cout << "  " << i.file << " - " << i.reason << endl;
+		std::cout << "  " << i.file << " - " << i.reason << std::endl;
 	    }
 	}
 
-        cout << "generating html output" << endl;
+        std::cout << "generating html output" << std::endl;
         {
             mode_t  umsk = umask(0);
             umask(umsk);
@@ -595,22 +594,22 @@ int main(int argc, char **argv)
             // generate the html tbl
             const std::string  out = htmlgen->generate(htmlpayloads);
             if (out.size() == 0) {
-                cerr << "generated output is empty!" << endl;
+                std::cerr << "generated output is empty!" << std::endl;
 		allok = false;
             }
             else
             {
                 int  fd;
                 if ( (fd = open("index.html", O_WRONLY | O_CREAT | O_TRUNC, 0666 & ~umsk)) < 0) {
-                    cerr << "failed to create index.html - " << strerror(errno) << " - will use stdout" << endl;
-                    cout << out << endl;
+                    std::cerr << "failed to create index.html - " << strerror(errno) << " - will use stdout" << std::endl;
+                    std::cout << out << std::endl;
 		    allok = false;
                 }
                 else
                 {
                     if ( write(fd, out.c_str(), out.size()) != out.size()) {
-                        cerr << "failed to write all data to index.html - " << strerror(errno) << endl;
-                        cout << out << endl;
+                        std::cerr << "failed to write all data to index.html - " << strerror(errno) << std::endl;
+                        std::cout << out << std::endl;
 			allok = false;
                     }
                     close(fd);
@@ -625,9 +624,9 @@ int main(int argc, char **argv)
     }
 
 
-    const chrono::time_point<std::chrono::system_clock>  now = std::chrono::system_clock::now();
-    const chrono::duration<double>  elapsed = now - start;
-    cout << "completed in " << elapsed.count() << " secs" << endl;
+    const std::chrono::time_point<std::chrono::system_clock>  now = std::chrono::system_clock::now();
+    const std::chrono::duration<double>  elapsed = now - start;
+    std::cout << "completed in " << elapsed.count() << " secs" << std::endl;
 
     for (auto i : idxs) {
 	delete i;
