@@ -12,23 +12,25 @@
 #include "ImgKey.h"
 #include "ImgData.h"
 
-class Img
+struct Img
 {
-  public:
-    Img(const ImgKey& k_, const ImgData& d_) throw ()
+    Img(const ImgKey& k_, const ImgData& d_) noexcept
 	: key(k_), data(d_)
     { }
- 
-    Img(const Img& rhs_)  throw ()
+
+    void operator=(const Img&)  = delete;
+    void operator=(const Img&&) = delete;
+
+    Img(const Img& rhs_)  noexcept
 	: key(rhs_.key), data(rhs_.data)
+    { }
+ 
+    Img(const Img&& rhs_)  noexcept
+	: key(std::move(rhs_.key)), data(std::move(rhs_.data))
     { }
 
     const ImgKey   key;
     const ImgData  data;
-
-  private:
-    void operator=(const Img&);
-
 };
 
 #endif
