@@ -12,7 +12,6 @@
 
 #include <iosfwd>
 #include <string>
-using std::string;
 
 
 class ImgData
@@ -31,18 +30,18 @@ class ImgData
 	  metaimg(rhs_.metaimg), metavid(rhs_.metavid)
     { }
 
-    string  filename;
-    string  title;
+    std::string  filename;
+    std::string  title;
 
     ImgData::Type  type;
-    string  mimetype;
+    std::string  mimetype;
     size_t  size;
-    string  thumb;     // path of thumbnail
+    std::string  thumb;     // path of thumbnail
 
-    string  xy;        // dimensions
+    std::string  xy;        // dimensions
 
-    string  moddate;  // may be empty or reset to empty
-    string  rating;
+    std::string  moddate;  // may be empty or reset to empty
+    std::string  rating;
 
     struct MetaImg {
         MetaImg() = default;
@@ -62,21 +61,21 @@ class ImgData
 	{ }
 	MetaImg& operator=(const MetaImg&) = delete;
 
-	string  dpi;
+	std::string  dpi;
 	double  rotate;
 
 
-	string  camera;
-	string  sn;
-	string  lens;
-	string  focallen;
-	string  shuttercnt;
+	std::string  camera;
+	std::string  sn;
+	std::string  lens;
+	std::string  focallen;
+	std::string  shuttercnt;
 
-	string  prog;      // PASM
-	string  shutter;
-	string  aperture;
-	string  iso;
-	string  wb;
+	std::string  prog;      // PASM
+	std::string  shutter;
+	std::string  aperture;
+	std::string  iso;
+	std::string  wb;
     };
     ImgData::MetaImg  metaimg;
 
@@ -91,8 +90,8 @@ class ImgData
 	{}
 	MetaVid& operator-(const MetaVid&) = delete;
 
-        string  container;
-	string  model;
+	std::string  container;
+	std::string  model;
 	time_t  duration;
 	float   framerate;
     };
@@ -133,8 +132,8 @@ class ImgData
 
     void  _title()
     {
-	string::size_type  p;
-	title = ( (p = filename.find_last_of('/')) == string::npos) ? 
+	std::string::size_type  p;
+	title = ( (p = filename.find_last_of('/')) == std::string::npos) ? 
 	            filename :
 		    filename.substr(p+1);
     }

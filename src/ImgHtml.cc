@@ -98,7 +98,7 @@ std::string  ImgHtmlClassic::generate(ImgHtml::Payloads& payloads_)
                  << " title=\"";
             if (!img.rating.empty())
             {
-                const string&  s = img.rating;
+                const std::string&  s = img.rating;
 
                 long  l = -1;
 
@@ -403,7 +403,7 @@ li.dropdown {\
             body << "  <div class=flex-item  rating=" << (img.rating.empty() ? "0" : img.rating.c_str()) << "  title=\"";
             if (!img.rating.empty())
             {
-                const string&  s = img.rating;
+                const std::string&  s = img.rating;
 
                 long  l = -1;
 
