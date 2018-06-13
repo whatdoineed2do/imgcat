@@ -52,6 +52,11 @@ struct Istat {
 	memcpy(&st, &st_, sizeof(st));
     }
 
+    Istat(const Istat&& rhs_) : filename(std::move(rhs_.filename))
+    {
+	memcpy(&st, &rhs_.st, sizeof(st));
+    }
+
     Istat(const Istat& rhs_) : filename(rhs_.filename)
     {
 	memcpy(&st, &rhs_.st, sizeof(st));
@@ -61,6 +66,15 @@ struct Istat {
     {
 	if (this != &rhs_) {
 	    filename = rhs_.filename;
+	    memcpy(&st, &rhs_.st, sizeof(st));
+	}
+	return *this;
+    }
+
+    const Istat& operator=(const Istat&& rhs_)
+    {
+	if (this != &rhs_) {
+	    filename = std::move(rhs_.filename);
 	    memcpy(&st, &rhs_.st, sizeof(st));
 	}
 	return *this;
