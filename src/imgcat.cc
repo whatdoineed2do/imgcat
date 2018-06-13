@@ -242,12 +242,18 @@ struct _Task
     std::condition_variable&  _cond;
     unsigned*  _sem;
 
-
     _Task(ImgThumbGen* task_, std::mutex& mtx_, std::condition_variable& cond_, unsigned& sem_)
         : task(task_), _mtx(mtx_), _cond(cond_), _sem(&sem_)
     {
         f = std::async(std::launch::async, &_Task::run, this);
     }
+
+    _Task(_Task&& rhs_)
+        : f(std::move(rhs_.f)), task(rhs_.task), _mtx(rhs_._mtx), _cond(rhs_._cond), _sem(rhs_._sem)
+    { }
+
+    _Task&  operator=(const _Task&)  = delete;
+    _Task&  operator=(const _Task&&) = delete;
 
     void run()
     {
@@ -491,30 +497,31 @@ int main(int argc, char **argv)
 	    if (verbosetime) {
 		gettimeofday(&tvB, NULL);
 	    }
-	    for (Istats::const_iterator i=imgfilenames.begin(); i!=imgfilenames.end(); ++i)
+	    for (const auto&  i : imgfilenames)
 	    {
 		try
 		{
-		    const Img  img = exifparser.parse(i->filename.c_str(), i->st, thumbpath);
+		    const Img  img = exifparser.parse(i.filename.c_str(), i.st, thumbpath);
 		    (*idxs.back())[img.key].push_back(img.data);
 		}
 		catch (const std::invalid_argument& ex)
 		{
-		    ignored.emplace_back(i->filename, ex.what());
+		    ignored.emplace_back(i.filename, ex.what());
 		}
 	    }
 
 	    for (Istats::iterator i=vidfilenames.begin(); i!=vidfilenames.end(); ++i)
+	    for (auto&  i : vidfilenames)
 	    {
 		try
 		{
-		    const Img  img = avfmtparser.parse(i->filename.c_str(), i->st, thumbpath);
+		    const Img  img = avfmtparser.parse(i.filename.c_str(), i.st, thumbpath);
 		    (*idxs.back())[img.key].push_back(img.data);
 		}
 		catch (const std::exception& ex)
 		{
 		    DLOG("failed to video parse - " << ex.what());
-		    ignored.emplace_back(i->filename, ex.what());
+		    ignored.emplace_back(i.filename, ex.what());
 		}
 	    }
 	    ttlfiles += imgfilenames.size() + vidfilenames.size();
@@ -542,9 +549,9 @@ int main(int argc, char **argv)
         ImgHtml::Payloads  htmlpayloads;
 
 	std::cout << "generating thumbnail previews.." << std::endl;
-	for (ImgIdxs::const_iterator i=idxs.begin(); i!=idxs.end(); ++i) 
+	for (const auto&  i : idxs)
 	{
-	    ImgIdx&  idx = **i;
+	    ImgIdx&  idx = *i;
 	    std::cout << "  working on [" << std::setw(3) << idx.size() << "]  " << idx.id << "  " << std::flush;
 
 	    if (idx.empty()) {
@@ -556,7 +563,7 @@ int main(int argc, char **argv)
 
 
 	    Tasks  tasks;
-	    for (ImgIdx::const_iterator j=idx.begin(); j!=idx.end(); ++j)
+	    for (const auto&  j : idx)
 	    {
                 // wait for allowable thread to be available
                 std::unique_lock<std::mutex>  lck(mtx);
@@ -565,7 +572,7 @@ int main(int argc, char **argv)
 		/* grab the exif and thumb from the very first item which is
 		 * supposed to be the primary image
 		 */
-		tasks.push_back( new _Task(new ImgThumbGen(*j, thumbsize), mtx, cond, --tpsz) );
+		tasks.push_back(new _Task(new ImgThumbGen(j, thumbsize), mtx, cond, --tpsz) );
 
                 lck.unlock();
 		std::cout << "#" << std::flush;
@@ -574,21 +581,21 @@ int main(int argc, char **argv)
 
             htmlpayloads.push_back(ImgHtml::Payload(idx));
 
-	    for (Tasks::const_iterator t=tasks.begin(); t!=tasks.end(); ++t)
+	    for (auto&  t : tasks)
 	    {
-		(*t)->f.get();
+		t->f.get();
 
-		if ( !(*t)->task->error().empty() ) {
-		    std::cerr << (*t)->task->error() << std::endl;
+		if ( !t->task->error().empty() ) {
+		    std::cerr << t->task->error() << std::endl;
 		}
 
                 /* this set of thumbs is for this idx, need to handoff otherwise
                  * the imgthumbs contains ALL the thumbs for all dirs
                  */
-                ImgThumbGen*  itg = (*t)->release();
+                ImgThumbGen*  itg = t->release();
                 htmlpayloads.back().thumbs.push_back(itg);
                 imgthumbs.push_back(itg);
-                delete *t;
+		delete t;
 	    }
 	    std::cout << std::endl;
 	}
