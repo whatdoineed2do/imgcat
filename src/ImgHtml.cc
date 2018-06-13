@@ -25,7 +25,7 @@ ImgHtml*  ImgHtml::create(const char* type_)
 
     const bool options = type_ && strcasecmp("help", type_) == 0; 
     if (options) {
-        cout << "html options[]=";
+        std::cout << "html options[]=";
     }
 
     ImgHtml*  h = NULL;
@@ -33,7 +33,7 @@ ImgHtml*  ImgHtml::create(const char* type_)
     while (h == NULL && p->id) 
     {
         if (options) {
-            cout << p->id << " ";
+            std::cout << p->id << " ";
         }
         else {
             if (type_ == NULL || strcasecmp(p->id, type_) == 0) {
@@ -42,7 +42,7 @@ ImgHtml*  ImgHtml::create(const char* type_)
         }
         ++p;
     }
-    if (options) cout << endl;
+    if (options) std::cout << std::endl;
     return h;
 }
 
@@ -60,11 +60,11 @@ std::string  ImgHtmlClassic::generate(ImgHtml::Payloads& payloads_)
         ImgThumbGens&  thumbs = p.thumbs;
         
 
-        cout << "  working on [" << setw(3) << idx.size() << "]  " << idx.id << "  " << flush;
+        std::cout << "  working on [" << std::setw(3) << idx.size() << "]  " << idx.id << "  " << std::flush;
         html << "<h2>/<a href=\"" << idx.id << "\">" << idx.id << "</a></h2>";
 
         if (idx.empty()) {
-            cout << '\n';
+            std::cout << '\n';
             continue;
         }
 
@@ -141,13 +141,13 @@ std::string  ImgHtmlClassic::generate(ImgHtml::Payloads& payloads_)
                 html << "</tr>\n";
                 tk = 0;
             }
-            cout << '.' << flush;
+            std::cout << '.' << std::flush;
         }
         if (tk) {
             html << "</tr>";
         }
         html << "</table>\n\n";
-        cout << endl;
+        std::cout << std::endl;
     }
     html << "</body></html>";
 
@@ -333,7 +333,7 @@ li.dropdown {\
         ImgIdx&        idx    = p.idx;
         ImgThumbGens&  thumbs = p.thumbs;
         
-        cout << "  working on [" << setw(3) << idx.size() << "]  " << idx.id << "  " << flush;
+        std::cout << "  working on [" << std::setw(3) << idx.size() << "]  " << idx.id << "  " << std::flush;
 
 	nav << "  <a href=\"#photo_block" << pblck << "\">" << idx.id << "</a>";
 	body << "<div id=\"photo_block" << pblck << "\">\n";
@@ -344,7 +344,7 @@ li.dropdown {\
 	     << "</h2>\n";
 
         if (idx.empty()) {
-            cout << '\n';
+            std::cout << '\n';
             continue;
         }
 
@@ -458,11 +458,11 @@ li.dropdown {\
             }
             body << "  </div>  <!-- flex item -->\n";
                 
-            cout << '.' << flush;
+            std::cout << '.' << std::flush;
         }
         body << " </div>  <!-- flex container -->\n"
 	     << "</div>  <!-- photo block -->\n";
-        cout << endl;
+        std::cout << std::endl;
     }
 
     html << nav.str()

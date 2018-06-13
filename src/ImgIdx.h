@@ -84,7 +84,7 @@ class ImgIdx
     /* this is the ONLY function that will create the Ent if not present
      */
     Imgs&        operator[](const ImgKey&)        throw ();
-    const Imgs&  operator[](const ImgKey&) const  throw (range_error);
+    const Imgs&  operator[](const ImgKey&) const  throw (std::range_error);
 
 
     void  sort()  throw();
