@@ -64,6 +64,14 @@ class ImgKey
           dt(rhs_.dt)
     { }
 
+    ImgKey(const ImgKey&& rhs_)
+    	: mfctr(std::move(rhs_.mfctr)), mdl(std::move(rhs_.mdl)), sn(std::move(rhs_.sn)),
+          dt(std::move(rhs_.dt))
+    { }
+
+    void operator=(const ImgKey&)  = delete;
+    void operator=(const ImgKey&&) = delete;
+
     const std::string  mfctr;
     const std::string  mdl;
     const std::string  sn;
@@ -83,8 +91,6 @@ class ImgKey
     }
 
   private:
-    void operator=(const ImgKey&);
-
     static const std::string  _ino2str(const ino_t& ino_);
 };
 

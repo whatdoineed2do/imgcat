@@ -159,10 +159,10 @@ void  _readdir(Istats& files_, Istats& vfiles_,
 		if (st.st_mode & S_IFREG)
 		{
 		    if (_filterextn(extn_, path)) {
-			files_.push_back(Istat(path, st));
+			files_.emplace_back(Istat(path, st));
 		    }
 		    else if (_filterextn(vextn_, path)) {
-			vfiles_.push_back(Istat(path, st));
+			vfiles_.emplace_back(Istat(path, st));
 		    }
 		}
 	    }

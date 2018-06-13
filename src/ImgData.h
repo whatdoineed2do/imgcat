@@ -22,13 +22,20 @@ class ImgData
     ImgData(const char* filename_, const size_t sz_) : filename(filename_), size(sz_), type(ImgData::UNKNOWN)
     { _title(); }
 
-
-    
     ImgData(const ImgData&  rhs_)
 	: filename(rhs_.filename), title(rhs_.title), type(rhs_.type), mimetype(rhs_.mimetype), size(rhs_.size), thumb(rhs_.thumb), 
 	  xy(rhs_.xy), moddate(rhs_.moddate), rating(rhs_.rating),
 	  metaimg(rhs_.metaimg), metavid(rhs_.metavid)
     { }
+
+    ImgData(const ImgData&&  rhs_)
+	: filename(std::move(rhs_.filename)), title(std::move(rhs_.title)), type(rhs_.type), mimetype(std::move(rhs_.mimetype)), size(rhs_.size), thumb(std::move(rhs_.thumb)), 
+	  xy(std::move(rhs_.xy)), moddate(std::move(rhs_.moddate)), rating(std::move(rhs_.rating)),
+	  metaimg(std::move(rhs_.metaimg)), metavid(std::move(rhs_.metavid))
+    { }
+
+    void operator=(const ImgData&)  = delete;
+    void operator=(const ImgData&&) = delete;
 
     std::string  filename;
     std::string  title;
@@ -59,7 +66,23 @@ class ImgData
 	    iso(rhs_.iso),
 	    wb(rhs_.wb)
 	{ }
-	MetaImg& operator=(const MetaImg&) = delete;
+
+	MetaImg(const MetaImg&& rhs_) :
+	    dpi(std::move(rhs_.dpi)),
+	    rotate(rhs_.rotate),
+	    camera(std::move(rhs_.camera)),
+	    sn(std::move(rhs_.sn)),
+	    lens(std::move(rhs_.lens)),
+	    focallen(std::move(rhs_.focallen)),
+	    shuttercnt(std::move(rhs_.shuttercnt)),
+	    prog(std::move(rhs_.prog)),
+	    shutter(std::move(rhs_.shutter)),
+	    aperture(std::move(rhs_.aperture)),
+	    iso(std::move(rhs_.iso)),
+	    wb(std::move(rhs_.wb))
+	{ }
+	MetaImg& operator=(const MetaImg&)  = delete;
+	MetaImg& operator=(const MetaImg&&) = delete;
 
 	std::string  dpi;
 	double  rotate;
@@ -88,7 +111,14 @@ class ImgData
 	    duration(rhs_.duration),
 	    framerate(rhs_.framerate)
 	{}
-	MetaVid& operator-(const MetaVid&) = delete;
+	MetaVid(const MetaVid&& rhs_) :
+            container(std::move(rhs_.container)),
+	    model(std::move(rhs_.model)),
+	    duration(rhs_.duration),
+	    framerate(rhs_.framerate)
+	{}
+	MetaVid& operator=(const MetaVid&)  = delete;
+	MetaVid& operator=(const MetaVid&&) = delete;
 
 	std::string  container;
 	std::string  model;
@@ -128,8 +158,6 @@ class ImgData
     }
 
   private:
-    void operator=(const ImgData&);
-
     void  _title()
     {
 	std::string::size_type  p;
