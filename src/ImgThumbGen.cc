@@ -80,7 +80,7 @@ void  ImgThumbGen::generate()
             }
         }
     }
-    catch (const exception& e)
+    catch (const std::exception& e)
     {
         _error << e.what();
     }
@@ -131,9 +131,9 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
     }
     catch (const std::exception& ex)
     {
-	ostringstream  err;
+	std::ostringstream  err;
 	err << "failed to resize thumbnail " << origpath_ << " - " << ex.what();
-	throw range_error(err.str());
+	throw std::range_error(err.str());
     }
 }
 
@@ -171,9 +171,9 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
     }
     catch (const std::exception& ex)
     {
-	ostringstream  err;
+	std::ostringstream  err;
 	err << "failed to resize thumbnail, unable to create internal obj " << origpath_ << " - " << ex.what();
-	throw range_error(err.str());
+	throw std::range_error(err.str());
     }
 }
 
@@ -182,7 +182,7 @@ void  ImgThumbGen::_readgenthumbnail(const ImgData& img_, const std::string& pre
 {
     int  fd;
     if ( (fd = open(img_.filename.c_str(), O_RDONLY)) < 0) {
-	cerr << "failed to open source file to generate thumbnail: " << img_.filename << " - " << strerror(errno) << endl;
+	std::cerr << "failed to open source file to generate thumbnail: " << img_.filename << " - " << strerror(errno) << std::endl;
     }
     else
     {
@@ -190,7 +190,7 @@ void  ImgThumbGen::_readgenthumbnail(const ImgData& img_, const std::string& pre
 	char*  buf = new char[img_.size];
 	size_t  n;
 	if ( (n = read(fd, buf, img_.size)) != img_.size) {
-	    cerr << "failed to read source file to generate thumbnail: " << img_.filename << " (read " << n << "/" << img_.size << ") - " << strerror(errno) << endl;
+	    std::cerr << "failed to read source file to generate thumbnail: " << img_.filename << " (read " << n << "/" << img_.size << ") - " << strerror(errno) << std::endl;
 	}
 	else {
 	    _genthumbnail(prevpath_, img_.filename, buf, img_.size, sz_, img_.metaimg.rotate);
