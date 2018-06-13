@@ -29,9 +29,20 @@ ImgKey::Dt::Dt(const time_t& t_)  throw (std::invalid_argument)
 
 ImgKey::Dt::Dt(const Dt&& rhs_)
 {
+    hms = std::move(rhs_.hms);
+    ms = std::move(rhs_.ms);
+    _hms = rhs_._hms;
 }
+
 const ImgKey::Dt&  ImgKey::Dt::operator=(const Dt&& rhs_)
 {
+    if (this != &rhs_) {
+	hms = std::move(rhs_.hms);
+	ms = std::move(rhs_.ms);
+	_hms = rhs_._hms;
+    }
+
+    return *this;
 }
 
 const ImgKey::Dt&  ImgKey::Dt::operator=(const Dt& rhs_)
@@ -44,7 +55,7 @@ const ImgKey::Dt&  ImgKey::Dt::operator=(const Dt& rhs_)
     return *this;
 }
 
-static const std::string  ImgKey::_ino2str(const ino_t& ino_)
+const std::string  ImgKey::_ino2str(const ino_t& ino_)
 {
     std::stringstream  conv;
     conv << ino_;
