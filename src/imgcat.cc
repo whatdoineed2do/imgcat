@@ -238,59 +238,67 @@ struct _Task
     std::future<void>  f;  // used to determe task complete
     ImgThumbGen*  task;
 
+    // external locks for semaphore
     std::mutex&  _mtx;
     std::condition_variable&  _cond;
-    unsigned*  _sem;
+    unsigned&  _sem;
+
+    // internal locks
+    std::mutex  _m;
+    std::condition_variable  _c;
+    bool  _b;
+
 
     _Task(ImgThumbGen* task_, std::mutex& mtx_, std::condition_variable& cond_, unsigned& sem_)
-        : task(task_), _mtx(mtx_), _cond(cond_), _sem(&sem_)
+        : task(task_), _mtx(mtx_), _cond(cond_), _sem(sem_),
+	  _b(false)
     {
         f = std::async(std::launch::async, &_Task::run, this);
     }
 
     _Task(_Task&& rhs_)
-        : f(std::move(rhs_.f)), task(rhs_.task), _mtx(rhs_._mtx), _cond(rhs_._cond), _sem(rhs_._sem)
-    { }
+        : f(std::move(rhs_.f)), task(rhs_.task), 
+	  _mtx(rhs_._mtx), _cond(rhs_._cond), _sem(rhs_._sem),
+	  _b(rhs_._b)
+    { rhs_.task = NULL; }
 
     _Task&  operator=(const _Task&)  = delete;
     _Task&  operator=(const _Task&&) = delete;
 
     void run()
     {
-        if (_sem == NULL || task == NULL) {
-            return;
-        }
+	std::unique_lock<std::mutex>  lck(_m);
+	if (_b) {
+	    return;
+	}
 
+	try
+	{
+	    task->generate();
+	}
+	catch (const std::exception& ex)
+	{ }
 
-        if (task )
-        {
-            try
-            {
-                task->generate();
-            }
-            catch (const std::exception& ex)
-            { }
+	_mtx.lock();
+	++_sem;
+	_cond.notify_all();
+	_mtx.unlock();
 
-            _mtx.lock();
-            ++(*_sem);
-            _mtx.unlock();
-            _cond.notify_all();
-
-            _sem = NULL;
-        }
+	_b = true;
+	_c.notify_all();
+	lck.unlock();
     }
 
     ImgThumbGen*  release()
     {
         ImgThumbGen*  byebye = task;
-        // TODO - theres a potential race here
-        if (_sem) {
-            _mtx.lock();
-            ++(*_sem);
-            _mtx.unlock();
-            _cond.notify_all();
-        }
+
+	std::unique_lock<std::mutex>  lck(_m);
+        bool&  b = _b;
+        _c.wait(lck, [&b]{ return b; });
         task = NULL;
+        lck.unlock();
+
         return byebye;
     }
 
