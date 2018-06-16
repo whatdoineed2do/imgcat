@@ -256,12 +256,8 @@ struct _Task
         f = std::async(std::launch::async, &_Task::run, this);
     }
 
-    _Task(_Task&& rhs_)
-        : f(std::move(rhs_.f)), task(rhs_.task), 
-	  _mtx(rhs_._mtx), _cond(rhs_._cond), _sem(rhs_._sem),
-	  _b(rhs_._b)
-    { rhs_.task = NULL; }
-
+    // mtx/conds are not movable
+    _Task(_Task&&) = delete
     _Task&  operator=(const _Task&)  = delete;
     _Task&  operator=(const _Task&&) = delete;
 
