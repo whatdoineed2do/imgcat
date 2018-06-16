@@ -257,7 +257,7 @@ struct _Task
     }
 
     // mtx/conds are not movable
-    _Task(_Task&&) = delete
+    _Task(_Task&&) = delete;
     _Task&  operator=(const _Task&)  = delete;
     _Task&  operator=(const _Task&&) = delete;
 
@@ -485,7 +485,7 @@ int main(int argc, char **argv)
 	if ( dir[dirlen-1] == '/' ) {
 	    dir[dirlen-1] = (char)NULL;
 	}
-	idxs.push_back(new ImgIdx(dir));
+	idxs.emplace_back(ImgIdx(dir));
 
 	try
 	{
@@ -506,7 +506,7 @@ int main(int argc, char **argv)
 		try
 		{
 		    const Img  img = exifparser.parse(i.filename.c_str(), i.st, thumbpath);
-		    (*idxs.back())[img.key].push_back(img.data);
+		    idxs.back()[img.key].push_back(img.data);
 		}
 		catch (const std::invalid_argument& ex)
 		{
@@ -520,7 +520,7 @@ int main(int argc, char **argv)
 		try
 		{
 		    const Img  img = avfmtparser.parse(i.filename.c_str(), i.st, thumbpath);
-		    (*idxs.back())[img.key].push_back(img.data);
+		    idxs.back()[img.key].push_back(img.data);
 		}
 		catch (const std::exception& ex)
 		{
@@ -553,9 +553,8 @@ int main(int argc, char **argv)
         ImgHtml::Payloads  htmlpayloads;
 
 	std::cout << "generating thumbnail previews.." << std::endl;
-	for (const auto&  i : idxs)
+	for (auto&  idx : idxs)
 	{
-	    ImgIdx&  idx = *i;
 	    std::cout << "  working on [" << std::setw(3) << idx.size() << "]  " << idx.id << "  " << std::flush;
 
 	    if (idx.empty()) {
@@ -583,7 +582,7 @@ int main(int argc, char **argv)
 	    }
 
 
-            htmlpayloads.push_back(ImgHtml::Payload(idx));
+            htmlpayloads.emplace_back(ImgHtml::Payload(idx));
 
 	    for (auto&  t : tasks)
 	    {
@@ -653,9 +652,6 @@ int main(int argc, char **argv)
     const std::chrono::duration<double>  elapsed = now - start;
     std::cout << "completed in " << elapsed.count() << " secs" << std::endl;
 
-    for (auto i : idxs) {
-	delete i;
-    }
     idxs.clear();
     delete htmlgen;
 

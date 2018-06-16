@@ -106,6 +106,6 @@ class ImgIdx
     ImgIdx::Idx  _idx;
 };
 
-using ImgIdxs = std::list<ImgIdx*>;
+using ImgIdxs = std::list<ImgIdx>;
 
 #endif
