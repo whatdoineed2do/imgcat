@@ -243,6 +243,10 @@ struct _Task
         f = std::async(std::launch::async, &_Task::run, this);
     }
 
+    _Task(_Task&&) = delete;
+    _Task&  operator=(_Task&)  = delete;
+    _Task&  operator=(_Task&&) = delete;
+
 
     void run()
     {
