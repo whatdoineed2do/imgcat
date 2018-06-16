@@ -217,7 +217,7 @@ void  _readdir(const ImgMetaParser& metaparser_, ImgIdx& idx_, const char* thumb
 		DLOG(path);
 		if (st.st_mode & S_IFREG && _filterextn(extn_, path)) {
 		    const Img  img = metaparser_.parse(path, st, thumbpath_);
-		    idx_[img.key].push_back(img.data);
+		    idx_[img.key].emplace_back(std::move(img.data));
 		}
 	    }
 	}
@@ -506,7 +506,7 @@ int main(int argc, char **argv)
 		try
 		{
 		    const Img  img = exifparser.parse(i.filename.c_str(), i.st, thumbpath);
-		    idxs.back()[img.key].push_back(img.data);
+		    idxs.back()[img.key].emplace_back(std::move(img.data));
 		}
 		catch (const std::invalid_argument& ex)
 		{
@@ -520,7 +520,7 @@ int main(int argc, char **argv)
 		try
 		{
 		    const Img  img = avfmtparser.parse(i.filename.c_str(), i.st, thumbpath);
-		    idxs.back()[img.key].push_back(img.data);
+		    idxs.back()[img.key].emplace_back(std::move(img.data));
 		}
 		catch (const std::exception& ex)
 		{
