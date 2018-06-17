@@ -51,7 +51,8 @@ class ImgData
     std::string  rating;
 
     struct MetaImg {
-        MetaImg() = default;
+        MetaImg() : rotate(0) { }
+
 	MetaImg(const MetaImg& rhs_) :
 	    dpi(rhs_.dpi),
 	    rotate(rhs_.rotate),
