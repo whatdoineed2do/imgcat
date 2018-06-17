@@ -24,15 +24,15 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
     typedef Exiv2::ExifData::const_iterator (*EasyAccessFct)(const Exiv2::ExifData& ed);
 
     ImgData  data(filename_, st_.st_size);
-    string   mftr;
-    string   dtorg;
-    string   dtorgsub;
+    std::string   mftr;
+    std::string   dtorg;
+    std::string   dtorgsub;
     float    orientation = 1;
 
     static const struct _EasyAccess {
 	const char*   desc;
 	EasyAccessFct find;
-	string*       target;
+	std::string*       target;
     } eatags[] = {
 	{ "  ISO speed",            Exiv2::isoSpeed,     &data.metaimg.iso      },
 	{ "  Exposure mode",        Exiv2::exposureMode, &data.metaimg.prog     },
@@ -52,7 +52,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
     static const struct _MiscTags {
 	const char*  desc;
 	const char*  tag;
-	string*      target;
+	std::string*      target;
 	long*        tgtlong;
 	float*       tgtfloat;
     } misctags[] = {
@@ -88,7 +88,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 	}
 	catch (const Exiv2::AnyError&)
 	{
-	    ostringstream  err;
+	    std::ostringstream  err;
 	    err << "invalid image file " << filename_;
 	    throw std::invalid_argument(err.str());
 	}
@@ -136,7 +136,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 
 	image->readMetadata();
 	{
-	    ostringstream  os;
+	    std::ostringstream  os;
 	    os << image->pixelWidth() << 'x' << image->pixelHeight();
 	    data.xy = std::move(os.str());
 	}
@@ -145,7 +145,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 	{
 	    // need to generate uniq key, will use ino
 	    if (thumbpath_) {
-		ostringstream  tmp;
+		std::ostringstream  tmp;
 		tmp << thumbpath_ << "/" << st_.st_dev << "-" << st_.st_ino;
 		data.thumb = tmp.str();
 	    }
@@ -224,7 +224,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 		data.thumb.append("/");
 	    }
 
-	    ostringstream  id;
+	    std::ostringstream  id;
 	    if (data.metaimg.sn.empty() && data.metaimg.shuttercnt.empty()) {
 		id << st_.st_dev << "-" << st_.st_ino;
 	    }
@@ -239,7 +239,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
     }
     catch (const Exiv2::AnyError& e)
     {
-	ostringstream  err;
+	std::ostringstream  err;
 	err << "unable to extract exif from " << filename_ << " - " << e;
 	throw std::underflow_error(err.str());
     }

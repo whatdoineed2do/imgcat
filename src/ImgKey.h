@@ -16,9 +16,7 @@
 
 #include <stdexcept>
 #include <iostream>
-#include <sstream>
 #include <string>
-using namespace  std;
 
 
 class ImgKey
@@ -26,44 +24,16 @@ class ImgKey
   public:
     struct Dt
     { 
-	Dt(const char* hms_, const char* ms_)  throw (std::invalid_argument)
-	    : hms(hms_), ms(ms_)
-	{
-	    struct tm  tm;
-	    memset(&tm, 0, sizeof(tm));
-	    if (strptime(hms_, "%Y:%m:%d %T", &tm) == NULL) {
-		ostringstream  err;
-		err << "invalid time '" << hms_ << "'";
-		throw invalid_argument(err.str());
-	    }
-	    _hms = mktime(&tm);
-	}
-
-	Dt(const time_t& t_)  throw (std::invalid_argument)
-	    : _hms(t_)
-	{
-	    struct tm  tm;
-	    localtime_r(&_hms, &tm);
-	    char  tmp[21];
-	    memset(tmp, 0, sizeof(tmp));
-	    strftime(tmp, 20, "%Y:%m:%d %T", &tm);
-	    hms = tmp;
-	}
-
+	Dt(const char* hms_, const char* ms_)  throw (std::invalid_argument);
+	Dt(const time_t& t_)  throw (std::invalid_argument);
 	Dt(const Dt& rhs_) : hms(rhs_.hms), ms(rhs_.ms), _hms(rhs_._hms)  { }
+	Dt(const Dt&& rhs_);
 
-	const Dt&  operator=(const Dt& rhs_)
-	{
-	    if (this != &rhs_) {
-		hms = rhs_.hms;
-		ms = rhs_.ms;
-		_hms = rhs_._hms;
-	    }
-	    return *this;
-	}
+	const Dt&  operator=(const Dt&  rhs_);
+	const Dt&  operator=(const Dt&& rhs_);
 
-	string  hms;
-	string  ms;
+	std::string  hms;
+	std::string  ms;
 	time_t  _hms;
 
 	bool  operator==(const Dt& rhs_) const
@@ -94,9 +64,17 @@ class ImgKey
           dt(rhs_.dt)
     { }
 
-    const string  mfctr;
-    const string  mdl;
-    const string  sn;
+    ImgKey(const ImgKey&& rhs_)
+    	: mfctr(std::move(rhs_.mfctr)), mdl(std::move(rhs_.mdl)), sn(std::move(rhs_.sn)),
+          dt(std::move(rhs_.dt))
+    { }
+
+    void operator=(const ImgKey&)  = delete;
+    void operator=(const ImgKey&&) = delete;
+
+    const std::string  mfctr;
+    const std::string  mdl;
+    const std::string  sn;
 
     const ImgKey::Dt   dt;
 
@@ -113,19 +91,11 @@ class ImgKey
     }
 
   private:
-    void operator=(const ImgKey&);
-
-    static const string  _ino2str(const ino_t& ino_)
-    {
-	stringstream  conv;
-	conv << ino_;
-	return conv.str();
-    }
-
+    static const std::string  _ino2str(const ino_t& ino_);
 };
 
 inline
-ostream& operator<<(ostream& os_, const ImgKey& obj_)
+std::ostream& operator<<(std::ostream& os_, const ImgKey& obj_)
 {
     return os_ << obj_.mfctr << ", " << obj_.mdl << " #" << obj_.sn << " [" << obj_.dt._hms << "]";
 }

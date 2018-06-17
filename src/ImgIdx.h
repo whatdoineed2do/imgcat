@@ -27,6 +27,9 @@ class ImgIdx
 	Ent(const ImgKey& key_) : key(key_) { }
 	Ent(const Ent& rhs_) : key(rhs_.key), imgs(rhs_.imgs) { }
 
+	Ent(const ImgKey&& key_) : key(std::move(key_)) { }
+	Ent(const Ent&& rhs_) : key(std::move(rhs_.key)), imgs(std::move(rhs_.imgs)) { }
+
 	ImgKey  key;
 	Imgs    imgs;
 
@@ -78,13 +81,20 @@ class ImgIdx
 
     ImgIdx(const char* id_) : id(id_)  { }
 
+    ImgIdx(const ImgIdx&) = delete;
+    ImgIdx(const ImgIdx&& rhs_) : _idx(std::move(rhs_._idx)), id(std::move(rhs_.id))
+    { }
+
+    void operator=(const ImgIdx&)  = delete;
+    void operator=(const ImgIdx&&) = delete;
+
     iterator        find(const ImgKey&)        throw ();
     const_iterator  find(const ImgKey&) const  throw ();
 
     /* this is the ONLY function that will create the Ent if not present
      */
     Imgs&        operator[](const ImgKey&)        throw ();
-    const Imgs&  operator[](const ImgKey&) const  throw (range_error);
+    const Imgs&  operator[](const ImgKey&) const  throw (std::range_error);
 
 
     void  sort()  throw();
@@ -92,14 +102,10 @@ class ImgIdx
 
     const std::string  id;
 
-
   private:
-    ImgIdx(const ImgIdx&);
-    void operator=(const ImgIdx&);
-
     ImgIdx::Idx  _idx;
 };
 
-typedef std::list<ImgIdx*>  ImgIdxs;
+using ImgIdxs = std::list<ImgIdx>;
 
 #endif

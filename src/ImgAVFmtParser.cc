@@ -30,7 +30,7 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
     imgdata.type = ImgData::VIDEO;
 
     {
-	ostringstream  tmp;
+	std::ostringstream  tmp;
 	tmp << thumbpath_ << "/" << st_.st_dev << "-" << st_.st_ino;
 	imgdata.thumb = std::move(tmp.str());
     }

@@ -44,11 +44,11 @@ ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_)  throw ()
     return p->imgs;
 }
 
-const ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_) const  throw (range_error)
+const ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_) const  throw (std::range_error)
 {
     const_iterator p;
     if ( (p = find(k_)) == end()) {
-	throw range_error("no such key");
+	throw std::range_error("no such key");
     }
     return p->imgs;
 }
