@@ -246,7 +246,9 @@ struct _Task
     // internal locks
     std::mutex  _m;
     std::condition_variable  _c;
+
     bool  _b;
+
 
 
     _Task(ImgThumbGen* task_, std::mutex& mtx_, std::condition_variable& cond_, unsigned& sem_)
@@ -255,6 +257,7 @@ struct _Task
     {
         f = std::async(std::launch::async, &_Task::run, this);
     }
+
 
     // mtx/conds are not movable
     _Task(_Task&&) = delete;
