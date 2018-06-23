@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
-AM_CPPFLAGS = -DHAVE_SAMPLE_ICC -DNEED_UCHAR_UINT_T
+AM_CPPFLAGS = -DHAVE_SAMPLE_ICC -DNEED_UCHAR_UINT_T -DIMGCAT_VERSION=$(shell git describe --long --tags --dirty --always)
 AM_CXXFLAGS = $(IMAGEMAGICK_CFLAGS) $(EXIV_CFLAGS) $(SAMPLEICC_CFLAGS) -Wno-deprecated -Wno-pointer-arith
 AM_LDFLAGS = $(IMAGEMAGICK_LIBS) $(EXIV_LIBS) 
 
@@ -15,6 +15,7 @@ libimgcat_la_LDFLAGS = $(AM_LDFLAGS) $(AVFORMAT_LIBS) $(AVUTIL_LIBS) $(FFMPEGTHU
 libimgcat_la_LIBADD = $(SAMPLEICC_LIBS)
 libimgcat_la_SOURCES = \
     ICCprofiles.c \
+    version.cc \
     ImgData.cc  \
     ImgMetaParser.cc  \
     ImgExifParser.cc  \

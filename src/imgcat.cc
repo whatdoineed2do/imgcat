@@ -33,6 +33,7 @@ typedef long long  longlong_t;
 #include "ImgAVFmtParser.h"
 #include "ImgHtml.h"
 #include "ImgThumbGen.h"
+#include "version.h"
 
 
 
@@ -379,7 +380,17 @@ int main(int argc, char **argv)
 	    case 'h':
 	    usage:
 	    default:
-		std::cout << "usage: " << argv[0] << " [-I " << DFLT_EXTNS << " -V " << DFLT_VEXTNS << " ]  [-t <thumbpath=.thumbs>]  [-s <thumbsize=150>]  [-T <max threads=" << tpsz << ">]  [-H <html output, try 'help'] <dir0> <dir1> <...>" << std::endl
+		const char*  argv0 = basename(argv[0]);
+
+		std::cout << argv0 << " " << Imgcat::version() << "\n\n"
+		          << "usage: " << argv0 << "\n"
+			  << "           [-I " << DFLT_EXTNS << "]\t\timage extns\n"
+			  << "           [-V " << DFLT_VEXTNS << "]\t\tvideo extns\n"
+			  << "           [-t <thumbpath=.thumbs>]\t\tlocation of thumbpath\n"
+			  << "           [-s <thumbsize=150>]\t\tgenerated thumb size\n"
+			  << "           [-T <max threads=" << tpsz << ">]\t\tthread pool size\n"
+			  << "           [-H <html output, try 'help']\t\tHTML output\n"
+			  << "           <dir0> <dir1> <...>" << std::endl
                      << "\n"
                      << "use MAGICK_TMPDIR= to are suitably free disk if default /tmp or /var/tmp dirs get full" << std::endl;
 		return 1;

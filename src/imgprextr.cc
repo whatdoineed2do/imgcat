@@ -55,6 +55,7 @@ typedef unsigned int   uint_t;
 #endif
 
 #include "ICCprofiles.h"
+#include "version.h"
 
 
 class _Buf
@@ -411,7 +412,8 @@ int main(int argc, char* const argv[])
 	    case 'h':
 	    default:
 usage:
-		cout << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile>] [-x] [-I] [-O <output size>]   file0 file1 .. fileN" << endl
+		cout << argv0 << " " << Imgcat::version() << "\n"
+		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile>] [-x] [-I] [-O <output size>]   file0 file1 .. fileN" << endl
 		     << "         -p    extract preview images to location=./" << endl
 		     << "         -c    perform ICC conversion to sRGB if possible" << endl
 		     << "         -x    exclude metadata" << endl
