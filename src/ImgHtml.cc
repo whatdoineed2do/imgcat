@@ -17,6 +17,7 @@ ImgHtml*  ImgHtml::create(const char* type_)
     };
 
     _HtmlGenerators  htmlgens[] = {
+        { ImgHtmlJG::ID,           []() { return (ImgHtml*)new ImgHtmlJG(); } },
         { ImgHtmlFlexboxSlide::ID, []() { return (ImgHtml*)new ImgHtmlFlexboxSlide(); } },
         { ImgHtmlFlexboxHide::ID,  []() { return (ImgHtml*)new ImgHtmlFlexboxHide(); } },
         { ImgHtmlClassic::ID,      []() { return (ImgHtml*)new ImgHtmlClassic(); } },

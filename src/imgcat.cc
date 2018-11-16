@@ -317,7 +317,7 @@ int main(int argc, char **argv)
     const char*  vextns = DFLT_VEXTNS;
 
     const char*  thumbpath = ".thumbs";
-    unsigned  thumbsize = 300;
+    unsigned  thumbsize = 640;
     int  width = 8;
     char*  p = NULL;
 

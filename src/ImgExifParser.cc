@@ -100,7 +100,6 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 	switch (image->imageType())
 	{
 	    case Exiv2::ImageType::nef:
-	    case Exiv2::ImageType::tiff:
 	    case Exiv2::ImageType::cr2:
 	    case Exiv2::ImageType::raf:
 		data.type = ImgData::EMBD_PREVIEW;

@@ -84,4 +84,22 @@ class ImgHtmlFlexboxHide : public ImgHtmlFlexbox
 };
 
 
+// justified gallery
+class ImgHtmlJG: public ImgHtml
+{
+  public:
+    static constexpr const char*  ID = "justified-gallery";
+
+    ImgHtmlJG() = default;
+    virtual ~ImgHtmlJG() = default;
+
+    std::string  generate(ImgHtml::Payloads&)  final;
+
+  private:
+    static const char*  _css_justified_gallery;
+    static const char*  _js_justified_gallery;
+    static const char*  _js_jquery;
+};
+
+
 #endif

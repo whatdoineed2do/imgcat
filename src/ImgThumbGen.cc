@@ -100,10 +100,10 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
 	}
 
 	/* make sure that the thumb is at least 'sz_'
-	 * wide
+	 * high 
 	 */
         std::ostringstream  tmp;
-	if (img_.rows() < img_.columns()) {
+	if (img_.columns() < img_.rows()) {
 	    tmp << "x" << sz_;
 	}
 	else {
@@ -111,6 +111,7 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
 	}
 	img_.scale(tmp.str().c_str());
 
+#if 0
 	const size_t   r = img_.rows();
 	const size_t   c = img_.columns();
 
@@ -127,6 +128,7 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
 	}
 
 	img_.crop( Magick::Geometry(sz_, sz_, coff, roff) );
+#endif
 	img_.write(path_.c_str());
     }
     catch (const std::exception& ex)
