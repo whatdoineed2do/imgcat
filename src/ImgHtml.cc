@@ -213,11 +213,6 @@ p1 {\
   margin: 0;\
   font-size: 80%;\
 }\
-img {\
-  width: 100%;\
-  height: auto;\
-  border-radius: 3px;\
-}\
 a {\
   color: white;\
 }\
