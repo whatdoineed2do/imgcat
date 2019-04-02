@@ -1,5 +1,5 @@
 AC_PREREQ(2.64)
-AC_INIT([imgcat], [1.1.5], [https://github.com/whatdoineed2do/imgcat/issues], [https://github.com/whatdoineed2do/imgcat], [whatdoineed2do@nospam-github.com])
+AC_INIT([imgcat], [m4_esyscmd([git describe --tags --dirty --always | tr -d '\n'])], [https://github.com/whatdoineed2do/imgcat/issues], [https://github.com/whatdoineed2do/imgcat], [whatdoineed2do@nospam-github.com])
 AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
 AC_CONFIG_MACRO_DIRS([m4])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
