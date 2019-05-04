@@ -7,6 +7,7 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
 #include <libavutil/avutil.h>
 #include <libavutil/dict.h>
 }
@@ -17,7 +18,6 @@ bool  ImgAVFmtParser::_initd = false;
 ImgAVFmtParser::ImgAVFmtParser()
 {
     if (!ImgAVFmtParser::_initd) {
-	av_register_all();
 	ImgAVFmtParser::_initd = true;
     }
 }
@@ -35,9 +35,8 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
 	imgdata.thumb = std::move(tmp.str());
     }
 
-#if 1
     AVFormatContext*  avfmt   = NULL;
-    AVCodecContext*   avcodec = NULL;
+    AVCodecParameters* avcodec = NULL;
 
     int ret;
     if ((ret = avformat_open_input(&avfmt, filename_, NULL, NULL)) != 0) {
@@ -59,7 +58,7 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
     avformat_find_stream_info(avfmt, NULL);
     int  vidstream = -1;
     for (int i=0; i< avfmt->nb_streams; i++) {
-	if (avfmt->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+	if (avfmt->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
 	    vidstream = i;
 	    break;
 	}
@@ -71,14 +70,14 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
 	throw std::underflow_error(err.str());
     }
 
-    avcodec = avfmt->streams[vidstream]->codec;
+    avcodec = avfmt->streams[vidstream]->codecpar;
     {
 	std::ostringstream  dim;
 	dim << avcodec->width << "x" << avcodec->height;
 	imgdata.xy = std::move(dim.str());
     }
 
-    imgdata.metavid.framerate = av_q2d(avcodec->framerate);
+    imgdata.metavid.framerate = av_q2d(avfmt->streams[vidstream]->avg_frame_rate);
 
     struct TagsOI {
 	//TagsOI(const char* tag_, const std::string& s_) : tag(tag_), s(s_) { }
@@ -108,13 +107,13 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
     }
 
     avformat_close_input(&avfmt);
-#endif
+
     time_t  t = st_.st_mtime;
     if (!imgdata.moddate.empty()) {
 	// should be ISO8601 - "2013-06-19T14:46:34.000000Z" or 2013-07-18T09:11:58+0100
 	char tmp[20];
 	strncpy(tmp, imgdata.moddate.c_str(), 19);
-	tmp[19] = NULL;
+	tmp[19] = '\0';
         struct tm  tm;
 	memset(&tm, 0, sizeof(tm));
 	if ( strptime(tmp, "%Y-%m-%dT%T", &tm)) {
