@@ -1,6 +1,7 @@
 #include "ImgThumbGen.h"
 
 #include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 
 #include <Magick++/Exception.h>
