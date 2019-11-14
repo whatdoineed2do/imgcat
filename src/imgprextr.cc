@@ -429,9 +429,9 @@ int main(int argc, char* const argv[])
 	    default:
 usage:
 		std::cout << argv0 << " " << Imgcat::version() << "\n"
-		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile>] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG]   file0 file1 .. fileN" << std::endl
+		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG]   file0 file1 .. fileN" << std::endl
 		     << "         -p    extract preview images to location=./" << std::endl
-		     << "         -c    perform ICC conversion to sRGB if possible" << std::endl
+		     << "         -c    perform ICC conversion if possible: srgb for internal sRGB or file location of target ICC" << std::endl
 		     << "         -x    exclude metadata" << std::endl
 		     << "         -I    dump ICC to disk for each image" << std::endl
 		     << "         -O    target (re)size" << std::endl
