@@ -310,6 +310,10 @@ int main(int argc, char* const argv[])
     const char*  thumbpath = "./";
     bool  dumpICC = false;
     bool  excludeMeta = false;
+    short convert = 0;
+#define CONVERT_ICC 1
+#define CONVERT_OUTPUT_FMT 2
+    std::string  outputfmt;
 
     const ICCprofiles*  tgtICC     = NULL;  // used to determine if ICC conversions req'd
     uchar_t*            nonSRGBicc = NULL;  // buf for non internal sRGB ICC
@@ -319,7 +323,7 @@ int main(int argc, char* const argv[])
     Magick::Geometry  target;
 
     char c;
-    while ( (c=getopt(argc, argv, "p:Ic:xhO:")) != EOF) {
+    while ( (c=getopt(argc, argv, "p:Ic:xhO:o:")) != EOF) {
 	switch (c)
 	{
 	    case 'p':
@@ -387,6 +391,7 @@ int main(int argc, char* const argv[])
 		    if (tgtICC == NULL) {
 			goto usage;
 		    }
+		    convert |= CONVERT_ICC;
 		}
 	    } break;
 
@@ -409,16 +414,30 @@ int main(int argc, char* const argv[])
 		{ }
 		break;
 
+	    case 'o':
+		if (strcasecmp(optarg, "JPEG") == 0 || strcasecmp(optarg, "PNG") == 0) {
+		    convert |= CONVERT_OUTPUT_FMT;
+		    outputfmt = optarg;
+		    std::transform(outputfmt.begin(), outputfmt.end(), outputfmt.begin(), ::toupper);
+		}
+		else {
+		    if (strcasecmp(optarg, "DEFAULT") != 0) {
+			std::cerr << argv0 << ": unsupported output format '" << optarg << "', will not convert output" << std::endl;
+		    }
+		}
+		break;
+
 	    case 'h':
 	    default:
 usage:
 		cout << argv0 << " " << Imgcat::version() << "\n"
-		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile>] [-x] [-I] [-O <output size>]   file0 file1 .. fileN" << endl
+		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile>] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG]   file0 file1 .. fileN" << endl
 		     << "         -p    extract preview images to location=./" << endl
 		     << "         -c    perform ICC conversion to sRGB if possible" << endl
 		     << "         -x    exclude metadata" << endl
 		     << "         -I    dump ICC to disk for each image" << endl
 		     << "         -O    target (re)size" << endl
+		     << "         -o    target output format" << endl
 		     << "  internal ICC profiles: ";
 
 		const ICCprofiles*  p = theSRGBICCprofiles;
@@ -521,7 +540,6 @@ thumbpatherr:
 	    cout << LOG_FILE_INFO << endl;
 
 	    Exiv2::PreviewImage  preview = loader.getPreviewImage(*prevp);
-	    strcat(path, preview.extension().c_str());
 
 	    Exiv2::Image::AutoPtr  upd = Exiv2::ImageFactory::open( preview.pData(), preview.size() );
 
@@ -537,7 +555,6 @@ thumbpatherr:
 
 	    Exiv2::ExifData&  exif = orig->exifData();
 	    Exiv2::ExifData::iterator  iccavail = _extractICC(buf, exif);
-	    bool  dumporig = true;
 
 	    if (iccavail != exif.end() && tgtICC)
 	    {
@@ -561,7 +578,6 @@ thumbpatherr:
 		    }
 		}
 
-		bool  convert = true;
 		if (nonSRGBicc == NULL)
 		{
 		    /* is this ICC profile sRGB - covnert only if not; the
@@ -578,94 +594,106 @@ thumbpatherr:
 
 		    if (p->profile) {
 			cout << argv0 << ": " << LOG_FILE_INFO << ": already sRGB (" << p->name << ") - not converting" << endl;
-			convert = false;
+			convert &= ~CONVERT_ICC;
 		    }
 		    else
 		    {
 			/* the ICC profile is different to the any of the known
 			 * sRGBs so we'll have to convert
 			 */
-		    }
-		}
-
-
-		if (convert)
-		{
-		    try
-		    {
-			if (!excludeMeta) {
-			    exif.erase(iccavail);
-			}
-
-			/* grab hold of underlying and updated data */
-			Exiv2::BasicIo&  rawio = upd->io();
-			rawio.seek(0, Exiv2::BasicIo::beg);
-
-			Magick::Image  img(Magick::Blob(rawio.mmap(), rawio.size()));
-
-			img.quality(100);
-			img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
-			img.profile("ICC", *outicc);
-			img.iccColorProfile(*outicc);
-			// exif not maintained!!!
-
-#ifdef HAVE_SAMPLE_ICC
-			string  desc, cprt;
-			_extractICCinfo(buf.buf, buf.bufsz, desc, cprt);
-#endif
-
-			cout << argv0 << ": " << LOG_FILE_INFO << ": ICC converted";
-#ifdef HAVE_SAMPLE_ICC
-			cout << " from " << desc;
-#endif
-			cout << endl;
-			if (target.isValid()) {
-			    img.resize(target);
-			}
-
-			if (excludeMeta) {
-			    img.write(path);
-			}
-			else {
-			    // because IM doesnt take across the Exif data, take the converted img back to Exiv2
-			    Magick::Blob  blob;
-			    img.write(&blob);
-
-			    Exiv2::Image::AutoPtr  cnvrted = Exiv2::ImageFactory::open((const unsigned char*)blob.data(), blob.length());
-			    cnvrted->readMetadata();
-			    cnvrted->setByteOrder(orig->byteOrder());
-			    cnvrted->setExifData(exif);
-			    cnvrted->writeMetadata();
-
-#ifdef __MINGW32__
-			    if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
-#else
-			    if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
-#endif
-				cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create converted preview - " << strerror(errno) << endl;
-				continue;
-			    }
-
-			    Exiv2::BasicIo&  rawio = cnvrted->io();
-			    rawio.seek(0, Exiv2::BasicIo::beg);
-
-			    if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
-				cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write converted preview - " << strerror(errno) << endl;
-			    }
-			    close(fd);
-			}
-			dumporig = false;
-		    }
-		    catch (const std::exception& ex)
-		    {
-			cout << argv0 << ": " << LOG_FILE_INFO << ": failed to write (sRGB converted) preview - " << ex.what() << endl;
+			convert |= CONVERT_ICC;
 		    }
 		}
 	    }
 
 
-	    if (dumporig)
+	    if (convert)
 	    {
+		try
+		{
+		    if (!excludeMeta) {
+			exif.erase(iccavail);
+		    }
+
+		    /* grab hold of underlying and updated data */
+		    Exiv2::BasicIo&  rawio = upd->io();
+		    rawio.seek(0, Exiv2::BasicIo::beg);
+
+		    Magick::Image  img(Magick::Blob(rawio.mmap(), rawio.size()));
+
+		    img.quality(100);
+		    if (convert & CONVERT_OUTPUT_FMT) {
+			char  extn[5];
+			if      (strcasecmp(outputfmt.c_str(), "JPEG") == 0) sprintf(extn, ".jpg");
+			else if (strcasecmp(outputfmt.c_str(), "PNG")  == 0) sprintf(extn, ".png");
+			else abort();
+			strcat(path, extn);
+			img.magick(outputfmt);
+		    }
+		    else {
+			strcat(path, preview.extension().c_str());
+		    }
+		    if (convert & CONVERT_ICC) {
+			img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
+			img.profile("ICC", *outicc);
+			img.iccColorProfile(*outicc);
+		    }
+		    // exif not maintained!!!
+
+#ifdef HAVE_SAMPLE_ICC
+		    string  desc, cprt;
+		    _extractICCinfo(buf.buf, buf.bufsz, desc, cprt);
+#endif
+
+		    cout << argv0 << ": " << LOG_FILE_INFO << ": ICC converted";
+#ifdef HAVE_SAMPLE_ICC
+		    cout << " from " << desc;
+#endif
+		    cout << endl;
+		    if (target.isValid()) {
+			img.resize(target);
+		    }
+
+		    if (excludeMeta) {
+			img.write(path);
+		    }
+		    else {
+			// because IM doesnt take across the Exif data, take the converted img back to Exiv2
+			Magick::Blob  blob;
+			img.write(&blob);
+
+			Exiv2::Image::AutoPtr  cnvrted = Exiv2::ImageFactory::open((const unsigned char*)blob.data(), blob.length());
+			cnvrted->readMetadata();
+			cnvrted->setByteOrder(orig->byteOrder());
+			cnvrted->setExifData(exif);
+			cnvrted->writeMetadata();
+
+#ifdef __MINGW32__
+			if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
+#else
+			if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
+#endif
+			    cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create converted preview - " << strerror(errno) << endl;
+			    continue;
+			}
+
+			Exiv2::BasicIo&  rawio = cnvrted->io();
+			rawio.seek(0, Exiv2::BasicIo::beg);
+
+			if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
+			    cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write converted preview - " << strerror(errno) << endl;
+			}
+			close(fd);
+		    }
+		}
+		catch (const std::exception& ex)
+		{
+		    cout << argv0 << ": " << LOG_FILE_INFO << ": failed to write (sRGB converted) preview - " << ex.what() << endl;
+		}
+	    }
+	    else
+	    {
+		strcat(path, preview.extension().c_str());
 #ifdef __MINGW32__
 		if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
 #else
