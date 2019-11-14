@@ -558,6 +558,7 @@ thumbpatherr:
 	    {
 		if (dumpICC)
 		{
+		    char  path[PATH_MAX];
 		    sprintf(path, "%s/%s.icc", thumbpath, basename(path1));
 
 #ifdef __MINGW32__
