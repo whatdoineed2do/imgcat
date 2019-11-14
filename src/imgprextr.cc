@@ -31,8 +31,6 @@
 #include <iostream>
 #include <cassert>
 
-using namespace  std;
-
 #include <exiv2/exiv2.hpp>
 #include <Magick++.h>
 #ifdef HAVE_SAMPLE_ICC
@@ -137,8 +135,8 @@ Exiv2::ExifData::iterator  _extractICC(_Buf& buf_, Exiv2::ExifData& exif_)
 	    if (d->toLong() == 2)
 	    {
 		// it was shot as aRGB - check the orig vs mod times
-		string  orig;
-		string  mod;
+		std::string  orig;
+		std::string  mod;
 
 		Exiv2::ExifData::iterator  e;
 		if ( (e = exif_.findKey(Exiv2::ExifKey("Exif.Image.DateTime")) ) != exif_.end()) {
@@ -176,38 +174,38 @@ void  _extractProfile(const void* data_, const size_t datasz_)
 	Magick::Image  magick(blob);
 
 	Magick::Blob   profile = magick.iccColorProfile();
-	cout << "data size = " << datasz_ << endl;
-	cout << "profile size = " << profile.length() << endl;
+	std::cout << "data size = " << datasz_ << std::endl;
+	std::cout << "profile size = " << profile.length() << std::endl;
 	if (profile.length() == 0) {
 #if 0
 	    // ??? lets be trying ICC/ICM
 	    const Magick::Blob   icc  = magick.profile("ICC");
 	    const Magick::Blob   icm  = magick.profile("ICM");
 
-	    cout << "  explicit icc len=" << icc.length() << endl
-	         << "  explicit icm len=" << icm.length() << endl;
+	    std::cout << "  explicit icc len=" << icc.length() << std::endl
+	         << "  explicit icm len=" << icm.length() << std::endl;
 
 	    mode_t  msk = umask(0);
 	    umask(msk);
 	    int  fd;
 	    if ( (fd = open("icc.icc", O_CREAT | O_TRUNC, 0666 & ~msk)) < 0) {
-		cerr << "  failed to create icc profile - " << strerror(errno) << endl;
+		std::cerr << "  failed to create icc profile - " << strerror(errno) << std::endl;
 	    }
 	    else 
 	    {
 		if ( write(fd, icc.data(), icc.length()) != profile.length()) {
-		    cerr << "  failed to write profile data - " << strerror(errno) << endl;
+		    std::cerr << "  failed to write profile data - " << strerror(errno) << std::endl;
 		}
 	    }
 	    close(fd);
 
 	    if ( (fd = open("icm.icc", O_CREAT | O_TRUNC, 0666 & ~msk)) < 0) {
-		cerr << "  failed to create icm profile - " << strerror(errno) << endl;
+		std::cerr << "  failed to create icm profile - " << strerror(errno) << std::endl;
 	    }
 	    else 
 	    {
 		if ( write(fd, icm.data(), icm.length()) != profile.length()) {
-		    cerr << "  failed to write profile data - " << strerror(errno) << endl;
+		    std::cerr << "  failed to write profile data - " << strerror(errno) << std::endl;
 		}
 	    }
 	    close(fd);
@@ -219,31 +217,31 @@ void  _extractProfile(const void* data_, const size_t datasz_)
 	umask(msk);
 	int  fd;
 	if ( (fd = open("profile.icc", O_CREAT | O_TRUNC, 0666 & ~msk)) < 0) {
-	    cerr << "  failed to create profile - " << strerror(errno) << endl;
+	    std::cerr << "  failed to create profile - " << strerror(errno) << std::endl;
 	    return;
 	}
 
 	if ( write(fd, profile.data(), profile.length()) != profile.length()) {
-	    cerr << "  failed to write profile data - " << strerror(errno) << endl;
+	    std::cerr << "  failed to write profile data - " << strerror(errno) << std::endl;
 	}
 	close(fd);
     }
     catch (const std::exception& ex)
     {
-	cerr << "failed to magick - " << ex.what() << endl;
+	std::cerr << "failed to magick - " << ex.what() << std::endl;
     }
 }
 
-string  _extraInfo(const Exiv2::Image& img_)
+std::string  _extraInfo(const Exiv2::Image& img_)
 {
-    string  mftr;
-    string  camera;
-    string  sn;
+    std::string  mftr;
+    std::string  camera;
+    std::string  sn;
 
     typedef Exiv2::ExifData::const_iterator (*EasyAccessFct)(const Exiv2::ExifData& ed);
     static const struct _EasyAccess {
 	EasyAccessFct find;
-	string*       target;
+	std::string*  target;
     } eatags[] = {
 	{ Exiv2::make,         &mftr   },
 	{ Exiv2::model,        &camera },
@@ -270,13 +268,13 @@ string  _extraInfo(const Exiv2::Image& img_)
 	mftr.replace(10, mftr.length(), 3, '.');
     }
 
-    ostringstream  dump;
+    std::ostringstream  dump;
     dump << mftr << " " << camera << " " << sn;
     return dump.str();
 }
 
 
-bool  _extractICCinfo(const void* data_, const size_t datasz_, string& desc_, string& cprt_)
+bool  _extractICCinfo(const void* data_, const size_t datasz_, std::string& desc_, std::string& cprt_)
 {
     CIccProfile*  icc = OpenIccProfile((icUInt8Number*)data_, datasz_);
     if (icc == NULL) {
@@ -352,12 +350,12 @@ int main(int argc, char* const argv[])
 			// not a trgt ICC that we know of internally
 			struct stat  st;
 			if (stat(optarg, &st) < 0) {
-			    cerr << argv0 << ": invalid ICC " << "'" << optarg << "' - " << strerror(errno) << endl;
+			    std::cerr << argv0 << ": invalid ICC " << "'" << optarg << "' - " << strerror(errno) << std::endl;
 			    return 1;
 			}
 
 			if (st.st_size == 0 || S_ISREG(st.st_mode) == 0) {
-			    cerr << argv0 << ": invalid ICC " << "'" << optarg << "'" << endl;
+			    std::cerr << argv0 << ": invalid ICC " << "'" << optarg << "'" << std::endl;
 			    return 1;
 			}
 
@@ -380,7 +378,7 @@ int main(int argc, char* const argv[])
 				tgtICC = (ICCprofiles*)nonSRGBicc;
 			    }
 			    else {
-				cerr << argv0 << ": unable to read ICC '" << optarg << "' - " << strerror(errno) << endl;
+				std::cerr << argv0 << ": unable to read ICC '" << optarg << "' - " << strerror(errno) << std::endl;
 				delete [] nonSRGBicc;
 				nonSRGBicc = NULL;
 			    }
@@ -407,7 +405,7 @@ int main(int argc, char* const argv[])
 		try
 		{
 		    const Magick::Geometry  g(optarg);
-		    const string  s = g;
+		    const std::string  s = g;
 		    target = s.c_str();
 		}
 		catch (...)
@@ -430,22 +428,22 @@ int main(int argc, char* const argv[])
 	    case 'h':
 	    default:
 usage:
-		cout << argv0 << " " << Imgcat::version() << "\n"
-		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile>] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG]   file0 file1 .. fileN" << endl
-		     << "         -p    extract preview images to location=./" << endl
-		     << "         -c    perform ICC conversion to sRGB if possible" << endl
-		     << "         -x    exclude metadata" << endl
-		     << "         -I    dump ICC to disk for each image" << endl
-		     << "         -O    target (re)size" << endl
-		     << "         -o    target output format" << endl
+		std::cout << argv0 << " " << Imgcat::version() << "\n"
+		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile>] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG]   file0 file1 .. fileN" << std::endl
+		     << "         -p    extract preview images to location=./" << std::endl
+		     << "         -c    perform ICC conversion to sRGB if possible" << std::endl
+		     << "         -x    exclude metadata" << std::endl
+		     << "         -I    dump ICC to disk for each image" << std::endl
+		     << "         -O    target (re)size" << std::endl
+		     << "         -o    target output format" << std::endl
 		     << "  internal ICC profiles: ";
 
 		const ICCprofiles*  p = theSRGBICCprofiles;
 		while (p->profile) {
-		    cout << " '" << p->name << "' (" << p->length << "bytes)";
+		    std::cout << " '" << p->name << "' (" << p->length << "bytes)";
 		    ++p;
 		}
-		cout << endl;
+		std::cout << std::endl;
 		return 1;
 	}
     }
@@ -470,35 +468,35 @@ usage:
 	}
 	else {
 thumbpatherr:
-	    cerr << argv0 << ": invalid thumbpath '" << thumbpath << "' - " << strerror(errno) << endl;
+	    std::cerr << argv0 << ": invalid thumbpath '" << thumbpath << "' - " << strerror(errno) << std::endl;
 	    return 1;
 	}
     }
 
 
     if (optind == argc) {
-	cerr << argv0 << ": no input files" << endl;
+	std::cerr << argv0 << ": no input files" << std::endl;
 	goto usage;
     }
 
     if (tgtICC == NULL) {
-	cout << argv0 << ": preview extract only (no ICC conversions)" << endl;
+	std::cout << argv0 << ": preview extract only (no ICC conversions)" << std::endl;
     }
     else
     {
-	cout << argv0 << ": ICC target=" << (nonSRGBicc ? "external" : "internal") << " '" << tgtICC->name << "'";
+	std::cout << argv0 << ": ICC target=" << (nonSRGBicc ? "external" : "internal") << " '" << tgtICC->name << "'";
 
 #ifdef HAVE_SAMPLE_ICC
-	string  tgtICCdesc = "<no internal desc>";
-	string  tgtICCcprt = "<no internal copyright>";
+	std::string  tgtICCdesc = "<no internal desc>";
+	std::string  tgtICCcprt = "<no internal copyright>";
 
 	if ( !_extractICCinfo(tgtICC->profile, tgtICC->length, tgtICCdesc, tgtICCcprt)) {
-	    cerr << "  invalid ICC fmt" << endl;
+	    std::cerr << "  invalid ICC fmt" << std::endl;
 	    return -1;
 	}
-	cout << "  " << tgtICCdesc << " (c) " << tgtICCcprt << endl;
+	std::cout << "  " << tgtICCdesc << " (c) " << tgtICCcprt << std::endl;
 #else
-	cout << endl;
+	std::cout << std::endl;
 #endif
     }
 
@@ -524,7 +522,7 @@ thumbpatherr:
 	    // grabbing the largest preview
 	    Exiv2::PreviewPropertiesList::iterator prevp = list.begin();
 	    if (prevp == list.end()) {
-		cout << filename << ":  no preview" << endl;
+		std::cout << filename << ":  no preview" << std::endl;
 		continue;
 	    }
 
@@ -535,9 +533,9 @@ thumbpatherr:
 	    strcpy(path1, filename);
 	    sprintf(path, "%s/%s", thumbpath, basename(path1));
 
-#define LOG_FILE_INFO  filename << ": " << setw(8) << prevp->size_ << " bytes, " << prevp->width_ << "x" << prevp->height_ << "  " << _extraInfo(*orig)
+#define LOG_FILE_INFO  filename << ": " << std::setw(8) << prevp->size_ << " bytes, " << prevp->width_ << "x" << prevp->height_ << "  " << _extraInfo(*orig)
 
-	    cout << LOG_FILE_INFO << endl;
+	    std::cout << LOG_FILE_INFO << std::endl;
 
 	    Exiv2::PreviewImage  preview = loader.getPreviewImage(*prevp);
 
@@ -567,12 +565,12 @@ thumbpatherr:
 #else
 		    if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
-			cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << endl;
+			std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << std::endl;
 		    }
 		    else
 		    {
 			if (write(fd, buf.buf, buf.bufsz) != buf.bufsz) {
-			    cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write ICC - " << strerror(errno) << endl;
+			    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write ICC - " << strerror(errno) << std::endl;
 			}
 			close(fd);
 		    }
@@ -593,7 +591,7 @@ thumbpatherr:
 		    }
 
 		    if (p->profile) {
-			cout << argv0 << ": " << LOG_FILE_INFO << ": already sRGB (" << p->name << ") - not converting" << endl;
+			std::cout << argv0 << ": " << LOG_FILE_INFO << ": already sRGB (" << p->name << ") - not converting" << std::endl;
 			convert &= ~CONVERT_ICC;
 		    }
 		    else
@@ -641,15 +639,15 @@ thumbpatherr:
 		    // exif not maintained!!!
 
 #ifdef HAVE_SAMPLE_ICC
-		    string  desc, cprt;
+		    std::string  desc, cprt;
 		    _extractICCinfo(buf.buf, buf.bufsz, desc, cprt);
 #endif
 
-		    cout << argv0 << ": " << LOG_FILE_INFO << ": ICC converted";
+		    std::cout << argv0 << ": " << LOG_FILE_INFO << ": ICC converted";
 #ifdef HAVE_SAMPLE_ICC
-		    cout << " from " << desc;
+		    std::cout << " from " << desc;
 #endif
-		    cout << endl;
+		    std::cout << std::endl;
 		    if (target.isValid()) {
 			img.resize(target);
 		    }
@@ -673,7 +671,7 @@ thumbpatherr:
 #else
 			if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
-			    cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create converted preview - " << strerror(errno) << endl;
+			    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create converted preview - " << strerror(errno) << std::endl;
 			    continue;
 			}
 
@@ -681,14 +679,14 @@ thumbpatherr:
 			rawio.seek(0, Exiv2::BasicIo::beg);
 
 			if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
-			    cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write converted preview - " << strerror(errno) << endl;
+			    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write converted preview - " << strerror(errno) << std::endl;
 			}
 			close(fd);
 		    }
 		}
 		catch (const std::exception& ex)
 		{
-		    cout << argv0 << ": " << LOG_FILE_INFO << ": failed to write (sRGB converted) preview - " << ex.what() << endl;
+		    std::cout << argv0 << ": " << LOG_FILE_INFO << ": failed to write (sRGB converted) preview - " << ex.what() << std::endl;
 		}
 	    }
 	    else
@@ -699,7 +697,7 @@ thumbpatherr:
 #else
 		if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
-		    cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create preview - " << strerror(errno) << endl;
+		    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create preview - " << strerror(errno) << std::endl;
 		    continue;
 		}
 
@@ -707,14 +705,14 @@ thumbpatherr:
 		rawio.seek(0, Exiv2::BasicIo::beg);
 
 		if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
-		    cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write preview - " << strerror(errno) << endl;
+		    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write preview - " << strerror(errno) << std::endl;
 		}
 		close(fd);
 	    }
 	}
 	catch (const Exiv2::AnyError& e)
 	{
-	    cout << filename << ":  unable to extract preview/reset exif - " << e << endl;
+	    std::cout << filename << ":  unable to extract preview/reset exif - " << e << std::endl;
 	    continue;
 	}
     }
