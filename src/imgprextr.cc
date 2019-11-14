@@ -610,7 +610,7 @@ thumbpatherr:
 	    {
 		try
 		{
-		    if (!excludeMeta) {
+		    if (!excludeMeta && iccavail != exif.end() ) {
 			exif.erase(iccavail);
 		    }
 
