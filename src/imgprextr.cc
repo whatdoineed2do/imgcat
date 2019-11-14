@@ -595,9 +595,6 @@ thumbpatherr:
 		    {
 			if (!excludeMeta) {
 			    exif.erase(iccavail);
-			    upd->setByteOrder(orig->byteOrder());
-			    upd->setExifData(exif);
-			    upd->writeMetadata();
 			}
 
 			/* grab hold of underlying and updated data */
@@ -610,6 +607,7 @@ thumbpatherr:
 			img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
 			img.profile("ICC", *outicc);
 			img.iccColorProfile(*outicc);
+			// exif not maintained!!!
 
 #ifdef HAVE_SAMPLE_ICC
 			string  desc, cprt;
@@ -622,10 +620,40 @@ thumbpatherr:
 #endif
 			cout << endl;
 			if (target.isValid()) {
-				img.resize(target);
+			    img.resize(target);
 			}
-			img.write(path);
 
+			if (excludeMeta) {
+			    img.write(path);
+			}
+			else {
+			    // because IM doesnt take across the Exif data, take the converted img back to Exiv2
+			    Magick::Blob  blob;
+			    img.write(&blob);
+
+			    Exiv2::Image::AutoPtr  cnvrted = Exiv2::ImageFactory::open((const unsigned char*)blob.data(), blob.length());
+			    cnvrted->readMetadata();
+			    cnvrted->setByteOrder(orig->byteOrder());
+			    cnvrted->setExifData(exif);
+			    cnvrted->writeMetadata();
+
+#ifdef __MINGW32__
+			    if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
+#else
+			    if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
+#endif
+				cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create converted preview - " << strerror(errno) << endl;
+				continue;
+			    }
+
+			    Exiv2::BasicIo&  rawio = cnvrted->io();
+			    rawio.seek(0, Exiv2::BasicIo::beg);
+
+			    if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
+				cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write converted preview - " << strerror(errno) << endl;
+			    }
+			    close(fd);
+			}
 			dumporig = false;
 		    }
 		    catch (const std::exception& ex)
