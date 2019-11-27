@@ -19,8 +19,11 @@ libimgcat_la_SOURCES = \
     ImgData.cc  \
     ImgMetaParser.cc  \
     ImgExifParser.cc  \
+    ImgOut.cc  \
+    ImgOutJson.cc  \
     ImgHtml.cc  \
     ImgHtmlJG.cc \
+    ImgOutJson.cc \
     ImgAVFmtParser.cc \
     ImgIdx.cc  \
     ImgKey.cc \

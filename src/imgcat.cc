@@ -31,6 +31,7 @@ typedef long long  longlong_t;
 #include "ImgIdx.h"
 #include "ImgExifParser.h"
 #include "ImgAVFmtParser.h"
+#include "ImgOut.h"
 #include "ImgHtml.h"
 #include "ImgThumbGen.h"
 #include "version.h"
@@ -324,7 +325,7 @@ int main(int argc, char **argv)
     bool  verbosetime = false;
     unsigned  tpsz = 8;
 
-    ImgHtml*  htmlgen = NULL;
+    ImgOut*  htmlgen = NULL;
 
     const std::chrono::time_point<std::chrono::system_clock>  start = std::chrono::system_clock::now();
 
@@ -373,7 +374,7 @@ int main(int argc, char **argv)
 
             case 'H':
             {
-                if ( (htmlgen = ImgHtml::create(optarg)) == NULL) {
+                if ( (htmlgen = ImgOut::create(optarg)) == NULL) {
                 }
             } break;
 
@@ -398,7 +399,7 @@ int main(int argc, char **argv)
     }
 
     if (htmlgen == NULL) {
-        htmlgen = ImgHtml::create(NULL);  // ask for the default
+        htmlgen = ImgOut::create(NULL);  // ask for the default
     }
 
 
@@ -440,7 +441,7 @@ int main(int argc, char **argv)
 		DLOG(src << "  n=" << n << " tokens");
 
 		*target = new char*[n+1];
-		memset(*target, 0, n+1);
+		memset(*target, 0, n+1); // BUG?
 		char**  eptr = *target;
 
 		char*  pc = NULL;
@@ -450,6 +451,7 @@ int main(int argc, char **argv)
 		    const uint_t  n = strlen(tok);
 		    *eptr++ = strcpy(new char[n+1], tok);
 		}
+                *eptr++ = NULL;
 	    }
 	    delete []  e;
 	}
@@ -564,7 +566,7 @@ int main(int argc, char **argv)
         std::condition_variable  cond;
 
         ImgThumbGens  imgthumbs;
-        ImgHtml::Payloads  htmlpayloads;
+        ImgOut::Payloads  htmlpayloads;
 
 	std::cout << "generating thumbnail previews.." << std::endl;
 	for (auto&  idx : idxs)
@@ -596,7 +598,7 @@ int main(int argc, char **argv)
 	    }
 
 
-            htmlpayloads.emplace_back(ImgHtml::Payload(idx));
+            htmlpayloads.emplace_back(ImgOut::Payload(idx));
 
 	    for (auto&  t : tasks)
 	    {
@@ -624,7 +626,7 @@ int main(int argc, char **argv)
 	    }
 	}
 
-        std::cout << "generating html output" << std::endl;
+        std::cout << "generating output" << std::endl;
         {
             mode_t  umsk = umask(0);
             umask(umsk);
@@ -638,15 +640,15 @@ int main(int argc, char **argv)
             else
             {
                 int  fd;
-                if ( (fd = open("index.html", O_WRONLY | O_CREAT | O_TRUNC, 0666 & ~umsk)) < 0) {
-                    std::cerr << "failed to create index.html - " << strerror(errno) << " - will use stdout" << std::endl;
+                if ( (fd = open(htmlgen->filename().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666 & ~umsk)) < 0) {
+                    std::cerr << "failed to create " << htmlgen->filename() << " - " << strerror(errno) << " - will use stdout" << std::endl;
                     std::cout << out << std::endl;
 		    allok = false;
                 }
                 else
                 {
                     if ( write(fd, out.c_str(), out.size()) != out.size()) {
-                        std::cerr << "failed to write all data to index.html - " << strerror(errno) << std::endl;
+                        std::cerr << "failed to write all data - " << strerror(errno) << std::endl;
                         std::cout << out << std::endl;
 			allok = false;
                     }

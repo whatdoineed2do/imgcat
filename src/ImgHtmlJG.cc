@@ -4,7 +4,7 @@
 #include <iomanip>
 
 
-std::string  ImgHtmlJG::generate(ImgHtml::Payloads& payloads_)
+std::string  ImgHtmlJG::generate(ImgOut::Payloads& payloads_)
 {
     static const char* const  hdr = "\
 <html lang=en><meta charset=utf-8><head>\
