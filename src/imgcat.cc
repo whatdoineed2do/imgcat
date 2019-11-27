@@ -450,6 +450,7 @@ int main(int argc, char **argv)
 		    const uint_t  n = strlen(tok);
 		    *eptr++ = strcpy(new char[n+1], tok);
 		}
+                *eptr++ = NULL;
 	    }
 	    delete []  e;
 	}
