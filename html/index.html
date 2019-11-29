@@ -46,17 +46,6 @@ p { color: white;
   opacity: 1;
   transition: opacity 1s ease;
 }
-.justified-gallery > div > .caption,
-.justified-gallery > div > .caption.caption-visible {
-  display: inline !important;
-  background-color: transparant !important;
-  opacity: 0.1 !important;
-  text-color: white !important;
-}
-.justified-gallery > div > .caption.caption-visible {
-  opacity: 0.5 !important;
-}
-
 </style>
 <script>
 $(function() {
@@ -206,16 +195,20 @@ $(document).ready(function() {
             for (var j=0; j<block.images.length; j++) {
               var obj = block.images[j];
               var caption = '';
+	      if (obj.comment && obj.comment.length > 0) {
+		caption = '<div class="caption">' + obj.comment + '</div>';
+	      }
+              var alts = '';
               for (var k=0; k<obj.alt.length; ++k) {
                 if (k == 0) {
-                  caption = '<div class="caption">';
+                  alts = '<div class="caption_alt" style="background: silver; text-align: center;">';
                 }
-                caption += '<a href=' + obj.alt[k] + '># </a>'
+		alts += '<p><a href=' + obj.alt[k] + '># </a></p>'
                 if (k == obj.alt.length -1) {
-                  caption += '</div>';
+                  alts += '</div>';
                 }
               }
-              $("#images").append('<div><a class="img-item" rating=' + obj.rating + ' href="' + obj.src + '" target="_blank"><img src="' + obj.thumb + '"/></a>' + caption + '</div>');
+              $("#images").append('<div><a class="img-item" rating=' + obj.rating + ' href="' + obj.src + '" target="_blank"><img src="' + obj.thumb + '"/></a>' + caption + '</div>' + alts);
             }
             imgs_ttl += block.images.length;
             $("#total").text(imgs_ttl + ' images');
