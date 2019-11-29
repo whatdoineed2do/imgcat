@@ -158,10 +158,11 @@ $(document).ready(function() {
 	    $("#images").append('<div id=img_block' + ibi + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + encodeURI(block.path) + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + ' .. ' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(block.cameras) + '</p><p>' + jltos(block.lenses) + '</p><p>' + jltos(block.focal_lengths) + '</p></div>');
             for (var j=0; j<block.images.length; j++) {
               var obj = block.images[j];
-              var caption = '';
+	      var caption = '<div class="caption">' + obj.datetime;
 	      if (obj.comment && obj.comment.length > 0) {
-		caption = '<div class="caption">' + obj.comment + '</div>';
+	        caption += '<p>' + obj.comment;
 	      }
+	      caption += '</div>';
               var alts = '';
               for (var k=0; k<obj.alt.length; ++k) {
                 if (k == 0) {
