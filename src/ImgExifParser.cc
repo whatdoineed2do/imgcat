@@ -27,6 +27,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
     std::string   mftr;
     std::string   dtorg;
     std::string   dtorgsub;
+    std::string   lens;
     float    orientation = 1;
 
     static const struct _EasyAccess {
@@ -75,6 +76,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 
     static const _MiscTags  xmptags[] = {
 	{ "  XMP Rating", "Xmp.xmp.Rating", &data.rating },
+	{ "  XMP Lens name", "Xmp.aux.Lens", &lens, NULL, NULL },
 	{ NULL, NULL, NULL }
     };
 
@@ -214,6 +216,10 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 		*mp->target = xp->print(&ed);
 	    }
 	    ++mp;
+	}
+	// special hack for lens names
+	if (!lens.empty()) {
+	    data.metaimg.lens = std::move(lens);
 	}
 
 	if (thumbpath_)
