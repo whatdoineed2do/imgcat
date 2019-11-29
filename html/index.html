@@ -126,7 +126,7 @@ $(document).ready(function() {
 
   <body>
     <div class="header">
-      <a href="/flickr" class="logo">ImgCat</a>
+      <a href="/" class="logo">ImgCat</a>
       <div class="header-right">
         <a class="active" href="#" onclick=_scrollNext()";return false;" id="total">loading...</a>
         <a id="loaded"></a>
@@ -140,6 +140,7 @@ $(document).ready(function() {
       <script type="text/javascript">
         function jltos(jsonobj) {
 	  var s = '';
+          jsonobj.sort((a,b) => (a.count < b.count) ? 1:0);
 	  for (var i=0; i<jsonobj.length; ++i) {
 	    s += '<b>' + jsonobj[i].id + '</b>: ' + jsonobj[i].count + ' ';
 	  }
