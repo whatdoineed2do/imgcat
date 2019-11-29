@@ -8,7 +8,16 @@ The intended use is for cataloguing large collections of images (particularly RA
 
 For (Nikon NEF/Canon CR2/Fuji RAF) RAW files, the tool will extract the largest embedded thumbnails from the RAW file to generate thumbnail.
 
-The (default) generated HTML is responsive and uses `flexbox` to fit rows of images to browser size with `jquery` providing functionality for navigation between index directories (via `j`/`k` or `left`/`right` arrows) and (XMP) rated files can be display-toggled via `r` or `0`-`5`.
+The (default) generated output is javascript file containing a JSON object of the scan results; a corresponding set of `html/js/css` exists that will render the results using [justified gallery](https://miromannino.github.io/Justified-Gallery/) - navigation between index directories (via `j`/`k` or `left`/`right` arrows) and (XMP) rated files can be display-toggled `0`-`5`.
+```
+# produces data.js
+$ imgcat -t ./tn photos/2019-*
+
+# obtain HTML after index'ing and thumb generation
+$ cp -r <imgcat>/html/* .
+
+# view index.html
+```
 
 #### Extending for other formats
 To recognise other RAW formats, supported by Exiv2, update `main` and `DFLT_EXTNS` along with `ImgExifParser.cc` and the block that assigns `data.type = ImgData::EMBD_PREVIEW`
