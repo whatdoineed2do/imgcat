@@ -325,7 +325,7 @@ int main(int argc, char **argv)
     bool  verbosetime = false;
     unsigned  tpsz = 8;
 
-    ImgOut*  htmlgen = NULL;
+    ImgOut*  outgen = NULL;
 
     const std::chrono::time_point<std::chrono::system_clock>  start = std::chrono::system_clock::now();
 
@@ -374,7 +374,7 @@ int main(int argc, char **argv)
 
             case 'H':
             {
-                if ( (htmlgen = ImgOut::create(optarg)) == NULL) {
+                if ( (outgen = ImgOut::create(optarg)) == NULL) {
                 }
             } break;
 
@@ -398,8 +398,8 @@ int main(int argc, char **argv)
 	}
     }
 
-    if (htmlgen == NULL) {
-        htmlgen = ImgOut::create(NULL);  // ask for the default
+    if (outgen == nullptr) {
+        outgen = ImgOut::create(NULL);  // ask for the default
     }
 
 
@@ -632,7 +632,7 @@ int main(int argc, char **argv)
             umask(umsk);
 
             // generate the html tbl
-            const std::string  out = htmlgen->generate(htmlpayloads);
+            const std::string  out = outgen->generate(htmlpayloads);
             if (out.size() == 0) {
                 std::cerr << "generated output is empty!" << std::endl;
 		allok = false;
@@ -640,8 +640,8 @@ int main(int argc, char **argv)
             else
             {
                 int  fd;
-                if ( (fd = open(htmlgen->filename().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666 & ~umsk)) < 0) {
-                    std::cerr << "failed to create " << htmlgen->filename() << " - " << strerror(errno) << " - will use stdout" << std::endl;
+                if ( (fd = open(outgen->filename().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666 & ~umsk)) < 0) {
+                    std::cerr << "failed to create " << outgen->filename() << " - " << strerror(errno) << " - will use stdout" << std::endl;
                     std::cout << out << std::endl;
 		    allok = false;
                 }
@@ -669,7 +669,7 @@ int main(int argc, char **argv)
     std::cout << "completed in " << elapsed.count() << " secs" << std::endl;
 
     idxs.clear();
-    delete htmlgen;
+    delete outgen;
 
     char**  pp = extn;
     while (*pp) {

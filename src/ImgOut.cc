@@ -14,12 +14,12 @@ using Fctry = T*(*)();
 ImgOut*  ImgOut::create(const char* type_)
     throw (std::range_error)
 {
-    struct _HtmlGenerators {
+    struct OutGenerators {
         const char*  id;
         Fctry<ImgOut>  create;
     };
 
-    _HtmlGenerators  htmlgens[] = {
+    OutGenerators  outgens[] = {
         { ImgOutJsonJS::ID,        []() { return (ImgOut*)new ImgOutJsonJS(); } },
         { ImgOutJson::ID,         []() { return (ImgOut*)new ImgOutJson(); } },
         { ImgHtmlJG::ID,           []() { return (ImgOut*)new ImgHtmlJG(); } },
@@ -31,11 +31,11 @@ ImgOut*  ImgOut::create(const char* type_)
 
     const bool options = type_ && strcasecmp("help", type_) == 0; 
     if (options) {
-        std::cout << "html options[]=";
+        std::cout << "out options[]=";
     }
 
     ImgOut*  h = NULL;
-    _HtmlGenerators*  p = htmlgens;
+    OutGenerators*  p = outgens;
     while (h == NULL && p->id) 
     {
         if (options) {
