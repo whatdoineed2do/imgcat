@@ -148,10 +148,14 @@ $(document).ready(function() {
 
         function loadimages(limit) {
           var imgdata = JSON.parse(jsondata);
-          img_block_ttl = imgdata.data.length;
+          img_block_ttl = imgdata.data.length + 1 ;
+
+	  $("#images").append('<div id=img_block0 style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><h1></h1><h5>' + imgdata.count + ' entries / ' + imgdata.data.length + ' sections<h5><h6>' + imgdata.date_start + ' .. ' + imgdata.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(imgdata.cameras) + '</p><p>' + jltos(imgdata.lenses) + '</p><p>' + jltos(imgdata.focal_lengths) + '</p></div>');
+
           for (var i=0; i<imgdata.data.length; i++) {
             var block = imgdata.data[i];
-	    $("#images").append('<div id=img_block' + i + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + block.path + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + '..' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(block.cameras) + '</p><p>' + jltos(block.lenses) + '</p><p>' + jltos(block.focal_lengths) + '</p></div>');
+	    var ibi = i + 1;
+	    $("#images").append('<div id=img_block' + ibi + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + block.path + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + ' .. ' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(block.cameras) + '</p><p>' + jltos(block.lenses) + '</p><p>' + jltos(block.focal_lengths) + '</p></div>');
             for (var j=0; j<block.images.length; j++) {
               var obj = block.images[j];
               var caption = '';

@@ -24,6 +24,8 @@ std::string  ImgOutJson::filename()
 std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
 {
     unsigned  imgttl = 0;
+    std::string  datestart;
+    std::string  dateend;
     std::ostringstream  body;
     body << "{ \"data\": [";
 
@@ -73,6 +75,9 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
                 continue;
             }
             body << ", \"date_start\": \"" << dtsf->key.dt.hms << '"';
+	    if (datestart.empty() || datestart > dtsf->key.dt.hms) {
+		datestart = dtsf->key.dt.hms;
+	    }
 
             for (ImgIdx::const_reverse_iterator  dts=idx.crbegin(); dts!=idx.crend(); ++dts) {
                 if (dts->key.dt.hms.empty()) {
@@ -80,6 +85,9 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
                 }
 
                 body << ", \"date_end\": \"" << dts->key.dt.hms << '"';
+		if (dateend.empty() || dateend < dts->key.dt.hms) {
+		    dateend = dts->key.dt.hms;
+		}
                 break;
             }
 
@@ -114,7 +122,7 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
         body << "] }";
     }
 
-    body << "], \"count\":" << imgttl << ", \"blocks\":" << payloads_.size();
+    body << "], \"count\":" << imgttl << ", \"blocks\":" << payloads_.size() << ", \"date_start\": \"" << datestart << "\", \"date_end\": \"" << dateend << "\"";
     _genJsonStat(body, ttlstats);
     body << " }";
     return std::move(body.str());
