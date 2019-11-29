@@ -374,7 +374,8 @@ int main(int argc, char **argv)
 
             case 'H':
             {
-                if ( (outgen = ImgOut::create(optarg)) == NULL) {
+                if ( (outgen = ImgOut::create(optarg)) == NULL && strcasecmp(optarg, "help") == 0) {
+		    return 1;
                 }
             } break;
 
@@ -388,9 +389,9 @@ int main(int argc, char **argv)
 			  << "           [-I " << DFLT_EXTNS << "]\t\timage extns\n"
 			  << "           [-V " << DFLT_VEXTNS << "]\t\tvideo extns\n"
 			  << "           [-t <thumbpath=.thumbs>]\t\tlocation of thumbpath\n"
-			  << "           [-s <thumbsize=150>]\t\tgenerated thumb size\n"
+			  << "           [-s <thumbsize=" << thumbsize << ">]\t\tgenerated thumb size\n"
 			  << "           [-T <max threads=" << tpsz << ">]\t\tthread pool size\n"
-			  << "           [-H <html output, try 'help']\t\tHTML output\n"
+			  << "           [-H <output, try 'help']\t\toutput type\n"
 			  << "           <dir0> <dir1> <...>" << std::endl
                      << "\n"
                      << "use MAGICK_TMPDIR= to are suitably free disk if default /tmp or /var/tmp dirs get full" << std::endl;
