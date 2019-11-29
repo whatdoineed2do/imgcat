@@ -155,7 +155,7 @@ $(document).ready(function() {
           for (var i=0; i<imgdata.data.length; i++) {
             var block = imgdata.data[i];
 	    var ibi = i + 1;
-	    $("#images").append('<div id=img_block' + ibi + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + block.path + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + ' .. ' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(block.cameras) + '</p><p>' + jltos(block.lenses) + '</p><p>' + jltos(block.focal_lengths) + '</p></div>');
+	    $("#images").append('<div id=img_block' + ibi + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + encodeURI(block.path) + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + ' .. ' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(block.cameras) + '</p><p>' + jltos(block.lenses) + '</p><p>' + jltos(block.focal_lengths) + '</p></div>');
             for (var j=0; j<block.images.length; j++) {
               var obj = block.images[j];
               var caption = '';
@@ -167,12 +167,12 @@ $(document).ready(function() {
                 if (k == 0) {
                   alts = '<div class="caption_alt" style="background: silver; text-align: center;">';
                 }
-		alts += '<p><a href=' + obj.alt[k] + '># </a></p>'
+		alts += '<p><a href=' + encodeURI(obj.alt[k]) + '># </a></p>'
                 if (k == obj.alt.length -1) {
                   alts += '</div>';
                 }
               }
-              $("#images").append('<div><a class="img-item" rating=' + obj.rating + ' href="' + obj.src + '" target="_blank"><img src="' + obj.thumb + '"/></a>' + caption + '</div>' + alts);
+              $("#images").append('<div><a class="img-item" rating=' + obj.rating + ' href="' + encodeURI(obj.src) + '" target="_blank"><img src="' + obj.thumb + '"/></a>' + caption + '</div>' + alts);
             }
             imgs_ttl += block.images.length;
             $("#total").text(imgs_ttl + ' images');
