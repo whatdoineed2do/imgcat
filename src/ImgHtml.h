@@ -1,14 +1,12 @@
 #ifndef IMG_HTML_H
 #define IMG_HTML_H
 
-#include <memory>
-#include <list>
+#include "ImgOut.h"
 
-#include "ImgIdx.h"
-#include "ImgThumbGen.h"
+#include <string>
 
 
-class ImgHtml
+class ImgHtml : public ImgOut
 {
    public:
      virtual ~ImgHtml() = default;
@@ -18,20 +16,8 @@ class ImgHtml
      ImgHtml(const ImgHtml&&) = delete;
      ImgHtml& operator=(const ImgHtml&&) = delete;
 
-     struct Payload {
-         Payload(ImgIdx& idx_) : idx(idx_) { }
-         Payload(Payload&& rhs_) : idx(rhs_.idx), thumbs(std::move(rhs_.thumbs)) { }
-
-         ImgIdx& idx;
-         ImgThumbGens thumbs;  // dont own 
-     };
-     typedef std::list<ImgHtml::Payload>  Payloads;
-
-
-     virtual std::string  generate(Payloads&) = 0;
-
-     //static std::unique_ptr<ImgHtml>  create(const char* type_)  throw (std::range_error);
-     static ImgHtml*  create(const char* type_)  throw (std::range_error);
+     std::string  filename() final
+     { return std::string("index.html"); }
 
    protected:
      ImgHtml() = default;
@@ -44,7 +30,7 @@ struct ImgHtmlClassic : public ImgHtml
 
     ImgHtmlClassic() = default;
 
-    std::string  generate(ImgHtml::Payloads&)  override;
+    std::string  generate(ImgOut::Payloads&)  override;
 };
 
 class ImgHtmlFlexbox : public ImgHtml
@@ -53,7 +39,7 @@ class ImgHtmlFlexbox : public ImgHtml
     ImgHtmlFlexbox() = default;
     virtual ~ImgHtmlFlexbox() = default;
 
-    std::string  generate(ImgHtml::Payloads&)  final;
+    std::string  generate(ImgOut::Payloads&)  final;
 
   protected:
     virtual const char*  _jsblock() = 0;
@@ -93,7 +79,7 @@ class ImgHtmlJG: public ImgHtml
     ImgHtmlJG() = default;
     virtual ~ImgHtmlJG() = default;
 
-    std::string  generate(ImgHtml::Payloads&)  final;
+    std::string  generate(ImgOut::Payloads&)  final;
 
   private:
     static const char*  _css_justified_gallery;

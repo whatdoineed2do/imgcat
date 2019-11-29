@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+
+    <script type='text/javascript' src="js/jquery.min.js"></script>
+    <script type='text/javascript' src="js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="css/justifiedGallery.min.css"/>
+    <script type='text/javascript' src="js/jquery.justifiedGallery.min.js"></script>
+    <script type='text/javascript' src="data.js"></script>
+
+    <link rel="stylesheet" href="css/flackr.css"/>
+
+    <script>
+      var img_block_ttl = 0;
+      var imgs_ttl = 0;
+      var rating = 0;
+    </script>
+<style>
+a { color: white; }
+.jg-faded {
+  opacity: 0.3;
+  transition: opacity 1s ease;
+}
+h1 { color: white; 
+    font-size: 2.5em;
+    text-align: center;
+    padding: 15px;
+}
+h5 { color: white; 
+    font-size: 0.9em;
+    text-align: center;
+}
+h6 { color: white; 
+    font-size: 0.65em;
+    text-align: center;
+}
+p { color: white;
+    font-size: 0.65em;
+}
+
+.jg-unfaded {
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+</style>
+<script>
+$(function() {
+// Select all links with hashes
+$('a[href*="\\#"]')
+  // Remove links that don't actually link to anything
+  .not('[href="\\#"]')
+  .not('[href="\\#0"]')
+  .click(function(event) {
+    // On-page links
+    if (
+      location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '')
+      &&
+      location.hostname == this.hostname
+    ) {
+      // Figure out element to scroll to
+      var target = $(this.hash);
+      target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
+      // Does a scroll target exist?
+      if (target.length) {
+        // Only prevent default if animation is actually gonna happen
+        event.preventDefault();
+        $('html, body').animate({
+          scrollTop: target.offset().top
+        }, 1000, function() {
+          // Callback after animation
+          // Must change focus!
+          var $target = $(target);
+          $target.focus();
+          if ($target.is(":focus")) { // Checking if the target was focused
+            return false;
+          } else {
+            $target.attr('tabindex','-1'); // Adding tabindex for elements not focusable
+            $target.focus(); // Set focus again
+          };
+        });
+      }
+    }
+  });
+});
+</script>
+<script>
+$(document).ready(function() {
+  var i = 0;
+
+  function  _scrollNext() {
+    i = ++i % img_block_ttl;
+    var target = "#img_block" + i;
+    $('html,body').animate({scrollTop: $(target).offset().top}, 1000)
+  };
+  function _scrollPrev() {
+    if (!i) i = img_block_ttl;
+    --i;
+    var target = "#img_block" + i;
+    $('html,body').animate({scrollTop: $(target).offset().top}, 1000)
+  };
+
+
+  $('#next').click(function() {
+    _scrollNext();
+    return false;
+  });
+
+  $('#prev').click(function() {
+    _scrollPrev();
+    return false;
+  });
+
+  function _showRatingGT(r_)
+  {
+    $('.img-item').each(function(){
+      var  item_rating = $(this).attr("rating");
+      if (item_rating < r_) {
+        $(this).removeClass("jg-unfaded");
+        $(this).addClass("jg-faded");
+      }
+      else {
+        $(this).removeClass("jg-faded");
+        $(this).addClass("jg-unfaded");
+      }
+    });
+  }
+
+  $('body').keydown(function(evnt) 
+  {
+    switch (evnt.keyCode) {
+      case 74:
+      case 39:
+	evnt.preventDefault();
+	_scrollNext();
+	break;
+
+      case 75:
+      case 37:
+	evnt.preventDefault();
+	_scrollPrev();
+	break;
+
+      case 48:  //0
+      case 49:
+      case 50:
+      case 51:
+      case 52:
+      case 53:
+	_showRatingGT(evnt.keyCode - 48);
+	break;
+
+      case 67:  //c
+	break;
+
+      case 82:  //r
+       break;
+    }
+  });
+});
+</script>
+  </head>
+
+  <body>
+    <div class="header">
+      <a href="/flickr" class="logo">ImgCat</a>
+      <div class="header-right">
+        <a class="active" href="#" onclick=_scrollNext()";return false;" id="total">loading...</a>
+        <a id="loaded"></a>
+      </div>
+    </div> 
+
+    <div class="content">
+      <div id="images" class="justified-gallery">
+      </div>
+
+      <script type="text/javascript">
+        function jltos(jsonobj) {
+	  var s = '';
+	  for (var i=0; i<jsonobj.length; ++i) {
+	    s += '<b>' + jsonobj[i].id + '</b>: ' + jsonobj[i].count + ' ';
+	  }
+	  return s;
+	}
+
+        function loadimages(limit) {
+          var imgdata = JSON.parse(jsondata);
+          img_block_ttl = imgdata.data.length;
+          for (var i=0; i<imgdata.data.length; i++) {
+            var block = imgdata.data[i];
+	    $("#images").append('<div id=img_block' + i + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + block.path + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + '..' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(block.cameras) + '</p><p>' + jltos(block.lenses) + '</p><p>' + jltos(block.focal_lengths) + '</p></div>');
+            for (var j=0; j<block.images.length; j++) {
+              var obj = block.images[j];
+              var caption = '';
+	      if (obj.comment && obj.comment.length > 0) {
+		caption = '<div class="caption">' + obj.comment + '</div>';
+	      }
+              var alts = '';
+              for (var k=0; k<obj.alt.length; ++k) {
+                if (k == 0) {
+                  alts = '<div class="caption_alt" style="background: silver; text-align: center;">';
+                }
+		alts += '<p><a href=' + obj.alt[k] + '># </a></p>'
+                if (k == obj.alt.length -1) {
+                  alts += '</div>';
+                }
+              }
+              $("#images").append('<div><a class="img-item" rating=' + obj.rating + ' href="' + obj.src + '" target="_blank"><img src="' + obj.thumb + '"/></a>' + caption + '</div>' + alts);
+            }
+            imgs_ttl += block.images.length;
+            $("#total").text(imgs_ttl + ' images');
+            $("#images").justifiedGallery('norewind');
+          }
+        }
+
+        $("#images").justifiedGallery({
+          rowHeight : 200,
+          lastRow : 'nojustify',
+          margins: 5,
+          border: 20
+        });
+
+        loadimages();
+    </script>
+  </div>
+  </body>
+</html>
