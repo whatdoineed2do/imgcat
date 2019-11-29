@@ -27,6 +27,33 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
     std::ostringstream  body;
     body << "{ \"data\": [";
 
+    ImgIdx::Stats  ttlstats;
+    auto  _genJsonStat = [&ttlstats](std::ostringstream& body, const ImgIdx::Stats& stats)
+    {
+	struct P {
+	    const char*  category;
+	    const ImgIdx::Stats::_Stat&  stat;
+	}
+	all[] = {
+	    { "cameras",    stats.camera },
+	    { "lenses",     stats.lens },
+	    { "focal_lengths", stats.focallen },
+	    { NULL,         stats.camera },
+	};
+	P*  p = all;
+	while (p->category) {
+	    body << ", \"" << p->category << "\": [";
+	    bool i = true;
+	    for (const auto&  si : p->stat) {
+		body << (i ? ' ' : ',') << "{\"id\": \"" << (si.first.empty() ? "n/a" : si.first.c_str()) << "\", \"count\":" << si.second << "}";
+		i = false;
+	    }
+	    ++p;
+	    body << "]";
+	}
+    };
+
+
     unsigned  pblck = 0;
     for (auto& p : payloads_)
     {
@@ -58,30 +85,9 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
 
             break;
         }
-        const ImgIdx::Stats  stats = idx.stats();
-        {
-            struct P {
-                const char*  category;
-                const ImgIdx::Stats::_Stat&  stat;
-            }
-            all[] = {
-                { "cameras",    stats.camera },
-                { "lenses",     stats.lens },
-                { "focal_lengths", stats.focallen },
-                { NULL,         stats.camera },
-            };
-            P*  p = all;
-            while (p->category) {
-                body << ", \"" << p->category << "\": [";
-                bool i = true;
-                for (const auto&  si : p->stat) {
-                    body << (i ? ' ' : ',') << "{\"id\": \"" << (si.first.empty() ? "n/a" : si.first.c_str()) << "\", \"count\":" << si.second << "}";
-                    i = false;
-                }
-                ++p;
-                body << "]";
-            }
-        }
+	const auto& stats = idx.stats();
+	_genJsonStat(body, stats);
+	ttlstats += stats;
 
         body << ", \"images\": ["; 
         bool j = true;
@@ -108,6 +114,8 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
         body << "] }";
     }
 
-    body << "], \"count\":" << imgttl << ", \"blocks\":" << payloads_.size() << " }";
+    body << "], \"count\":" << imgttl << ", \"blocks\":" << payloads_.size();
+    _genJsonStat(body, ttlstats);
+    body << " }";
     return std::move(body.str());
 }

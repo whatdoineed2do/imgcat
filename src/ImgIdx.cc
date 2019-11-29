@@ -80,3 +80,22 @@ ImgIdx::Stats  ImgIdx::stats()
     }
     return stats;
 }
+
+
+ImgIdx::Stats&  ImgIdx::Stats::operator+=(const ImgIdx::Stats& rhs_)
+{
+    std::list<std::pair<ImgIdx::Stats::_Stat*, const ImgIdx::Stats::_Stat*>>  l = { 
+	std::make_pair(&camera,   &rhs_.camera),
+	std::make_pair(&lens,     &rhs_.lens),
+	std::make_pair(&focallen, &rhs_.focallen)
+    };
+    for (const auto& i : l) {
+	auto&  x = *i.first;
+	auto&  y = *i.second;
+
+	for (const auto& j : y) {
+	    x[j.first] += j.second;
+	}
+    }
+    return *this;
+}

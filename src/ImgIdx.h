@@ -44,6 +44,8 @@ class ImgIdx
         _Stat  camera;
         _Stat  lens;
         _Stat  focallen;
+
+	Stats&  operator+=(const ImgIdx::Stats&);
     };
 
     typedef Idx::iterator        iterator;
