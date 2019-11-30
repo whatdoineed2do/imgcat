@@ -120,6 +120,7 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
         }
 
         body << "] }";
+        std::cout << std::endl;
     }
 
     body << "], \"count\":" << imgttl << ", \"blocks\":" << payloads_.size() << ", \"date_start\": \"" << datestart << "\", \"date_end\": \"" << dateend << "\"";
