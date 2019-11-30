@@ -458,6 +458,11 @@ int main(int argc, char **argv)
 	}
     }
 
+    if (optind == argc) {
+        std::cerr << "no directories to index\n";
+        goto usage;
+    }
+
 
 
     if (thumbpath) {
