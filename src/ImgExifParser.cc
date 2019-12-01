@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <strings.h>
 
+#include <cmath>
 #include <sstream>
 
 #include <exiv2/exiv2.hpp>
@@ -164,6 +165,10 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 	    }
 	    ++ep;
 	}
+        if (!data.metaimg.focallen.empty()) {
+            // exiv2 gives this back like "105.0 mm" - round the focal length
+            data.metaimg.focallen = std::to_string((unsigned)std::round(std::stof(data.metaimg.focallen))) + " mm";
+        }
 
 	const _MiscTags*  mp = misctags;
 	while (mp->desc)
