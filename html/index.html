@@ -140,7 +140,6 @@ $(document).ready(function() {
       <script type="text/javascript">
         function jltos(jsonobj) {
 	  var s = '';
-          jsonobj.sort((a,b) => (a.count < b.count) ? 1:0);
 	  for (var i=0; i<jsonobj.length; ++i) {
 	    s += '<b>' + jsonobj[i].id + '</b>: ' + jsonobj[i].count + ' ';
 	  }

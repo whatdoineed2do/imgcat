@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
+#include <vector>
 
 std::string  ImgOutJsonJS::filename()
 {
@@ -45,8 +47,15 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
 	P*  p = all;
 	while (p->category) {
 	    body << ", \"" << p->category << "\": [";
+
+            std::vector<std::pair<std::string, unsigned>>  v(p->stat.begin(), p->stat.end());
+            std::sort(v.begin(), v.end(),
+                     [](const auto& a_, const auto& b_) {
+                          return a_.second > b_.second || (a_.second == b_.second && a_.first < b_.first);
+                      });
+
 	    bool i = true;
-	    for (const auto&  si : p->stat) {
+	    for (const auto&  si : v) {
 		body << (i ? ' ' : ',') << "{\"id\": \"" << (si.first.empty() ? "n/a" : si.first.c_str()) << "\", \"count\":" << si.second << "}";
 		i = false;
 	    }
