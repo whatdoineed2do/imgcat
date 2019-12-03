@@ -76,6 +76,8 @@ $(document).ready(function() {
 
   function _showRatingGT(r_)
   {
+    if (rating == r_) return;
+    rating = r_;
     $('.img-item').each(function(){
       var  item_rating = $(this).attr("rating");
       if (item_rating < r_) {
@@ -141,7 +143,7 @@ $(document).ready(function() {
         function jltos(jsonobj) {
 	  var s = '';
 	  for (var i=0; i<jsonobj.length; ++i) {
-	    s += '<b>' + jsonobj[i].id + '</b>: ' + jsonobj[i].count + ' ';
+	    s += '<b>' + jsonobj[i].id + '</b>: ' + jsonobj[i].count + '  ';
 	  }
 	  return s;
 	}
