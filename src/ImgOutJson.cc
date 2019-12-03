@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <vector>
+#include <functional>
 
 std::string  ImgOutJsonJS::filename()
 {
@@ -31,8 +32,11 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
     std::ostringstream  body;
     body << "{ \"data\": [";
 
+    std::hash<std::string>  hasher;
+    const std::string  na = "n/a";
+
     ImgIdx::Stats  ttlstats;
-    auto  _genJsonStat = [&ttlstats](std::ostringstream& body, const ImgIdx::Stats& stats)
+    auto  _genJsonStat = [&ttlstats, &hasher, &na](std::ostringstream& body, const ImgIdx::Stats& stats)
     {
 	struct P {
 	    const char*  category;
@@ -56,7 +60,8 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
 
 	    bool i = true;
 	    for (const auto&  si : v) {
-		body << (i ? ' ' : ',') << "{\"id\": \"" << (si.first.empty() ? "n/a" : si.first.c_str()) << "\", \"count\":" << si.second << "}";
+		const std::string&  id = si.first.empty() ? na : si.first;
+		body << (i ? ' ' : ',') << "{\"id\": \"" << id  << "\", \"hashid\": " << hasher(id) << ", \"count\":" << si.second << "}";
 		i = false;
 	    }
 	    ++p;
@@ -124,7 +129,10 @@ std::string  ImgOutJson::generate(ImgOut::Payloads& payloads_)
                     k = false;
                 }
             }
-            body << "]}";
+            const std::string&  x = img.metaimg.lens.empty() ? na : img.metaimg.lens;
+            const std::string&  y = img.metaimg.camera.empty() ? na : img.metaimg.camera;
+            const std::string&  z = img.metaimg.focallen.empty() ? na : img.metaimg.focallen;
+            body << "], \"hashid\": [ " << hasher(x) << ", " <<  hasher(y) << ", " << hasher(z) << " ] }";
             j = false;
         }
 
