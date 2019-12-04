@@ -81,12 +81,10 @@ $(document).ready(function() {
     $('.img-item').each(function(){
       var  item_rating = $(this).attr("rating");
       if (item_rating < r_) {
-        $(this).removeClass("jg-unfaded");
-        $(this).addClass("jg-faded");
+        $(this).removeClass("jg-unfaded").addClass("jg-faded");
       }
       else {
-        $(this).removeClass("jg-faded");
-        $(this).addClass("jg-unfaded");
+        $(this).removeClass("jg-faded").addClass("jg-unfaded");
       }
     });
   }
@@ -140,25 +138,36 @@ $(document).ready(function() {
       </div>
 
       <script type="text/javascript">
-        function _highlight(what_) {
+        function _highlight(blockid_, what_) {
           $('.img-item').each(function(){
-            var  item = $(this).attr("hashid");
-            if (what_ == 0 || item.match(what_)) {
-              $(this).removeClass("jg-faded");
-              $(this).addClass("jg-unfaded");
+            if (what_ == 0) {
+              $(this).removeClass("jg-faded").addClass("jg-unfaded");
             }
             else {
-              $(this).removeClass("jg-unfaded");
-              $(this).addClass("jg-faded");
+              var  blockid = $(this).attr("id");
+              if (blockid_ == 0 || blockid_ == blockid) {
+                var  item = $(this).attr("hashid");
+                var  withrating = true;
+                if (rating > 0) {
+                  var  item_rating = $(this).attr("rating");
+                  withrating = item_rating >= rating;
+                }
+                if (item.includes(what_) && withrating) {
+                  $(this).removeClass("jg-faded").addClass("jg-unfaded");
+                }
+                else {
+                  $(this).removeClass("jg-unfaded").addClass("jg-faded");
+                }
+              }
             }
           });
         }
 
-        function jltos(what_, jsonobj) {
+        function jltos(blockid_, what_, jsonobj) {
 	  var s = '';
-          s += '<b><a href="#" onclick="_highlight(0);">' + what_ + ':</a></b> ' + jsonobj.length;
+          s += '<b><a href="#" onclick="_highlight(' + blockid_ + ', 0); return false;">' + what_ + ':</a></b> ' + jsonobj.length;
 	  for (var i=0; i<jsonobj.length; ++i) {
-            s += '  <b><a href="#" onclick="_highlight(' +  jsonobj[i].hashid + ');">' + jsonobj[i].id + '</a></b>: ' + jsonobj[i].count + '  ';
+            s += '  <b><a href="#" onclick="_highlight(' + blockid_ + ',' +  jsonobj[i].hashid + '); return false;">' + jsonobj[i].id + '</a></b>: ' + jsonobj[i].count + '  ';
 	  }
 	  return s;
 	}
@@ -167,12 +176,12 @@ $(document).ready(function() {
           var imgdata = JSON.parse(jsondata);
           img_block_ttl = imgdata.data.length + 1 ;
 
-	  $("#images").append('<div id=img_block0 style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><h1></h1><h5>' + imgdata.count + ' entries / ' + imgdata.data.length + ' sections<h5><h6>' + imgdata.date_start + ' .. ' + imgdata.date_end + '</h6><div style="padding: 13px;"><p>' + jltos("camera", imgdata.cameras) + '</p><p>' + jltos("lens", imgdata.lenses) + '</p><p>' + jltos("focal_length", imgdata.focal_lengths) + '</p></div>');
+	  $("#images").append('<div id=img_block0 style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><h1></h1><h5>' + imgdata.count + ' entries / ' + imgdata.data.length + ' sections<h5><h6>' + imgdata.date_start + ' .. ' + imgdata.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(0, "camera", imgdata.cameras) + '</p><p>' + jltos(0, "lens", imgdata.lenses) + '</p><p>' + jltos(0, "focal_length", imgdata.focal_lengths) + '</p></div>');
 
           for (var i=0; i<imgdata.data.length; i++) {
             var block = imgdata.data[i];
 	    var ibi = i + 1;
-	    $("#images").append('<div id=img_block' + ibi + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + encodeURI(block.path) + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + ' .. ' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos("camera", block.cameras) + '</p><p>' + jltos("lens", block.lenses) + '</p><p>' + jltos("focal_length", block.focal_lengths) + '</p></div>');
+	    $("#images").append('<div id=img_block' + ibi + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + encodeURI(block.path) + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + ' .. ' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(ibi, "camera", block.cameras) + '</p><p>' + jltos( ibi, "lens", block.lenses) + '</p><p>' + jltos(ibi, "focal_length", block.focal_lengths) + '</p></div>');
             for (var j=0; j<block.images.length; j++) {
               var obj = block.images[j];
 	      var caption = '<div class="caption">' + obj.datetime;
@@ -190,7 +199,7 @@ $(document).ready(function() {
                   alts += '</div>';
                 }
               }
-              $("#images").append('<div><a class="img-item" rating=' + obj.rating + ' hashid="' + obj.hashid + '" href="' + encodeURI(obj.src) + '" target="_blank"><img src="' + obj.thumb + '"/></a>' + caption + '</div>' + alts);
+              $("#images").append('<div><a class="img-item" id=' + ibi + ' rating=' + obj.rating + ' hashid="' + obj.hashid + '" href="' + encodeURI(obj.src) + '" target="_blank"><img src="' + obj.thumb + '"/></a>' + caption + '</div>' + alts);
             }
             imgs_ttl += block.images.length;
             $("#total").text(imgs_ttl + ' images');
