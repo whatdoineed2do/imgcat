@@ -172,8 +172,14 @@ $(document).ready(function() {
 	  return s;
 	}
 
-        function loadimages(limit) {
-          var imgdata = JSON.parse(jsondata);
+        function loadimages() {
+	  var imgdata = { };
+	  try {
+	    imgdata = JSON.parse((typeof jsondata == "undefined" ?  '{ "data": [], "count": 0, "cameras": [], "lenses": [], "focal_lengths": [] }' : jsondata));
+	  }
+	  catch (e) {
+	  imgdata = JSON.parse('{ "data": [], "count": 0, "cameras": [ {"id": "' + e.message + '", "hashid": 0, "count": 0 } ], "lenses": [], "focal_lengths": [] }');
+	  }
           img_block_ttl = imgdata.data.length + 1 ;
 
 	  $("#images").append('<div id=img_block0 style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><h1></h1><h5>' + imgdata.count + ' entries / ' + imgdata.data.length + ' sections<h5><h6>' + imgdata.date_start + ' .. ' + imgdata.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(0, "camera", imgdata.cameras) + '</p><p>' + jltos(0, "lens", imgdata.lenses) + '</p><p>' + jltos(0, "focal_length", imgdata.focal_lengths) + '</p></div>');
@@ -182,6 +188,7 @@ $(document).ready(function() {
             var block = imgdata.data[i];
 	    var ibi = i + 1;
 	    $("#images").append('<div id=img_block' + ibi + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + encodeURI(block.path) + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + ' .. ' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(ibi, "camera", block.cameras) + '</p><p>' + jltos( ibi, "lens", block.lenses) + '</p><p>' + jltos(ibi, "focal_length", block.focal_lengths) + '</p></div>');
+	    $("#total").text(imgs_ttl + ' images');
             for (var j=0; j<block.images.length; j++) {
               var obj = block.images[j];
 	      var caption = '<div class="caption">' + obj.datetime;
@@ -202,17 +209,17 @@ $(document).ready(function() {
               $("#images").append('<div><a class="img-item" id=' + ibi + ' rating=' + obj.rating + ' hashid="' + obj.hashid + '" href="' + encodeURI(obj.src) + '" target="_blank"><img src="' + obj.thumb + '"/></a>' + caption + '</div>' + alts);
             }
             imgs_ttl += block.images.length;
-            $("#total").text(imgs_ttl + ' images');
-            $("#images").justifiedGallery('norewind');
           }
+	  $("#total").text(imgs_ttl + ' images');
+	  $("#images").justifiedGallery('norewind');
         }
 
-        $("#images").justifiedGallery({
+	$("#images").justifiedGallery({
           rowHeight : 200,
           lastRow : 'nojustify',
           margins: 5,
           border: 20
-        });
+	});
 
         loadimages();
     </script>
