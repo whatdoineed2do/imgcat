@@ -49,17 +49,17 @@ p { color: white;
 </style>
 <script>
 $(document).ready(function() {
-  var i = 0;
+  var blk_cur = 0;
 
   function  _scrollNext() {
-    i = ++i % img_block_ttl;
-    var target = "#img_block" + i;
+    blck_cur = ++blk_cur % img_block_ttl;
+    var target = "#img_block" + blk_cur;
     $('html,body').animate({scrollTop: $(target).offset().top}, 1000)
   };
   function _scrollPrev() {
-    if (!i) i = img_block_ttl;
-    --i;
-    var target = "#img_block" + i;
+    if (!blk_cur) blk_cur = img_block_ttl;
+    --blk_cur;
+    var target = "#img_block" + blk_cur;
     $('html,body').animate({scrollTop: $(target).offset().top}, 1000)
   };
 
