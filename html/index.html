@@ -18,6 +18,25 @@
       var img_block_ttl = 0;
       var imgs_ttl = 0;
       var rating = 0;
+      var blk_cur = 0;
+
+      function  _scrollNext() {
+	blck_cur = ++blk_cur % img_block_ttl;
+	var target = "#img_block" + blk_cur;
+	$('html,body').animate({scrollTop: $(target).offset().top}, 1000)
+      };
+      function _scrollPrev() {
+	if (!blk_cur) blk_cur = img_block_ttl;
+	--blk_cur;
+	var target = "#img_block" + blk_cur;
+	$('html,body').animate({scrollTop: $(target).offset().top}, 1000)
+      };
+
+      function  _scrollTo(blk_tgt_) {
+	blk_cur = blk_tgt_;
+	_scrollNext();
+      }
+
     </script>
 <style>
 a { color: white; }
@@ -49,21 +68,6 @@ p { color: white;
 </style>
 <script>
 $(document).ready(function() {
-  var blk_cur = 0;
-
-  function  _scrollNext() {
-    blck_cur = ++blk_cur % img_block_ttl;
-    var target = "#img_block" + blk_cur;
-    $('html,body').animate({scrollTop: $(target).offset().top}, 1000)
-  };
-  function _scrollPrev() {
-    if (!blk_cur) blk_cur = img_block_ttl;
-    --blk_cur;
-    var target = "#img_block" + blk_cur;
-    $('html,body').animate({scrollTop: $(target).offset().top}, 1000)
-  };
-
-
   $('#next').click(function() {
     _scrollNext();
     return false;
@@ -187,7 +191,7 @@ $(document).ready(function() {
           for (var i=0; i<imgdata.data.length; i++) {
             var block = imgdata.data[i];
 	    var ibi = i + 1;
-	    $("#images").append('<div id=img_block' + ibi + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + encodeURI(block.path) + '><h1>' + block.id + '</h1></a><h5>' + block.count + ' entries<h5><h6>' + block.date_start + ' .. ' + block.date_end + '</h6><div style="padding: 13px;"><p>' + jltos(ibi, "camera", block.cameras) + '</p><p>' + jltos( ibi, "lens", block.lenses) + '</p><p>' + jltos(ibi, "focal_length", block.focal_lengths) + '</p></div>');
+	    $("#images").append('<div id=img_block' + ibi + ' style="width: ' + window.innerWidth + 'px; background: black; color: grey;"><a href=' + encodeURI(block.path) + '><h1>' + block.id + '</h1></a><a href="#" onclick="_scrollTo(' + ibi + ')"><h5>' + block.count + ' entries<h5><h6>' + block.date_start + ' .. ' + block.date_end + '</h6></a><div style="padding: 13px;"><p>' + jltos(ibi, "camera", block.cameras) + '</p><p>' + jltos( ibi, "lens", block.lenses) + '</p><p>' + jltos(ibi, "focal_length", block.focal_lengths) + '</p></div>');
 	    $("#total").text(imgs_ttl + ' images');
             for (var j=0; j<block.images.length; j++) {
               var obj = block.images[j];
