@@ -324,13 +324,14 @@ int main(int argc, char **argv)
 
     bool  verbosetime = false;
     unsigned  tpsz = 8;
+    bool  generate = true;
 
     ImgOut*  outgen = NULL;
 
     const std::chrono::time_point<std::chrono::system_clock>  start = std::chrono::system_clock::now();
 
     int  c;
-    while ( (c = getopt(argc, argv, "I:V:t:T:s:w:H:hv")) != EOF)
+    while ( (c = getopt(argc, argv, "I:V:t:T:ns:w:H:hv")) != EOF)
     {
 	switch (c)
 	{
@@ -379,6 +380,11 @@ int main(int argc, char **argv)
                 }
             } break;
 
+	    case 'n':
+            {
+                generate = false;
+            } break;
+
 	    case 'h':
 	    usage:
 	    default:
@@ -388,6 +394,7 @@ int main(int argc, char **argv)
 		          << "usage: " << argv0 << "\n"
 			  << "           [-I " << DFLT_EXTNS << "]\t\timage extns\n"
 			  << "           [-V " << DFLT_VEXTNS << "]\t\tvideo extns\n"
+			  << "           [-n]\t\tdo NOT generate thumbs\n"
 			  << "           [-t <thumbpath=.thumbs>]\t\tlocation of thumbpath\n"
 			  << "           [-s <thumbsize=" << thumbsize << ">]\t\tgenerated thumb size\n"
 			  << "           [-T <max threads=" << tpsz << ">]\t\tthread pool size\n"
@@ -574,6 +581,11 @@ int main(int argc, char **argv)
         ImgThumbGens  imgthumbs;
         ImgOut::Payloads  htmlpayloads;
 
+        auto thumbgener = [&generate](const ImgIdx::Ent& imgidx_, unsigned thumbsize_) {
+            return generate ? new ImgThumbGen(imgidx_, thumbsize_) :
+                              new ImgThumbNoGen(imgidx_, thumbsize_);
+        };
+
 	std::cout << "generating thumbnail previews.." << std::endl;
 	for (auto&  idx : idxs)
 	{
@@ -597,7 +609,7 @@ int main(int argc, char **argv)
 		/* grab the exif and thumb from the very first item which is
 		 * supposed to be the primary image
 		 */
-		tasks.push_back(new _Task(new ImgThumbGen(j, thumbsize), mtx, cond, --tpsz) );
+		tasks.push_back(new _Task(thumbgener(j, thumbsize), mtx, cond, --tpsz) );
 
                 lck.unlock();
 		std::cout << "#" << std::flush;

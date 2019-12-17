@@ -31,7 +31,7 @@ class ImgThumbGen
 	  thumbsize(thumbsize_)
     { }
 
-    ~ImgThumbGen() = default;
+    virtual ~ImgThumbGen() = default;
 
     ImgThumbGen(const ImgThumbGen&) = delete;
     ImgThumbGen& operator=(const ImgThumbGen&) = delete;
@@ -44,7 +44,7 @@ class ImgThumbGen
     ImgThumbGen& operator=(ImgThumbGen&& rhs_) = delete;
 
 
-    void  generate();
+    virtual void  generate();
 
 
     const ImgIdx::Ent&  idx() const
@@ -102,5 +102,10 @@ class ImgThumbGen
 
 using ImgThumbGens = std::list<ImgThumbGen*>;
 
+struct ImgThumbNoGen : public ImgThumbGen {
+    ImgThumbNoGen(const ImgIdx::Ent& imgidx_, unsigned thumbsize_) : ImgThumbGen(imgidx_, thumbsize_) { }
+
+    void  generate() override { }
+};
 
 #endif
