@@ -9,6 +9,7 @@
 #include <libffmpegthumbnailer/filmstripfilter.h>
 
 #include "ICCprofiles.h"
+#include "ImgBuf.h"
 
 
 #ifdef DEBUG_LOG
@@ -204,64 +205,13 @@ void  ImgThumbGen::_readgenthumbnail(const ImgData& img_, const std::string& pre
 }
 
 
-typedef unsigned char  uchar_t;
-
-class _Buf
-{
-  public:
-    _Buf() : buf(NULL), sz(0), bufsz(0) { }
-    _Buf(size_t sz_) : buf(NULL), sz(0), bufsz(0) { alloc(sz_); }
-
-    ~_Buf() { free(); }
-
-    uchar_t*  buf;
-    size_t    bufsz;
-    size_t    sz;
-
-    void  alloc(size_t sz_)
-    {
-	if (sz_ > sz) {
-	    delete [] buf;
-	    sz = sz_;
-	    bufsz = sz;
-	    buf = new uchar_t[sz];
-	}
-	memset(buf, 0, sz);
-    }
-
-    void  free()
-    {
-	delete []  buf;
-	buf = NULL;
-	sz = 0;
-	bufsz = 0;
-    }
-
-    const uchar_t*  copy(uchar_t* buf_, size_t sz_)
-    {
-	alloc(sz_);
-	memcpy(buf, buf_, sz_);
-	bufsz = sz_;
-	return buf;
-    }
-
-    void  clear()
-    {
-	memset(buf, 0, sz);
-    }
-
-  private:
-    _Buf(const _Buf&);
-    void operator=(const _Buf&);
-};
-
 void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& origpath_,
                                  const Exiv2::PreviewImage& preview_, const Exiv2::ExifData& exif_, const unsigned sz_,
                                  const float rotate_)
 {
     const char*  iccproftag = "Exif.Image.InterColorProfile";
 
-    static _Buf  buf(1024);
+    static ImgCat::_Buf  buf(1024);
 
     bool  convertICC = false;
 
