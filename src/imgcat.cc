@@ -449,7 +449,7 @@ int main(int argc, char **argv)
 		DLOG(src << "  n=" << n << " tokens");
 
 		*target = new char*[n+1];
-		memset(*target, 0, n+1); // BUG?
+		memset(*target, 0, sizeof(char*)*(n+1));
 		char**  eptr = *target;
 
 		char*  pc = NULL;
@@ -459,7 +459,6 @@ int main(int argc, char **argv)
 		    const uint_t  n = strlen(tok);
 		    *eptr++ = strcpy(new char[n+1], tok);
 		}
-                *eptr++ = NULL;
 	    }
 	    delete []  e;
 	}
