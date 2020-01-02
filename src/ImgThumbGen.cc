@@ -20,6 +20,8 @@
 #endif
 
 
+std::once_flag  ImgThumbGen::_once;
+
 
 void  ImgThumbGen::generate()
 {

@@ -6,6 +6,8 @@
 #include <string>
 #include <list>
 #include <sstream>
+#include <thread>
+#include <mutex>
 
 #include <exiv2/exiv2.hpp>
 #include <Magick++.h>
@@ -29,7 +31,9 @@ class ImgThumbGen
     ImgThumbGen(const ImgIdx::Ent& imgidx_, unsigned thumbsize_)
 	: _imgidx(imgidx_), _img(*_imgidx.imgs.begin()), _prevpath(_img.thumb + ".jpg"),
 	  thumbsize(thumbsize_)
-    { }
+    {
+	std::call_once(ImgThumbGen::_once, [](){ Magick::InitializeMagick(NULL); });
+    }
 
     virtual ~ImgThumbGen() = default;
 
@@ -97,6 +101,8 @@ class ImgThumbGen
                         const unsigned sz_, const float rotate_);
 
     void  _readgenthumbnail(const ImgData& img_, const std::string& prevpath_, const unsigned sz_);
+
+    static std::once_flag  _once;
 
 };
 
