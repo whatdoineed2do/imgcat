@@ -506,6 +506,7 @@ int main(int argc, char **argv)
 
     std::list<_Ignored>  ignored;
     uint_t  ttlfiles = 0;
+    std::cout << "initial dir scan" << std::endl;
     while (optind < argc)
     {
 	char*  dir = argv[optind++];
@@ -513,6 +514,7 @@ int main(int argc, char **argv)
 	if ( dir[dirlen-1] == '/' ) {
 	    dir[dirlen-1] = (char)NULL;
 	}
+	std::cout << "  working on " << dir << std::flush;
 	idxs.emplace_back(ImgIdx(dir));
 
 	try
@@ -535,6 +537,7 @@ int main(int argc, char **argv)
 		{
 		    const Img  img = exifparser.parse(i.filename.c_str(), i.st, thumbpath);
 		    idxs.back()[img.key].emplace_back(std::move(img.data));
+		    std::cout << '#' << std::flush;
 		}
 		catch (const std::invalid_argument& ex)
 		{
@@ -549,6 +552,7 @@ int main(int argc, char **argv)
 		{
 		    const Img  img = avfmtparser.parse(i.filename.c_str(), i.st, thumbpath);
 		    idxs.back()[img.key].emplace_back(std::move(img.data));
+		    std::cout << '%' << std::flush;
 		}
 		catch (const std::exception& ex)
 		{
@@ -558,9 +562,10 @@ int main(int argc, char **argv)
 	    }
 	    ttlfiles += imgfilenames.size() + vidfilenames.size();
 
+	    std::cout << std::endl;
 	    if (verbosetime) {
 		gettimeofday(&tvC, NULL);
-		std::cout << dir << " -> " << imgfilenames.size() << " files, " << " read=" << (double)(tvB - tvA)/1000000 << ", parse=" << (double)(tvC - tvB)/1000000 << std::endl;
+		std::cout << "  " << dir << " -> " << ttlfiles << " files, (img=" << imgfilenames.size() << " vid=" << vidfilenames.size() << ") read=" << (double)(tvB - tvA)/1000000 << ", parse=" << (double)(tvC - tvB)/1000000 << std::endl;
 	    }
 	}
 	catch (const std::exception& ex)
