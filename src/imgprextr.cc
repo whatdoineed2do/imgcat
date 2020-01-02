@@ -33,6 +33,11 @@
 
 #include <sstream>
 #include <random>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <future>
+#include <chrono>
 
 #include <exiv2/exiv2.hpp>
 #include <Magick++.h>
@@ -234,7 +239,7 @@ std::ostream& operator<<(std::ostream& os_, const PrvInfo& obj_)
 PrvInfo::PrvInfo(const Exiv2::Image& img_) : seperator(nullptr)
 {
     typedef Exiv2::ExifData::const_iterator (*EasyAccessFct)(const Exiv2::ExifData& ed);
-    static const struct _EasyAccess {
+    const struct _EasyAccess {
 	EasyAccessFct find;
 	std::string*  target;
     } eatags[] = {
@@ -244,7 +249,7 @@ PrvInfo::PrvInfo(const Exiv2::Image& img_) : seperator(nullptr)
 	{ NULL, NULL }
     };
 
-    static const struct _MiscTags {
+    const struct _MiscTags {
         const char*  tag;
         std::string*  s;
     } misctags[] = {
@@ -356,9 +361,11 @@ int main(int argc, char* const argv[])
     enum FilenameType { FNT_FILE, FNT_RAND, FNT_META };
     FilenameType  fnt = FNT_FILE;
     int  imgqual = 100;
+    unsigned  tpsz = 8;
+    std::list<std::future<void>>  futures;
 
     int  c;
-    while ( (c=getopt(argc, argv, "p:Ic:xhO:o:q:RM")) != EOF) {
+    while ( (c=getopt(argc, argv, "p:Ic:xhO:o:q:RMT:")) != EOF) {
 	switch (c)
 	{
 	    case 'p':
@@ -376,6 +383,14 @@ int main(int argc, char* const argv[])
             case 'M':
                 fnt = FNT_META;
                 break;
+
+            case 'T':
+            {
+                tpsz = (unsigned)atol(optarg);
+                if (tpsz > 128) {
+                    tpsz = 128;
+                }
+            } break;
 
 	    case 'c':
 	    {
@@ -552,241 +567,337 @@ thumbpatherr:
 #endif
     }
 
-    ImgCat::_Buf  buf(1024);
     const Magick::Blob*  outicc = tgtICC ? new Magick::Blob(tgtICC->profile, tgtICC->length) : NULL;
-    int  fd;
+
+    std::mutex  mtx;
+    std::condition_variable  cond;
+    unsigned  sem = tpsz;
+
 
     int  a = optind;
     while (a < argc)
     {
 	const char* const  filename = argv[a++];
-	try
-	{
-	    Exiv2::Image::AutoPtr  orig = Exiv2::ImageFactory::open(filename);
-	    assert(orig.get() != 0);
 
+        auto  task = [&](const char* filename_) {
+            struct Raii
+            {
+                std::mutex&  mtx;
+                std::condition_variable&  cond;
+                unsigned&  sem;
 
-	    orig->readMetadata();
-
-	    Exiv2::PreviewManager loader(*orig);
-	    Exiv2::PreviewPropertiesList  list = loader.getPreviewProperties();
-
-	    // grabbing the largest preview
-	    Exiv2::PreviewPropertiesList::iterator prevp = list.begin();
-	    if (prevp == list.end()) {
-		std::cout << filename << ":  no preview" << std::endl;
-		continue;
-	    }
-
-	    advance(prevp, list.size()-1);
-
-            PrvInfo  pvi(*orig);
-
-	    char  path[PATH_MAX];
-	    char  path1[PATH_MAX];
-            switch (fnt) {
-	        case FNT_RAND:
-                    strcpy(path1, generate_hex(16).c_str());
-                    break;
-
-	        case FNT_META:
+                Raii(std::mutex& mtx_, std::condition_variable& cond_, unsigned& sem_)
+                    : mtx(mtx_), cond(cond_), sem(sem_)
                 {
-                    std::stringstream  d;
-                    const char*  osep = pvi.seperator;
-                    pvi.seperator = "-";
-                    d << pvi;
-                    strcpy(path1, d.str().c_str());
-                    pvi.seperator = osep;
-                } break;
+                    std::unique_lock<std::mutex>  lck(mtx);
+                    cond.wait(lck, [&sem  = sem]() { return sem > 0; });
+                    --sem;
+                    lck.unlock();
+                }
 
-                default:
-		    strcpy(path1, filename);
-	    }
-	    sprintf(path, "%s/%s", thumbpath, basename(path1));
+                ~Raii()
+                {
+                    mtx.lock();
+                    ++sem;
+                    cond.notify_all();
+                    mtx.unlock();
+                }
 
-#define LOG_FILE_INFO  filename << ": " << std::setw(8) << prevp->size_ << " bytes, " << prevp->width_ << "x" << prevp->height_ << "  " << pvi
+                Raii(const Raii&) = delete;
+                Raii(Raii&&) = delete;
 
-	    std::cout << LOG_FILE_INFO << std::endl;
+                Raii& operator=(const Raii&) = delete;
+                Raii& operator=(Raii&&) = delete;
+            };
+            const Raii  raii(mtx, cond, sem);
+            std::ostringstream  err;
 
-	    Exiv2::PreviewImage  preview = loader.getPreviewImage(*prevp);
+            ImgCat::_Buf  buf(1024);
+            int  fd;
 
-	    Exiv2::Image::AutoPtr  upd = Exiv2::ImageFactory::open( preview.pData(), preview.size() );
+            try
+            {
+                Exiv2::Image::AutoPtr  orig = Exiv2::ImageFactory::open(filename_);
+                assert(orig.get() != 0);
 
-	    if (!excludeMeta) {
-		upd->setByteOrder(orig->byteOrder());
 
-		upd->setExifData(orig->exifData());
-		upd->setIptcData(orig->iptcData());
-		upd->setXmpData(orig->xmpData());
+                orig->readMetadata();
 
-		upd->writeMetadata();
-	    }
+                Exiv2::PreviewManager loader(*orig);
+                Exiv2::PreviewPropertiesList  list = loader.getPreviewProperties();
 
-	    Exiv2::ExifData&  exif = orig->exifData();
-	    Exiv2::ExifData::iterator  iccavail = _extractICC(buf, exif);
+                // grabbing the largest preview
+                Exiv2::PreviewPropertiesList::iterator prevp = list.begin();
+                if (prevp == list.end()) {
+                    err << filename_ << ":  no preview";
+                    throw std::underflow_error(err.str());
+                }
 
-	    if (iccavail != exif.end() && tgtICC)
-	    {
-		if (dumpICC)
-		{
-		    char  path[PATH_MAX];
-		    sprintf(path, "%s/%s.icc", thumbpath, basename(path1));
+                advance(prevp, list.size()-1);
+
+                PrvInfo  pvi(*(orig.get()));
+
+                char  path[PATH_MAX];
+                char  path1[PATH_MAX];
+                switch (fnt) {
+                    case FNT_RAND:
+                        strcpy(path1, generate_hex(16).c_str());
+                        break;
+
+                    case FNT_META:
+                    {
+                        std::stringstream  d;
+                        const char*  osep = pvi.seperator;
+                        pvi.seperator = "-";
+                        d << pvi;
+                        strcpy(path1, d.str().c_str());
+                        pvi.seperator = osep;
+                    } break;
+
+                    default:
+                        strcpy(path1, filename_);
+                }
+                sprintf(path, "%s/%s", thumbpath, basename(path1));
+
+#define LOG_FILE_INFO  filename_ << ": " << std::setw(8) << prevp->size_ << " bytes, " << prevp->width_ << "x" << prevp->height_ << "  " << pvi
+
+                std::cout << LOG_FILE_INFO << std::endl;
+
+                Exiv2::PreviewImage  preview = loader.getPreviewImage(*prevp);
+
+                Exiv2::Image::AutoPtr  upd = Exiv2::ImageFactory::open( preview.pData(), preview.size() );
+
+                if (!excludeMeta) {
+                    upd->setByteOrder(orig->byteOrder());
+
+                    upd->setExifData(orig->exifData());
+                    upd->setIptcData(orig->iptcData());
+                    upd->setXmpData(orig->xmpData());
+
+                    upd->writeMetadata();
+                }
+
+                Exiv2::ExifData&  exif = orig->exifData();
+                Exiv2::ExifData::iterator  iccavail = _extractICC(buf, exif);
+
+                if (iccavail != exif.end() && tgtICC)
+                {
+                    if (dumpICC)
+                    {
+                        char  path[PATH_MAX];
+                        sprintf(path, "%s/%s.icc", thumbpath, basename(path1));
 
 #ifdef __MINGW32__
-		    if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
+                        if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
 #else
-		    if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
+                        if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
-			std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << std::endl;
-		    }
-		    else
-		    {
-			if (write(fd, buf.buf, buf.bufsz) != buf.bufsz) {
-			    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write ICC - " << strerror(errno) << std::endl;
-			}
-			close(fd);
-		    }
-		}
+                            std::cerr << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << std::endl;
+                        }
+                        else
+                        {
+                            if (write(fd, buf.buf, buf.bufsz) != buf.bufsz) {
+                                std::cerr << LOG_FILE_INFO << ": failed to write ICC - " << strerror(errno) << std::endl;
+                            }
+                            close(fd);
+                        }
+                    }
 
-		if (nonSRGBicc == NULL)
-		{
-		    /* is this ICC profile sRGB - covnert only if not; the
-		     * outicc is already pointing at a sRGB icc
-		     */
-		    const ICCprofiles*  p = theSRGBICCprofiles;
-		    while (p->profile)
-		    {
-			if (p->length == buf.bufsz && memcmp(p->profile, buf.buf, p->length) == 0) {
-			    break;
-			}
-			++p;
-		    }
+                    if (nonSRGBicc == NULL)
+                    {
+                        /* is this ICC profile sRGB - covnert only if not; the
+                         * outicc is already pointing at a sRGB icc
+                         */
+                        const ICCprofiles*  p = theSRGBICCprofiles;
+                        while (p->profile)
+                        {
+                            if (p->length == buf.bufsz && memcmp(p->profile, buf.buf, p->length) == 0) {
+                                break;
+                            }
+                            ++p;
+                        }
 
-		    if (p->profile) {
-			std::cout << argv0 << ": " << LOG_FILE_INFO << ": already sRGB (" << p->name << ") - not converting" << std::endl;
-			convert &= ~CONVERT_ICC;
-		    }
-		    else
-		    {
-			/* the ICC profile is different to the any of the known
-			 * sRGBs so we'll have to convert
-			 */
-			convert |= CONVERT_ICC;
-		    }
-		}
-	    }
+                        if (p->profile) {
+                            std::cout << argv0 << ": " << LOG_FILE_INFO << ": already sRGB (" << p->name << ") - not converting" << std::endl;
+                            convert &= ~CONVERT_ICC;
+                        }
+                        else
+                        {
+                            /* the ICC profile is different to the any of the known
+                             * sRGBs so we'll have to convert
+                             */
+                            convert |= CONVERT_ICC;
+                        }
+                    }
+                }
 
 
-	    if (convert)
-	    {
-		try
-		{
-		    if (!excludeMeta && iccavail != exif.end() ) {
-			exif.erase(iccavail);
-		    }
+                if (convert)
+                {
+                    try
+                    {
+                        if (!excludeMeta && iccavail != exif.end() ) {
+                            exif.erase(iccavail);
+                        }
 
-		    /* grab hold of underlying and updated data */
-		    Exiv2::BasicIo&  rawio = upd->io();
-		    rawio.seek(0, Exiv2::BasicIo::beg);
+                        /* grab hold of underlying and updated data */
+                        Exiv2::BasicIo&  rawio = upd->io();
+                        rawio.seek(0, Exiv2::BasicIo::beg);
 
-		    Magick::Image  img(Magick::Blob(rawio.mmap(), rawio.size()));
+                        Magick::Image  img(Magick::Blob(rawio.mmap(), rawio.size()));
 
-		    img.quality(imgqual);
-		    if (convert & CONVERT_OUTPUT_FMT) {
-			char  extn[5];
-			if      (strcasecmp(outputfmt.c_str(), "JPEG") == 0) sprintf(extn, ".jpg");
-			else if (strcasecmp(outputfmt.c_str(), "PNG")  == 0) sprintf(extn, ".png");
-			else abort();
-			strcat(path, extn);
-			img.magick(outputfmt);
-		    }
-		    else {
-			strcat(path, preview.extension().c_str());
-		    }
-		    if (convert & CONVERT_ICC) {
-			img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
-			img.profile("ICC", *outicc);
-			img.iccColorProfile(*outicc);
-		    }
-		    // exif not maintained!!!
+                        img.quality(imgqual);
+                        if (convert & CONVERT_OUTPUT_FMT) {
+                            char  extn[5];
+                            if      (strcasecmp(outputfmt.c_str(), "JPEG") == 0) sprintf(extn, ".jpg");
+                            else if (strcasecmp(outputfmt.c_str(), "PNG")  == 0) sprintf(extn, ".png");
+                            else abort();
+                            strcat(path, extn);
+                            img.magick(outputfmt);
+                        }
+                        else {
+                            strcat(path, preview.extension().c_str());
+                        }
+
+                        if (convert & CONVERT_ICC)
+                        {
+                            try
+                            {
+                                short  cretry = 5;
+                                while (cretry--) {
+                                    try
+                                    {
+                                        img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
+                                        img.profile("ICC", *outicc);
+                                        img.iccColorProfile(*outicc);
+                                        break;
+                                    }
+                                    // smoetimes we get this:
+                                    // ColorspaceColorProfileMismatch `ICC' @ error/profile.c/ProfileImage/829
+                                    catch (const Magick::ErrorResourceLimit&)
+                                    {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(333));
+                                    }
+                                }
+                            }
+                            catch (const Magick::Exception& ex)
+                            {
+                                std::cerr << "failed to convert ICC, ignoring - " << ex.what() << "\n";
+                            }
+                        }
+                        // exif not maintained!!!
 
 #ifdef HAVE_SAMPLE_ICC
-		    std::string  desc, cprt;
-		    _extractICCinfo(buf.buf, buf.bufsz, desc, cprt);
+                        std::string  desc = "<unknown>", cprt;
+                        _extractICCinfo(buf.buf, buf.bufsz, desc, cprt);
 #endif
 
-		    std::cout << argv0 << ": " << LOG_FILE_INFO << ": ICC converted";
+                        std::cout << LOG_FILE_INFO << ": ICC converted";
 #ifdef HAVE_SAMPLE_ICC
-		    std::cout << " from " << desc;
+                        std::cout << " from " << desc;
 #endif
-		    std::cout << std::endl;
-		    if (target.isValid()) {
-			img.resize(target);
-		    }
+                        std::cout << std::endl;
+                        if (target.isValid()) {
+                            img.resize(target);
+                        }
 
-		    if (excludeMeta) {
-			img.write(path);
-		    }
-		    else {
-			// because IM doesnt take across the Exif data, take the converted img back to Exiv2
-			Magick::Blob  blob;
-			img.write(&blob);
+                        if (excludeMeta) {
+                            img.write(path);
+                        }
+                        else {
+                            // because IM doesnt take across the Exif data, take the converted img back to Exiv2
+                            Magick::Blob  blob;
+                            img.write(&blob);
 
-			Exiv2::Image::AutoPtr  cnvrted = Exiv2::ImageFactory::open((const unsigned char*)blob.data(), blob.length());
-			cnvrted->readMetadata();
-			cnvrted->setByteOrder(orig->byteOrder());
-			cnvrted->setExifData(exif);
-			cnvrted->writeMetadata();
+                            Exiv2::Image::AutoPtr  cnvrted = Exiv2::ImageFactory::open((const unsigned char*)blob.data(), blob.length());
+                            cnvrted->readMetadata();
+                            cnvrted->setByteOrder(orig->byteOrder());
+                            cnvrted->setExifData(exif);
+                            cnvrted->writeMetadata();
 
 #ifdef __MINGW32__
-			if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
+                            if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
 #else
-			if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
+                            if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
-			    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create converted preview - " << strerror(errno) << std::endl;
-			    continue;
-			}
+                                err << LOG_FILE_INFO << ": failed to create converted preview - " << strerror(errno) << std::endl;
+                                throw std::system_error(errno, std::system_category(), err.str());
+                            }
 
-			Exiv2::BasicIo&  rawio = cnvrted->io();
-			rawio.seek(0, Exiv2::BasicIo::beg);
+                            Exiv2::BasicIo&  rawio = cnvrted->io();
+                            rawio.seek(0, Exiv2::BasicIo::beg);
 
-			if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
-			    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write converted preview - " << strerror(errno) << std::endl;
-			}
-			close(fd);
-		    }
-		}
-		catch (const std::exception& ex)
-		{
-		    std::cout << argv0 << ": " << LOG_FILE_INFO << ": failed to write (sRGB converted) preview - " << ex.what() << std::endl;
-		}
-	    }
-	    else
-	    {
-		strcat(path, preview.extension().c_str());
+                            if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
+                                close(fd);
+                                err << LOG_FILE_INFO << ": failed to write converted preview - " << strerror(errno) << std::endl;
+                                throw std::system_error(errno, std::system_category(), err.str());
+                            }
+                            close(fd);
+                        }
+                    }
+                    catch (const std::exception& ex)
+                    {
+                        throw;
+                    }
+                }
+                else
+                {
+                    strcat(path, preview.extension().c_str());
 #ifdef __MINGW32__
-		if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
+                    if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
 #else
-		if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
+                    if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
-		    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to create preview - " << strerror(errno) << std::endl;
-		    continue;
-		}
+                        err << LOG_FILE_INFO << ": failed to create preview - " << strerror(errno);
+                        throw std::system_error(errno, std::system_category(), err.str());
+                    }
 
-		Exiv2::BasicIo&  rawio = upd->io();
-		rawio.seek(0, Exiv2::BasicIo::beg);
+                    Exiv2::BasicIo&  rawio = upd->io();
+                    rawio.seek(0, Exiv2::BasicIo::beg);
 
-		if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
-		    std::cerr << argv0 << ": " << LOG_FILE_INFO << ": failed to write preview - " << strerror(errno) << std::endl;
-		}
-		close(fd);
-	    }
-	}
-	catch (const Exiv2::AnyError& e)
-	{
-	    std::cout << filename << ":  unable to extract preview/reset exif - " << e << std::endl;
-	    continue;
-	}
+                    if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
+                        close(fd);
+                        err << LOG_FILE_INFO << ": failed to write converted preview - " << strerror(errno) << std::endl;
+                        throw std::system_error(errno, std::system_category(), err.str());
+                    }
+                    close(fd);
+                }
+            }
+            catch (const Exiv2::AnyError& e)
+            {
+                err << filename_ << ":  unable to extract preview/reset exif - " << e;
+                throw std::overflow_error(err.str());
+            }
+        };
+
+        try
+        {
+            futures.emplace_back(std::async(std::launch::async, task, filename));
+        }
+        catch (const std::system_error& ex)
+        {
+            std::cerr << "failed to start thread - " << ex.what() << std::endl;
+            break;
+        }
+    }
+
+    // wait for all threads to finish
+    try
+    {
+        std::unique_lock<std::mutex>  lck(mtx);
+        cond.wait(lck, [&sem, &tpsz]() { return sem == tpsz; });
+        lck.unlock();
+        for (auto& f : futures) {
+            try {
+                f.get();
+            }
+            catch (const std::exception& ex) {
+                std::cerr << argv0 << ": " << ex.what() << std::endl;
+            }
+        }
+    }
+    catch (const std::system_error& ex) {
+        std::cerr << argv0 << ": failed to clean up threads - " << ex.what() << std::endl;
     }
 
     delete [] nonSRGBicc;
