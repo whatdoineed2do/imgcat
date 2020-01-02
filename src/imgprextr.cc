@@ -186,12 +186,53 @@ void  _extractProfile(const void* data_, const size_t datasz_)
     }
 }
 
-std::string  _extraInfo(const Exiv2::Image& img_)
-{
+struct PrvInfo {
+    std::string  dateorig;
     std::string  mftr;
     std::string  camera;
     std::string  sn;
+    std::string  shuttercnt;
 
+    const char* seperator;
+
+    PrvInfo(const Exiv2::Image&);
+
+    PrvInfo(PrvInfo&& rhs_) {
+        seperator = rhs_.seperator;
+        dateorig = std::move(rhs_.dateorig);
+        mftr = std::move(rhs_.mftr);
+        camera = std::move(rhs_.camera);
+        sn = std::move(rhs_.sn);
+        shuttercnt = std::move(rhs_.shuttercnt);
+    }
+
+    PrvInfo(const PrvInfo&) = delete;
+    PrvInfo& operator=(const PrvInfo&) = delete;
+    PrvInfo& operator=(PrvInfo&&) = delete;
+};
+
+std::ostream& operator<<(std::ostream& os_, const PrvInfo& obj_)
+{
+    const char*  s = obj_.seperator ? obj_.seperator : " ";
+    std::string  tmp;
+    auto  fmt = [&s](const std::string& s_, bool first_=false) {
+        std::ostringstream  f;
+        if (s_.empty()) {
+            return s_;
+        }
+        if (first_) {
+            f << s_;
+        }
+        else {
+            f << s << s_;
+        }
+        return f.str();
+    };
+    return os_ << fmt(obj_.dateorig, true) << fmt(obj_.mftr) << fmt(obj_.camera) << fmt(obj_.sn) << fmt(obj_.shuttercnt);
+}
+
+PrvInfo::PrvInfo(const Exiv2::Image& img_) : seperator(nullptr)
+{
     typedef Exiv2::ExifData::const_iterator (*EasyAccessFct)(const Exiv2::ExifData& ed);
     static const struct _EasyAccess {
 	EasyAccessFct find;
@@ -203,9 +244,18 @@ std::string  _extraInfo(const Exiv2::Image& img_)
 	{ NULL, NULL }
     };
 
+    static const struct _MiscTags {
+        const char*  tag;
+        std::string*  s;
+    } misctags[] = {
+        { "Exif.Photo.DateTimeOriginal", &dateorig },
+        { "Exif.Nikon3.ShutterCount",    &shuttercnt },
+        { NULL, NULL }
+    };
+
     const Exiv2::ExifData&  ed = img_.exifData();
     if (ed.empty()) {
-	return "";
+        return;
     }
 
     Exiv2::ExifData::const_iterator  exif;
@@ -218,13 +268,23 @@ std::string  _extraInfo(const Exiv2::Image& img_)
 	++ep;
     }
 
-    if (mftr.length() > 10) {
-	mftr.replace(10, mftr.length(), 3, '.');
+    if (mftr == "NIKON CORPORATION") {
+        mftr.clear();  // the model has "NIKON ..."
+    }
+    else {
+        if (mftr.length() > 10) {
+            mftr.replace(10, mftr.length(), 3, '.');
+        }
     }
 
-    std::ostringstream  dump;
-    dump << mftr << " " << camera << " " << sn;
-    return dump.str();
+    const _MiscTags*  mp = misctags;
+    while (mp->tag)
+    {
+        if ( (exif = ed.findKey(Exiv2::ExifKey(mp->tag)) ) != ed.end()) {
+            *mp->s = exif->print(&ed);
+        }
+        ++mp;
+    }
 }
 
 
@@ -293,11 +353,12 @@ int main(int argc, char* const argv[])
     Magick::InitializeMagick(NULL);
 
     Magick::Geometry  target;
-    bool  randfile  = false;
+    enum FilenameType { FNT_FILE, FNT_RAND, FNT_META };
+    FilenameType  fnt = FNT_FILE;
     int  imgqual = 100;
 
     int  c;
-    while ( (c=getopt(argc, argv, "p:Ic:xhO:o:q:R")) != EOF) {
+    while ( (c=getopt(argc, argv, "p:Ic:xhO:o:q:RM")) != EOF) {
 	switch (c)
 	{
 	    case 'p':
@@ -309,8 +370,12 @@ int main(int argc, char* const argv[])
 		break;
 
 	    case 'R':
-		randfile = true;
+		fnt = FNT_RAND;
 		break;
+
+            case 'M':
+                fnt = FNT_META;
+                break;
 
 	    case 'c':
 	    {
@@ -413,7 +478,7 @@ int main(int argc, char* const argv[])
 	    default:
 usage:
 		std::cout << argv0 << " " << Imgcat::version() << "\n"
-		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R]  file0 file1 .. fileN" << std::endl
+		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R|-M]  file0 file1 .. fileN" << std::endl
 		     << "         -p    extract preview images to location=./" << std::endl
 		     << "         -c    perform ICC conversion if possible: srgb for internal sRGB or file location of target ICC" << std::endl
 		     << "         -x    exclude metadata" << std::endl
@@ -421,7 +486,8 @@ usage:
 		     << "         -O    target (re)size" << std::endl
 		     << "         -o    target output format" << std::endl
 		     << "         -q    quality" << std::endl
-		     << "         -R    random 16 byte hex filename for output (not incl extn)" << std::endl
+		     << "         -R    random 16 byte hex for filename output (not incl extn)" << std::endl
+		     << "         -M    meta info used for filename output (not incl extn)" << std::endl
 		     << "  internal ICC profiles: ";
 
 		const ICCprofiles*  p = theSRGBICCprofiles;
@@ -514,17 +580,31 @@ thumbpatherr:
 
 	    advance(prevp, list.size()-1);
 
+            PrvInfo  pvi(*orig);
+
 	    char  path[PATH_MAX];
 	    char  path1[PATH_MAX];
-	    if (randfile) {
-		strcpy(path1, generate_hex(16).c_str());
-	    }
-	    else {
-		strcpy(path1, filename);
+            switch (fnt) {
+	        case FNT_RAND:
+                    strcpy(path1, generate_hex(16).c_str());
+                    break;
+
+	        case FNT_META:
+                {
+                    std::stringstream  d;
+                    const char*  osep = pvi.seperator;
+                    pvi.seperator = "-";
+                    d << pvi;
+                    strcpy(path1, d.str().c_str());
+                    pvi.seperator = osep;
+                } break;
+
+                default:
+		    strcpy(path1, filename);
 	    }
 	    sprintf(path, "%s/%s", thumbpath, basename(path1));
 
-#define LOG_FILE_INFO  filename << ": " << std::setw(8) << prevp->size_ << " bytes, " << prevp->width_ << "x" << prevp->height_ << "  " << _extraInfo(*orig)
+#define LOG_FILE_INFO  filename << ": " << std::setw(8) << prevp->size_ << " bytes, " << prevp->width_ << "x" << prevp->height_ << "  " << pvi
 
 	    std::cout << LOG_FILE_INFO << std::endl;
 
