@@ -31,12 +31,15 @@
 #include <iostream>
 #include <cassert>
 
+#include <sstream>
+#include <random>
+
 #include <exiv2/exiv2.hpp>
 #include <Magick++.h>
 #ifdef HAVE_SAMPLE_ICC
-#include <IccProfile.h>
-#include <IccTag.h>
-#include <IccUtil.h>
+#include <SampleICC/IccProfile.h>
+#include <SampleICC/IccTag.h>
+#include <SampleICC/IccUtil.h>
 #endif
 
 /*
@@ -252,6 +255,26 @@ bool  _extractICCinfo(const void* data_, const size_t datasz_, std::string& desc
     return true;
 }
 
+
+std::string  generate_hex(const unsigned int len_)
+{
+    std::stringstream  ss;
+    std::random_device  rd;
+
+    for (auto i = 0; i < len_; i++) {
+        std::stringstream  hexstream;
+
+	std::mt19937  gen(rd());
+	std::uniform_int_distribution<>  dis(0, 255);
+
+        hexstream << std::hex << dis(gen);
+        auto hex = hexstream.str();
+        ss << (hex.length() < 2 ? '0' + hex : hex);
+    }
+    return ss.str();
+}
+
+
 int main(int argc, char* const argv[])
 {
     const char*  argv0 = basename(argv[0]);
@@ -267,16 +290,26 @@ int main(int argc, char* const argv[])
     const ICCprofiles*  tgtICC     = NULL;  // used to determine if ICC conversions req'd
     uchar_t*            nonSRGBicc = NULL;  // buf for non internal sRGB ICC
 
-    Magick::InitializeMagick("");
+    Magick::InitializeMagick(NULL);
 
     Magick::Geometry  target;
+    bool  randfile  = false;
+    int  imgqual = 100;
 
     int  c;
-    while ( (c=getopt(argc, argv, "p:Ic:xhO:o:")) != EOF) {
+    while ( (c=getopt(argc, argv, "p:Ic:xhO:o:q:R")) != EOF) {
 	switch (c)
 	{
 	    case 'p':
 		thumbpath = optarg;
+		break;
+
+	    case 'q':
+		imgqual = atol(optarg);
+		break;
+
+	    case 'R':
+		randfile = true;
 		break;
 
 	    case 'c':
@@ -380,13 +413,15 @@ int main(int argc, char* const argv[])
 	    default:
 usage:
 		std::cout << argv0 << " " << Imgcat::version() << "\n"
-		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG]   file0 file1 .. fileN" << std::endl
+		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R]  file0 file1 .. fileN" << std::endl
 		     << "         -p    extract preview images to location=./" << std::endl
 		     << "         -c    perform ICC conversion if possible: srgb for internal sRGB or file location of target ICC" << std::endl
 		     << "         -x    exclude metadata" << std::endl
 		     << "         -I    dump ICC to disk for each image" << std::endl
 		     << "         -O    target (re)size" << std::endl
 		     << "         -o    target output format" << std::endl
+		     << "         -q    quality" << std::endl
+		     << "         -R    random 16 byte hex filename for output (not incl extn)" << std::endl
 		     << "  internal ICC profiles: ";
 
 		const ICCprofiles*  p = theSRGBICCprofiles;
@@ -481,7 +516,12 @@ thumbpatherr:
 
 	    char  path[PATH_MAX];
 	    char  path1[PATH_MAX];
-	    strcpy(path1, filename);
+	    if (randfile) {
+		strcpy(path1, generate_hex(16).c_str());
+	    }
+	    else {
+		strcpy(path1, filename);
+	    }
 	    sprintf(path, "%s/%s", thumbpath, basename(path1));
 
 #define LOG_FILE_INFO  filename << ": " << std::setw(8) << prevp->size_ << " bytes, " << prevp->width_ << "x" << prevp->height_ << "  " << _extraInfo(*orig)
@@ -571,7 +611,7 @@ thumbpatherr:
 
 		    Magick::Image  img(Magick::Blob(rawio.mmap(), rawio.size()));
 
-		    img.quality(100);
+		    img.quality(imgqual);
 		    if (convert & CONVERT_OUTPUT_FMT) {
 			char  extn[5];
 			if      (strcasecmp(outputfmt.c_str(), "JPEG") == 0) sprintf(extn, ".jpg");
