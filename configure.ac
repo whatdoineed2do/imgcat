@@ -19,7 +19,7 @@ PKG_CHECK_MODULES(AVFORMAT,    [libavformat >= 57.71.100])
 PKG_CHECK_MODULES(AVUTIL,      [libavutil >= 55.58.100])
 PKG_CHECK_MODULES(AVCODEC,     [libavcodec >= 57.48.101])
 PKG_CHECK_MODULES(AVFILTER,    [libavfilter >= 6.47.100])
-PKG_CHECK_MODULES(FFMPEGTHUMB, [libffmpegthumbnailer >= 2.2.0])
+PKG_CHECK_MODULES(FFMPEGTHUMB, [libffmpegthumbnailer >= 2.1.0])
 PKG_CHECK_MODULES(SAMPLEICC,   [sampleicc >= 1.6.8])
 
 AC_ARG_ENABLE([debug-code],
