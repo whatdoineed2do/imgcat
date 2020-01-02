@@ -1,8 +1,8 @@
 @font-face {
   font-family: "Proxima Nova";
-  src: url("/css/fonts/proxima-nova-regular.woff2");
+  src: url("css/fonts/proxima-nova-regular.woff2");
   font-weight: regular;
-  src: url("/css/fonts/proxima-nova-bold.woff2");
+  src: url("css/fonts/proxima-nova-bold.woff2");
   font-weight: bold;
 }
 
