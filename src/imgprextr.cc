@@ -271,7 +271,7 @@ int main(int argc, char* const argv[])
 
     Magick::Geometry  target;
 
-    char c;
+    int  c;
     while ( (c=getopt(argc, argv, "p:Ic:xhO:o:")) != EOF) {
 	switch (c)
 	{
