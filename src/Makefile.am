@@ -1,8 +1,8 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
 AM_CPPFLAGS = -DHAVE_SAMPLE_ICC -DNEED_UCHAR_UINT_T
-AM_CXXFLAGS = $(IMAGEMAGICK_CFLAGS) $(EXIV_CFLAGS) $(SAMPLEICC_CFLAGS) -Wno-deprecated -Wno-pointer-arith
-AM_LDFLAGS = $(IMAGEMAGICK_LIBS) $(EXIV_LIBS)
+AM_CXXFLAGS = $(IMAGEMAGICK_CFLAGS) $(EXIV_CFLAGS) $(SAMPLEICC_CFLAGS) -Wno-deprecated -Wno-pointer-arith -fopenmp -pthread
+AM_LDFLAGS = $(IMAGEMAGICK_LIBS) $(EXIV_LIBS) -fopenmp -pthread
 
 noinst_LTLIBRARIES = libimgcat_helper.la libimgcat.la
 
