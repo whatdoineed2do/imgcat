@@ -573,6 +573,8 @@ thumbpatherr:
     std::condition_variable  cond;
     unsigned  sem = tpsz;
 
+    std::ofstream  devnull("/dev/null");
+    std::streambuf*  erros = std::cerr.rdbuf(devnull.rdbuf());
 
     int  a = optind;
     while (a < argc)
@@ -692,12 +694,12 @@ thumbpatherr:
 #else
                         if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
-                            std::cerr << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << std::endl;
+                            std::cout << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << std::endl;
                         }
                         else
                         {
                             if (write(fd, buf.buf, buf.bufsz) != buf.bufsz) {
-                                std::cerr << LOG_FILE_INFO << ": failed to write ICC - " << strerror(errno) << std::endl;
+                                std::cout << LOG_FILE_INFO << ": failed to write ICC - " << strerror(errno) << std::endl;
                             }
                             close(fd);
                         }
@@ -782,7 +784,7 @@ thumbpatherr:
                             }
                             catch (const Magick::Exception& ex)
                             {
-                                std::cerr << "failed to convert ICC, ignoring - " << ex.what() << "\n";
+                                std::cout << "failed to convert ICC, ignoring - " << ex.what() << "\n";
                             }
                         }
                         // exif not maintained!!!
@@ -876,7 +878,7 @@ thumbpatherr:
         }
         catch (const std::system_error& ex)
         {
-            std::cerr << "failed to start thread - " << ex.what() << std::endl;
+            std::cout << "failed to start thread - " << ex.what() << std::endl;
             break;
         }
     }
@@ -887,6 +889,7 @@ thumbpatherr:
         std::unique_lock<std::mutex>  lck(mtx);
         cond.wait(lck, [&sem, &tpsz]() { return sem == tpsz; });
         lck.unlock();
+        std::cerr.rdbuf(erros);
         for (auto& f : futures) {
             try {
                 f.get();
