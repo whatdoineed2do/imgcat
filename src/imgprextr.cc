@@ -361,7 +361,7 @@ int main(int argc, char* const argv[])
     enum FilenameType { FNT_FILE, FNT_RAND, FNT_META };
     FilenameType  fnt = FNT_FILE;
     int  imgqual = 100;
-    unsigned  tpsz = 8;
+    unsigned  tpsz = std::thread::hardware_concurrency();
     std::list<std::future<void>>  futures;
 
     int  c;
@@ -503,6 +503,7 @@ usage:
 		     << "         -q    quality" << std::endl
 		     << "         -R    random 16 byte hex for filename output (not incl extn)" << std::endl
 		     << "         -M    meta info used for filename output (not incl extn)" << std::endl
+		     << "         -T    threads to use (default=" << std::thread::hardware_concurrency() << ')' << std::endl
 		     << "  internal ICC profiles: ";
 
 		const ICCprofiles*  p = theSRGBICCprofiles;
@@ -516,6 +517,10 @@ usage:
     }
     mode_t  msk = umask(0);
     umask(msk);
+
+    if (tpsz < 1) {
+        tpsz = 1;
+    }
 
 
     // make sure thumbpath is writable

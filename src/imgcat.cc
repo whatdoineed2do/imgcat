@@ -323,7 +323,7 @@ int main(int argc, char **argv)
     char*  p = NULL;
 
     bool  verbosetime = false;
-    unsigned  tpsz = 8;
+    unsigned  tpsz = std::thread::hardware_concurrency();
     bool  generate = true;
 
     ImgOut*  outgen = NULL;
@@ -408,6 +408,9 @@ int main(int argc, char **argv)
 
     if (outgen == nullptr) {
         outgen = ImgOut::create(NULL);  // ask for the default
+    }
+    if (tpsz < 1) {
+        tpsz = 1;
     }
 
 
