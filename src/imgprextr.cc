@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <math.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -362,7 +363,9 @@ int main(int argc, char* const argv[])
     enum FilenameType { FNT_FILE, FNT_RAND, FNT_META };
     FilenameType  fnt = FNT_FILE;
     int  imgqual = 100;
-    unsigned  tpsz = std::thread::hardware_concurrency();
+    const auto  maxtpsz = std::thread::hardware_concurrency()*3;
+    const auto  dflttpsz = ceil(std::thread::hardware_concurrency()/2);
+    unsigned  tpsz = dflttpsz;
     std::list<std::future<void>>  futures;
 
     int  c;
@@ -388,8 +391,8 @@ int main(int argc, char* const argv[])
             case 'T':
             {
                 tpsz = (unsigned)atol(optarg);
-                if (tpsz > 128) {
-                    tpsz = 128;
+                if (tpsz > maxtpsz) {
+                    tpsz = maxtpsz;
                 }
             } break;
 
@@ -504,7 +507,7 @@ usage:
 		     << "         -q    quality" << std::endl
 		     << "         -R    random 16 byte hex for filename output (not incl extn)" << std::endl
 		     << "         -M    meta info used for filename output (not incl extn)" << std::endl
-		     << "         -T    threads to use (default=" << std::thread::hardware_concurrency() << ')' << std::endl
+		     << "         -T    threads to use (default=" << tpsz << " h/w=" << std::thread::hardware_concurrency() << " max=" << maxtpsz << ')' << std::endl
 		     << "  internal ICC profiles: ";
 
 		const ICCprofiles*  p = theSRGBICCprofiles;
@@ -520,7 +523,7 @@ usage:
     umask(msk);
 
     if (tpsz < 1) {
-        tpsz = 1;
+        tpsz = dflttpsz;
     }
 
 
