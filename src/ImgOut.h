@@ -31,7 +31,7 @@ class ImgOut
      virtual std::string  filename() = 0;
      virtual std::string  generate(Payloads&) = 0;
 
-     static ImgOut*  create(const char* type_)  throw (std::range_error);
+     static ImgOut*  create(const char* type_);
 
    protected:
      ImgOut() = default;

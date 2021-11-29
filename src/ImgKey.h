@@ -24,8 +24,8 @@ class ImgKey
   public:
     struct Dt
     { 
-	Dt(const char* hms_, const char* ms_)  throw (std::invalid_argument);
-	Dt(const time_t& t_)  throw (std::invalid_argument);
+	Dt(const char* hms_, const char* ms_);
+	Dt(const time_t& t_);
 	Dt(const Dt& rhs_) : hms(rhs_.hms), ms(rhs_.ms), _hms(rhs_._hms)  { }
 	Dt(const Dt&& rhs_);
 
@@ -49,13 +49,13 @@ class ImgKey
     
 
     ImgKey(const char* mfctr_, const char* mdl_, const char* sn_,
-	   const char* dtorg_, const char* dtorgSub_)  throw (std::invalid_argument)
+	   const char* dtorg_, const char* dtorgSub_)
 	: mfctr(mfctr_), mdl(mdl_), sn(sn_),
           dt(dtorg_, dtorgSub_)
     { }
 
     // ctr for images that have no meta info
-    ImgKey(const ino_t&  ino_, const time_t&  mtime_)  throw (std::invalid_argument)
+    ImgKey(const ino_t&  ino_, const time_t&  mtime_)
 	: sn(ImgKey::_ino2str(ino_)), dt(mtime_)
     { }
 

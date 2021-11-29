@@ -12,7 +12,6 @@ using Fctry = T*(*)();
 
 
 ImgOut*  ImgOut::create(const char* type_)
-    throw (std::range_error)
 {
     struct OutGenerators {
         const char*  id;

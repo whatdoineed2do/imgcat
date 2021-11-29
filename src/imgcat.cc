@@ -119,7 +119,7 @@ bool  _filterextn(const char** extn_, const char* path_)
 
 
 void  _readdir(Istats& files_, Istats& vfiles_,
-	       const char* where_, const char** extn_, const char** vextn_)  throw (std::invalid_argument)
+	       const char* where_, const char** extn_, const char** vextn_)
 {
     DIR*  d;
     if ( (d = opendir(where_)) == NULL) {
@@ -179,7 +179,7 @@ void  _readdir(Istats& files_, Istats& vfiles_,
     closedir(d);
 }
 
-void  _readdir(const ImgMetaParser& metaparser_, ImgIdx& idx_, const char* thumbpath_, const char* where_, const char**  extn_)  throw (std::invalid_argument)
+void  _readdir(const ImgMetaParser& metaparser_, ImgIdx& idx_, const char* thumbpath_, const char* where_, const char**  extn_)
 {
     DIR*  d;
     if ( (d = opendir(where_)) == NULL) {

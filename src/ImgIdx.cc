@@ -8,7 +8,7 @@
 #include "ImgIdx.h"
 
 
-ImgIdx::iterator ImgIdx::find(const ImgKey& k_)  throw ()
+ImgIdx::iterator ImgIdx::find(const ImgKey& k_)
 {
     iterator i;
     for (i=begin(); i!=end(); ++i)
@@ -21,7 +21,7 @@ ImgIdx::iterator ImgIdx::find(const ImgKey& k_)  throw ()
 }
 
 
-ImgIdx::const_iterator  ImgIdx::find(const ImgKey& k_) const throw ()
+ImgIdx::const_iterator  ImgIdx::find(const ImgKey& k_) const
 {
     const_iterator i;
     for (i=begin(); i!=end(); ++i)
@@ -34,7 +34,7 @@ ImgIdx::const_iterator  ImgIdx::find(const ImgKey& k_) const throw ()
 }
 
 
-ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_)  throw ()
+ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_)
 {
     iterator p;
     if ( (p = find(k_)) == end()) {
@@ -44,7 +44,7 @@ ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_)  throw ()
     return p->imgs;
 }
 
-const ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_) const  throw (std::range_error)
+const ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_) const
 {
     const_iterator p;
     if ( (p = find(k_)) == end()) {
@@ -54,7 +54,7 @@ const ImgIdx::Imgs&  ImgIdx::operator[](const ImgKey& k_) const  throw (std::ran
 }
 
 
-void  ImgIdx::sort()  throw ()
+void  ImgIdx::sort()
 {
     _idx.sort(ImgIdx::Ent::sortop);
     for (iterator i=begin(); i!=end(); ++i) {

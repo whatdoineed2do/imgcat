@@ -11,8 +11,7 @@ class ImgAVFmtParser : public ImgMetaParser
     ImgAVFmtParser();
 
   private:
-    const Img  _parse(const char* filename_, const struct stat&, const char* thumbpath_)  const
-	 throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error) override final;
+    const Img  _parse(const char* filename_, const struct stat&, const char* thumbpath_)  const;
 
     mutable char  _averr[256];
     mutable std::string  _tmp;

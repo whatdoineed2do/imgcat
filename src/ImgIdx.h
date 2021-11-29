@@ -90,16 +90,16 @@ class ImgIdx
     void operator=(const ImgIdx&)  = delete;
     void operator=(const ImgIdx&&) = delete;
 
-    iterator        find(const ImgKey&)        throw ();
-    const_iterator  find(const ImgKey&) const  throw ();
+    iterator        find(const ImgKey&);
+    const_iterator  find(const ImgKey&) const;
 
     /* this is the ONLY function that will create the Ent if not present
      */
-    Imgs&        operator[](const ImgKey&)        throw ();
-    const Imgs&  operator[](const ImgKey&) const  throw (std::range_error);
+    Imgs&        operator[](const ImgKey&);
+    const Imgs&  operator[](const ImgKey&) const;
 
 
-    void  sort()  throw();
+    void  sort();
     ImgIdx::Stats  stats();
 
     const std::string  id;

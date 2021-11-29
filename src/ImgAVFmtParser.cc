@@ -24,7 +24,6 @@ ImgAVFmtParser::ImgAVFmtParser()
 
 
 const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_, const char* thumbpath_) const
-     throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error)
 {
     ImgData  imgdata(filename_, st_.st_size);
     imgdata.type = ImgData::VIDEO;

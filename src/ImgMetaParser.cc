@@ -10,7 +10,6 @@
 
 
 const Img  ImgMetaParser::parse(const char* filename_, const struct stat& st_, const char* thumbpath_) const
-    throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error)
 {
     if (access(filename_, R_OK) < 0) {
 	std::ostringstream  err;

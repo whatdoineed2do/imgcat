@@ -20,7 +20,6 @@
 
 
 const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, const char* thumbpath_) const
-    throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error)
 {
     typedef Exiv2::ExifData::const_iterator (*EasyAccessFct)(const Exiv2::ExifData& ed);
 

@@ -3,7 +3,7 @@
 #include <sstream>
 
 
-ImgKey::Dt::Dt(const char* hms_, const char* ms_)  throw (std::invalid_argument)
+ImgKey::Dt::Dt(const char* hms_, const char* ms_)
     : hms(hms_), ms(ms_)
 {
     struct tm  tm;
@@ -16,7 +16,7 @@ ImgKey::Dt::Dt(const char* hms_, const char* ms_)  throw (std::invalid_argument)
     _hms = mktime(&tm);
 }
 
-ImgKey::Dt::Dt(const time_t& t_)  throw (std::invalid_argument)
+ImgKey::Dt::Dt(const time_t& t_)
     : _hms(t_)
 {
     struct tm  tm;

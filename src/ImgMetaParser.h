@@ -12,11 +12,10 @@ struct ImgMetaParser
     ImgMetaParser() = default;
     virtual ~ImgMetaParser() = default;
 
-    const Img  parse(const char* filename_, const struct stat&, const char* thumbpath_)  const
-	 throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error);
+    const Img  parse(const char* filename_, const struct stat&, const char* thumbpath_)  const;
+
   protected:
-    virtual const Img  _parse(const char* filename_, const struct stat&, const char* thumbpath_)  const
-	 throw (std::invalid_argument, std::range_error, std::underflow_error, std::overflow_error) = 0;
+    virtual const Img  _parse(const char* filename_, const struct stat&, const char* thumbpath_)  const = 0;
 };
 
 #endif
