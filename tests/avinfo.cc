@@ -9,7 +9,6 @@ extern "C" {
 int main(int argc, char* argv[])
 {
     char**  pp = argv+1;
-    av_register_all();
 
 #if 0
     AVFormatContext* fmt_ctx = avformat_alloc_context();
@@ -32,7 +31,6 @@ int main(int argc, char* argv[])
     AVCodecContext*  codec_ctx = NULL;
 
     int ret;
-    av_register_all();
 
     while (*pp)
     {
@@ -54,7 +52,7 @@ int main(int argc, char* argv[])
 	avformat_find_stream_info(fmt_ctx, NULL);
 	int  vidstream = -1;
 	for (int i=0; i< fmt_ctx->nb_streams; i++) {
-	    if (fmt_ctx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
+	    if (fmt_ctx->streams[i]->codecpar->codec_type==AVMEDIA_TYPE_VIDEO) {
 		vidstream = i;
 		break;
 	    }
