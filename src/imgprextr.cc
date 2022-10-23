@@ -778,6 +778,8 @@ thumbpatherr:
                                 while (cretry--) {
                                     try
                                     {
+                                        img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
+                                        img.profile("ICC", *outicc);
                                         img.iccColorProfile(*outicc);
                                         break;
                                     }
