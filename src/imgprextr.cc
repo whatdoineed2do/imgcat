@@ -1,23 +1,3 @@
-/*  $Id: imgprextr.cc,v 1.6 2012/04/07 13:39:17 ray Exp $
- *
- *  $Log: imgprextr.cc,v $
- *  Revision 1.6  2012/04/07 13:39:17  ray
- *  add -O for resize upon extract
- *
- *  Revision 1.5  2011/12/28 09:04:17  ray
- *  use SampleICC for ICC info
- *
- *  Revision 1.4  2011/12/27 12:04:42  ray
- *  allow arbituary ICC profiles along with internal sRGB
- *
- *  Revision 1.3  2011/12/01 13:57:30  ray
- *  maintain original exif byte order
- *
- *  Revision 1.2  2011/10/30 17:42:07  ray
- *  cvs tags
- *
- */
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
