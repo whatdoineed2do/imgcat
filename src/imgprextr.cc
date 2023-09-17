@@ -629,10 +629,10 @@ thumbpatherr:
                 PrvInfo  pvi(*(orig.get()));
 
                 char  path[PATH_MAX];
-                char  path1[PATH_MAX];
+                char  outputFilename[PATH_MAX];
                 switch (fnt) {
                     case FNT_RAND:
-                        strcpy(path1, generate_hex(16).c_str());
+                        strcpy(outputFilename, generate_hex(16).c_str());
                         break;
 
                     case FNT_META:
@@ -641,20 +641,20 @@ thumbpatherr:
                         const char*  osep = pvi.seperator;
                         pvi.seperator = "-";
                         d << pvi;
-                        strcpy(path1, d.str().c_str());
+                        strcpy(outputFilename, d.str().c_str());
                         pvi.seperator = osep;
                     } break;
 
                     default:
-                        strcpy(path1, filename_);
+                        strcpy(outputFilename, filename_);
                 }
 
 		// strip off original extn
-		char*  extpos = strrchr(path1, '.');
+		char*  extpos = strrchr(outputFilename, '.');
 		if (extpos) {
 		    *extpos = '\0';
 		}
-                sprintf(path, "%s/%s", thumbpath, basename(path1));
+                sprintf(path, "%s/%s", thumbpath, basename(outputFilename));
 
 #define LOG_FILE_INFO  filename_ << ": " << std::setw(8) << prevp->size_ << " bytes, " << prevp->width_ << "x" << prevp->height_ << "  " << pvi
 
@@ -682,7 +682,7 @@ thumbpatherr:
                     if (dumpICC)
                     {
                         char  iccpath[PATH_MAX];
-                        sprintf(iccpath, "%s/%s.icc", thumbpath, basename(path1));
+                        sprintf(iccpath, "%s/%s.icc", thumbpath, basename(outputFilename));
 
 #ifdef __MINGW32__
                         if ( (fd = open(iccpath, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
