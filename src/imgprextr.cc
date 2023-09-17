@@ -675,13 +675,13 @@ thumbpatherr:
                 {
                     if (dumpICC)
                     {
-                        char  path[PATH_MAX];
-                        sprintf(path, "%s/%s.icc", thumbpath, basename(path1));
+                        char  iccpath[PATH_MAX];
+                        sprintf(iccpath, "%s/%s.icc", thumbpath, basename(path1));
 
 #ifdef __MINGW32__
-                        if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
+                        if ( (fd = open(iccpath, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
 #else
-                        if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
+                        if ( (fd = open(iccpath, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
                             std::cout << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << std::endl;
                         }
