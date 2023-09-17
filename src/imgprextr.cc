@@ -648,6 +648,12 @@ thumbpatherr:
                     default:
                         strcpy(path1, filename_);
                 }
+
+		// strip off original extn
+		char*  extpos = strrchr(path1, '.');
+		if (extpos) {
+		    *extpos = '\0';
+		}
                 sprintf(path, "%s/%s", thumbpath, basename(path1));
 
 #define LOG_FILE_INFO  filename_ << ": " << std::setw(8) << prevp->size_ << " bytes, " << prevp->width_ << "x" << prevp->height_ << "  " << pvi
