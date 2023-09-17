@@ -1,0 +1,35 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -yq \
+        build-essential autotools-dev autoconf libtool \
+        libmagick++-6.q16-dev \
+        libexiv2-dev \
+        libavformat-dev libavutil-dev libavcodec-dev libavfilter-dev \
+        libffmpegthumbnailer-dev
+    - name: build local dependency - sampleICC
+      run: |
+        gzip -d < contrib/SampleICC-1.6.8.tar.gz | tar xf -
+        cd SampleICC-1.6.8 && ./bootstrap && \
+        ./configure --prefix=/usr --disable-shared --enable-static && \
+        make install
+        cd $OLDPWD
+    - name: configure, build
+      run: |
+        autoreconf --install
+        autoconf
+        ./configure
+        make
