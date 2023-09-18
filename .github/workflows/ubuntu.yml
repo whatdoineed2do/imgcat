@@ -23,9 +23,12 @@ jobs:
     - name: build local dependency - sampleICC
       run: |
         gzip -d < contrib/SampleICC-1.6.8.tar.gz | tar xf -
-        cd SampleICC-1.6.8 && ./bootstrap && \
-        ./configure --prefix=/usr --disable-shared --enable-static && \
-        make install
+        cd SampleICC-1.6.8
+        ./bootstrap
+        autoreconf --install
+        autoconf
+        ./configure --prefix=/usr --disable-shared --enable-static
+        sudo make install
         cd $OLDPWD
     - name: configure, build
       run: |
