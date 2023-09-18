@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 #else
     AVFormatContext *fmt_ctx = NULL;
     AVDictionaryEntry *tag = NULL;
-    AVCodecContext*  codec_ctx = NULL;
+    AVCodecParameters*  codec_ctx = NULL;
 
     int ret;
 
@@ -58,10 +58,10 @@ int main(int argc, char* argv[])
 	    }
 	}
 
-	codec_ctx = fmt_ctx->streams[vidstream]->codec;
+	codec_ctx = fmt_ctx->streams[vidstream]->codecpar;
 	std::cout << "  width=" << codec_ctx->width << std::endl
 	          << " height=" << codec_ctx->height << std::endl
-		  << " avfps=" << av_q2d(codec_ctx->framerate) << std::endl;
+		  << " avfps=" << av_q2d(fmt_ctx->streams[vidstream]->avg_frame_rate) << std::endl;
 
 	const char*  toi[] = {
 	    "major_brand", "model", "date", "creation_time",
