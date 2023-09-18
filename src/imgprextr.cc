@@ -20,6 +20,7 @@
 #include <condition_variable>
 #include <future>
 #include <chrono>
+#include <exception>
 
 #include <exiv2/exiv2.hpp>
 #include <Magick++.h>
@@ -347,11 +348,16 @@ int main(int argc, char* const argv[])
     const auto  dflttpsz = ceil(std::thread::hardware_concurrency()/2);
     unsigned  tpsz = dflttpsz;
     std::list<std::future<void>>  futures;
+    bool  overwrite = false;
 
     int  c;
-    while ( (c=getopt(argc, argv, "p:Ic:xhO:o:q:RMT:")) != EOF) {
+    while ( (c=getopt(argc, argv, "fp:Ic:xhO:o:q:RMT:")) != EOF) {
 	switch (c)
 	{
+	    case 'f':
+		overwrite = true;
+		break;
+
 	    case 'p':
 		thumbpath = optarg;
 		break;
@@ -477,8 +483,9 @@ int main(int argc, char* const argv[])
 	    default:
 usage:
 		std::cout << argv0 << " " << Imgcat::version() << "\n"
-		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R|-M]  file0 file1 .. fileN" << std::endl
+		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R|-M] [-f]   file0 file1 .. fileN" << std::endl
 		     << "         -p    extract preview images to location=./" << std::endl
+		     << "         -f    overwrite existing preview images (default no)" << std::endl
 		     << "         -c    perform ICC conversion if possible: srgb for internal sRGB or file location of target ICC" << std::endl
 		     << "         -x    exclude metadata" << std::endl
 		     << "         -I    dump ICC to disk for each image" << std::endl
@@ -744,6 +751,7 @@ thumbpatherr:
                         Magick::Image  img(Magick::Blob(rawio.mmap(), rawio.size()));
 
                         img.quality(imgqual);
+
                         if (convert & CONVERT_OUTPUT_FMT) {
                             char  extn[5];
                             if      (strcasecmp(outputfmt.c_str(), "JPEG") == 0) sprintf(extn, ".jpg");
@@ -755,6 +763,11 @@ thumbpatherr:
                         else {
                             strcat(path, preview.extension().c_str());
                         }
+
+			if (access(path, F_OK) == 0 && !overwrite) {
+			    err << filename_ << ":  not overwritting existing output";
+			    throw std::underflow_error(err.str());
+			}
 
                         if (convert & CONVERT_ICC)
                         {
