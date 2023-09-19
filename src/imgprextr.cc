@@ -833,7 +833,20 @@ thumbpatherr:
 #endif
                         std::cout << std::endl;
                         if (target.isValid()) {
-                            img.resize(target);
+			    // figure out if need to flip bassed on img dimensions
+			    const auto  h = img.baseRows();
+			    const auto  w = img.columns();
+
+			    Magick::Geometry  imgtarget;
+			    std::string  x = "x";
+			    if (h > w) {
+			        imgtarget = x + (std::string)target;
+			    }
+			    else {
+			        imgtarget = (std::string)target + x;
+			    }
+			    
+                            img.resize(imgtarget);
                         }
 
                         if (excludeMeta) {
