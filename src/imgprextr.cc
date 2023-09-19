@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include <cassert>
+#include <array>
 
 #include <fstream>
 #include <sstream>
@@ -322,6 +323,41 @@ std::string  generate_hex(const unsigned int len_)
     return ss.str();
 }
 
+struct ImgSize {
+    ImgSize(const char* name_, unsigned x_, unsigned y_)
+        : name(name_), x(x_), y(y_)
+    { }
+    ImgSize(const ImgSize&) = default;
+    constexpr ImgSize& operator=(const ImgSize&) = default;
+
+    const char* name;
+    unsigned  x;
+    unsigned  y;
+    mutable char  buf[5] = { 0 };
+
+    bool  operator==(const char* name_) const
+    {
+        return strcasecmp(name_, name) == 0;
+    }
+
+    const char* c_str() const
+    {
+	snprintf(buf, sizeof(buf), "%d", x);
+	return buf;
+    }
+
+};
+
+const std::array   stdImgSzs {
+    ImgSize{  "web", 2048, 1536 },
+    ImgSize{  "4mp", 2464, 1632 },
+    ImgSize{  "6mp", 3008, 2000 },
+    ImgSize{  "8mp", 3264, 2448 },
+    ImgSize{ "12mp", 4320, 2868 },
+    ImgSize{ "16mp", 4920, 3264 },
+    ImgSize{ "24mp", 6048, 4024 }
+};
+
 
 int main(int argc, char* const argv[])
 {
@@ -458,7 +494,9 @@ int main(int argc, char* const argv[])
 	    case 'O':
 		try
 		{
-		    const Magick::Geometry  g(optarg);
+		    const auto  stdsz = std::find(cbegin(stdImgSzs), cend(stdImgSzs), optarg);
+
+		    const Magick::Geometry  g( (stdsz == std::end(stdImgSzs) ? optarg : stdsz->c_str()) );
 		    const std::string  s = g;
 		    target = s.c_str();
 		}
@@ -808,7 +846,20 @@ thumbpatherr:
 #endif
                         std::cout << std::endl;
                         if (target.isValid()) {
-                            img.resize(target);
+			    // figure out if need to flip bassed on img dimensions
+			    const auto  h = img.baseRows();
+			    const auto  w = img.columns();
+
+			    Magick::Geometry  imgtarget;
+			    std::string  x = "x";
+			    if (h > w) {
+			        imgtarget = x + (std::string)target;
+			    }
+			    else {
+			        imgtarget = (std::string)target + x;
+			    }
+			    
+                            img.resize(imgtarget);
                         }
 
                         if (excludeMeta) {
