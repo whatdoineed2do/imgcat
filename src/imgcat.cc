@@ -312,10 +312,14 @@ typedef std::list<_Task*>  Tasks;
 
 int main(int argc, char **argv)
 {
-    const char* DFLT_EXTNS = ".jpg;.jpeg;.nef;.tiff;.tif;.png;.gif;.cr2;.raf;.dng";
+    const char* DFLT_EXTNS = ".jpg;.jpeg;.nef;.tiff;.tif;.png;.gif;.cr2;.raf;.dng;.heic;.heif";
     const char* DFLT_VEXTNS = ".mov;.mp4;.avi;.mpg;.mpeg";
     const char*  extns  = DFLT_EXTNS;
     const char*  vextns = DFLT_VEXTNS;
+
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,27,4)
+    Exiv2::enableBMFF();
+#endif
 
     const char*  thumbpath = ".thumbs";
     unsigned  thumbsize = 640;

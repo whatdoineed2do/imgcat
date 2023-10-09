@@ -111,6 +111,9 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 	    case Exiv2::ImageType::jp2:
 	    case Exiv2::ImageType::png:
 	    case Exiv2::ImageType::gif:
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,27,4)
+	    case Exiv2::ImageType::bmff:
+#endif
 		data.type = ImgData::IMAGE;
 		break;
 	}
