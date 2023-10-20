@@ -552,7 +552,6 @@ int main(int argc, char **argv)
 		}
 	    }
 
-	    for (Istats::iterator i=vidfilenames.begin(); i!=vidfilenames.end(); ++i)
 	    for (auto&  i : vidfilenames)
 	    {
 		try
