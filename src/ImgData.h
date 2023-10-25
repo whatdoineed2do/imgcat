@@ -51,11 +51,11 @@ class ImgData
     std::string  rating;
 
     struct MetaImg {
-        MetaImg() : rotate(0) { }
+        MetaImg() : rotate(0), flop(false) { }
 
 	MetaImg(const MetaImg& rhs_) :
 	    dpi(rhs_.dpi),
-	    rotate(rhs_.rotate),
+	    rotate(rhs_.rotate), flop(rhs_.flop),
 	    camera(rhs_.camera),
 	    sn(rhs_.sn),
 	    lens(rhs_.lens),
@@ -70,7 +70,7 @@ class ImgData
 
 	MetaImg(const MetaImg&& rhs_) :
 	    dpi(std::move(rhs_.dpi)),
-	    rotate(rhs_.rotate),
+	    rotate(rhs_.rotate), flop(rhs_.flop),
 	    camera(std::move(rhs_.camera)),
 	    sn(std::move(rhs_.sn)),
 	    lens(std::move(rhs_.lens)),
@@ -87,6 +87,7 @@ class ImgData
 
 	std::string  dpi;
 	double  rotate;
+	bool  flop;
 
 
 	std::string  camera;

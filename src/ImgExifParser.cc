@@ -200,19 +200,20 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 
 	/* determine correct orientation of image, and any rotation requierd
 	 */
+	bool  flop = false;
 	switch ((int)orientation) {
-	    case 2:  orientation = 0;  break;   // flip horz
-	    case 3:  orientation = 180;  break;
-	    case 4:  orientation = 0;  break;   // flip vert
-	    case 5:  orientation = 0;  break;   // transpose
-	    case 6:  orientation = 90;  break;
-	    case 7:  orientation = 0;  break;   // traverse
-	    case 8:  orientation = -90;  break;
-
+	    case 2:  orientation =   -0;  flop = true; break;   // top right, flip horz/mirrored
+	    case 3:  orientation =  180;  break;                // bottom right/upside down
+	    case 4:  orientation =  180;  flop = true; break;   // bottom left/upsided down mirrored, flip vert
+	    case 5:  orientation =   90;  flop = true; break;   // left top, transpose/back to front/side
+	    case 6:  orientation =   90;  break;                // right top
+	    case 7:  orientation =  270;  flop = true; break;   // right bottom, traverse
+	    case 8:  orientation =  270;  break;                // left bottom
 	    case 1:
-	    default: orientation = 0;
+	    default: orientation =    0;  break;                // top left
 	}
 	data.metaimg.rotate = orientation;
+	data.metaimg.flop = flop;
 
 	const Exiv2::XmpData&  xmp = image->xmpData();
 	Exiv2::XmpData::const_iterator  xp;

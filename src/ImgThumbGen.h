@@ -90,15 +90,15 @@ class ImgThumbGen
 
     void  _genthumbnail(const std::string& path_, const std::string& origpath_,
                         Magick::Image& img_,
-                        const unsigned sz_, const float rotate_);
+                        const unsigned sz_, const float rotate_, const bool flop_);
 
     void  _genthumbnail(const std::string& path_, const std::string& origpath_,
                         const void* data_, const size_t datasz_,
-                        const unsigned sz_, const float rotate_);
+                        const unsigned sz_, const float rotate_, const bool flop_);
 
     void  _genthumbnail(const std::string& path_, const std::string& origpath_,
                         const Exiv2::PreviewImage& preview_, const Exiv2::ExifData& exif_,
-                        const unsigned sz_, const float rotate_);
+                        const unsigned sz_, const float rotate_, const bool flop_);
 
     void  _readgenthumbnail(const ImgData& img_, const std::string& prevpath_, const unsigned sz_);
 

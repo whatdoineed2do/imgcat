@@ -54,7 +54,7 @@ void  ImgThumbGen::generate()
                     // get the largest, convert to sRGB if possible and scale
                     const Exiv2::PreviewImage  preview = prevldr.getPreviewImage(prevs.back());
 
-                    _genthumbnail(prevpath, img.filename, preview, orig->exifData(), thumbsize, img.metaimg.rotate);
+                    _genthumbnail(prevpath, img.filename, preview, orig->exifData(), thumbsize, img.metaimg.rotate, img.metaimg.flop);
                 }
             }
             catch (const Exiv2::AnyError& e)
@@ -95,12 +95,15 @@ void  ImgThumbGen::generate()
 
 
 
-void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& origpath_, Magick::Image& img_, const unsigned sz_, const float rotate_)
+void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& origpath_, Magick::Image& img_, const unsigned sz_, const float rotate_, const bool flop_)
 {
     try
     {
 	if (rotate_) {
 	    img_.rotate(rotate_);
+	}
+	if (flop_) {
+	    img_.flop();
 	}
 
 	/* make sure that the thumb is at least 'sz_'
@@ -144,7 +147,7 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
 }
 
 void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& origpath_,
-                                 const void* data_, const size_t datasz_, const unsigned sz_, const float rotate_)
+                                 const void* data_, const size_t datasz_, const unsigned sz_, const float rotate_, const bool flop_)
 {
     try
     {
@@ -158,7 +161,7 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
                 Magick::Image  magick(blob);
 		magick.strip();
 
-                _genthumbnail(path_, origpath_, magick, sz_, rotate_);
+                _genthumbnail(path_, origpath_, magick, sz_, rotate_, flop_);
                 break;
             }
             catch (const Magick::ErrorCache& ex) 
@@ -200,7 +203,7 @@ void  ImgThumbGen::_readgenthumbnail(const ImgData& img_, const std::string& pre
 	    std::cerr << "failed to read source file to generate thumbnail: " << img_.filename << " (read " << n << "/" << img_.size << ") - " << strerror(errno) << std::endl;
 	}
 	else {
-	    _genthumbnail(prevpath_, img_.filename, buf, img_.size, sz_, img_.metaimg.rotate);
+	    _genthumbnail(prevpath_, img_.filename, buf, img_.size, sz_, img_.metaimg.rotate, img_.metaimg.flop);
 	}
 	delete []  buf;
 	close(fd);
@@ -210,7 +213,7 @@ void  ImgThumbGen::_readgenthumbnail(const ImgData& img_, const std::string& pre
 
 void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& origpath_,
                                  const Exiv2::PreviewImage& preview_, const Exiv2::ExifData& exif_, const unsigned sz_,
-                                 const float rotate_)
+                                 const float rotate_, const bool flop_)
 {
     const char*  iccproftag = "Exif.Image.InterColorProfile";
 
@@ -288,7 +291,7 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
 	DLOG(origpath_ << "  already sRGB");
 
 	/* already a known sRGB, no conversion needed just dump the preview */
-	_genthumbnail(path_, origpath_, preview_.pData(), preview_.size(), sz_, rotate_);
+	_genthumbnail(path_, origpath_, preview_.pData(), preview_.size(), sz_, rotate_, flop_);
     }
     else
     {
@@ -305,7 +308,7 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
                 img.profile("ICC", Magick::Blob(buf.buf, buf.bufsz));
                 img.profile("ICC", outicc);
 
-                _genthumbnail(path_, origpath_, img, sz_, rotate_);
+                _genthumbnail(path_, origpath_, img, sz_, rotate_, flop_);
                 break;
             }
             catch (const Magick::ErrorCache& ex)
