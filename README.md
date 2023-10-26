@@ -29,7 +29,13 @@ Sample RAW files available https://rawsamples.ch/index.php/en/
 Command line util to extract largest thumbnail from (Nikon) RAW files;  adds functionality not available in `exiv2` or `exiftool` in that this tool can extract the thumbnail and perform colour space conversions (Adobe to sRGB) and also resizing of the images before writing to disk
 
 ## Dependancies
-Require `ImageMagick`, `exiv2` and `SampleICC` (local copy available) and `ffmpegthumbnailer` and `libavformat` (from `ffmpeg`) development libraries
+Requires [`ImageMagick`](https://github.com/ImageMagick/ImageMagick), [`exiv2`](https://github.com/Exiv2/exiv2) and `SampleICC` (local copy available) and [`ffmpegthumbnailer`](https://github.com/dirkvdb/ffmpegthumbnailer) and `libavformat` (from [`ffmpeg`](https://github.com/FFmpeg/FFmpeg)) development libraries.  If you are building `ImageMagick` from source, you should include delegates for:
+* jpg
+* xml  (exif)
+* lcms (NEF)
+* png
+* tiff (NEF)
+
 
 ### Building local SampleICC
 If your distribution/host does not have SampleICC (ie Fedora) you can compile the one in this repo.  I would build this locally as a static archive
