@@ -156,6 +156,7 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
             {
                 Magick::Blob   blob(data_, datasz_);
                 Magick::Image  magick(blob);
+		magick.strip();
 
                 _genthumbnail(path_, origpath_, magick, sz_, rotate_);
                 break;
