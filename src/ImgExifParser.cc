@@ -98,6 +98,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
         /* determine if the img has an embedded prev image
          * http://www.exiv2.org/doc/classExiv2_1_1Image.html
          */
+	bool  skiporientation = false;
 #if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,26,0)
 	switch (image->imageType())
 	{
@@ -111,11 +112,14 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 	    case Exiv2::ImageType::jp2:
 	    case Exiv2::ImageType::png:
 	    case Exiv2::ImageType::gif:
-#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,27,4)
-	    case Exiv2::ImageType::bmff:
-#endif
 		data.type = ImgData::IMAGE;
 		break;
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,27,4)
+	    case Exiv2::ImageType::bmff:
+		data.type = ImgData::IMAGE;
+		skiporientation = true;
+		break;
+#endif
 	}
 #else
 	if (dynamic_cast<Exiv2::TiffImage*>(image.get()) ||    // nef
@@ -212,8 +216,10 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 	    case 1:
 	    default: orientation =    0;  break;                // top left
 	}
-	data.metaimg.rotate = orientation;
-	data.metaimg.flop = flop;
+	if (!skiporientation) {
+	    data.metaimg.rotate = orientation;
+	    data.metaimg.flop = flop;
+	}
 
 	const Exiv2::XmpData&  xmp = image->xmpData();
 	Exiv2::XmpData::const_iterator  xp;
