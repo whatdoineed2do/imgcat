@@ -21,6 +21,7 @@ typedef long long  longlong_t;
 #include <sstream>
 #include <string>
 #include <list>
+#include <filesystem>
 
 #include <chrono>
 #include <mutex>
@@ -49,7 +50,7 @@ struct Istat {
     std::string  filename;
     struct stat  st;
 
-    Istat(const char* filename_, const struct stat& st_) : filename(filename_)
+    Istat(const std::string& filename_, const struct stat& st_) : filename(filename_)
     {
 	memcpy(&st, &st_, sizeof(st));
     }
@@ -83,7 +84,7 @@ struct Istat {
     }
 };
 
-typedef std::list<Istat>  Istats;
+using Istats = std::list<Istat>;
 
 
 bool  _filterextn(const char** extn_, const char* path_)
@@ -121,118 +122,43 @@ bool  _filterextn(const char** extn_, const char* path_)
 void  _readdir(Istats& files_, Istats& vfiles_,
 	       const char* where_, const char** extn_, const char** vextn_)
 {
-    DIR*  d;
-    if ( (d = opendir(where_)) == NULL) {
-	std::ostringstream  err;
-	err << "failed to open '" << where_ << "' - " << strerror(errno);
-	throw std::invalid_argument(err.str());
-    }
-
-    char  path[PATH_MAX];
-
-    const size_t  dsz = (sizeof(struct dirent) + pathconf(where_, _PC_NAME_MAX));
-    struct dirent*  dent = (struct dirent*)malloc(dsz);
-    memset(dent, 0, dsz);
-    struct dirent*  result = NULL;
-    while ( readdir_r(d, dent, &result) == 0 && result)
+    const std::filesystem::path  where(where_);
+    for (auto const&  de : std::filesystem::recursive_directory_iterator{where}) 
     {
-	if (strcmp(result->d_name, ".") == 0 || strcmp(result->d_name, "..") == 0 || strcmp(result->d_name, "Thumbs.db") == 0) {
+	if (!de.is_regular_file()) {
 	    continue;
 	}
 
 	struct stat  st;
-	sprintf(path, "%s/%s", where_, result->d_name);
-	if (stat(path, &st) < 0)
-	{
-	    free(dent);
+	stat(de.path().c_str(), &st);
 
-	    std::ostringstream  err;
-	    err << "failed to stat '" << path << "' - " << strerror(errno);
-	    throw std::invalid_argument(err.str());
+	if (_filterextn(extn_, de.path().c_str())) {
+	    files_.emplace_back(Istat(de.path(), st));
 	}
-
-	try
-	{
-	    if (st.st_mode & S_IFDIR) {
-		_readdir(files_, vfiles_, path, extn_, vextn_);
-	    }
-	    else {
-		DLOG(path);
-		if (st.st_mode & S_IFREG)
-		{
-		    if (_filterextn(extn_, path)) {
-			files_.emplace_back(Istat(path, st));
-		    }
-		    else if (_filterextn(vextn_, path)) {
-			vfiles_.emplace_back(Istat(path, st));
-		    }
-		}
-	    }
-	}
-	catch (...)
-	{
-	    free(dent);
-	    throw;
+	else if (_filterextn(vextn_, de.path().c_str())) {
+	    vfiles_.emplace_back(Istat(de.path(), st));
 	}
     }
-    free(dent);
-    closedir(d);
 }
 
 void  _readdir(const ImgMetaParser& metaparser_, ImgIdx& idx_, const char* thumbpath_, const char* where_, const char**  extn_)
 {
-    DIR*  d;
-    if ( (d = opendir(where_)) == NULL) {
-	std::ostringstream  err;
-	err << "failed to open '" << where_ << "' - " << strerror(errno);
-	throw std::invalid_argument(err.str());
-    }
-
-    char  path[PATH_MAX];
-
-    struct dirent*  dent = (struct dirent*)malloc(sizeof(struct dirent) + pathconf(where_, _PC_NAME_MAX));
-    struct dirent*  result = NULL;
-    while ( readdir_r(d, dent, &result) == 0 && result)
+    const std::filesystem::path  where(where_);
+    for (auto const&  de : std::filesystem::recursive_directory_iterator{where}) 
     {
-	if (strcmp(result->d_name, ".") == 0 || strcmp(result->d_name, "..") || strcmp(result->d_name, "Thumbs.db") == 0) {
+	if (de.is_regular_file()) {
 	    continue;
 	}
 
 	struct stat  st;
-	sprintf(path, "%s/%s", where_, result->d_name);
-	if (stat(path, &st) < 0)
-	{
-	    free(dent);
-
-	    std::ostringstream  err;
-	    err << "failed to stat '" << path << "' - " << strerror(errno);
-	    throw std::invalid_argument(err.str());
-	}
-
-	try
-	{
-	    if (st.st_mode & S_IFDIR) {
-		_readdir(metaparser_, idx_, thumbpath_, path, extn_);
-	    }
-	    else
-	    {
-		DLOG(path);
-		if (st.st_mode & S_IFREG && _filterextn(extn_, path)) {
-		    const Img  img = metaparser_.parse(path, st, thumbpath_);
-		    idx_[img.key].emplace_back(std::move(img.data));
-		}
-	    }
-	}
-	catch (...)
-	{
-	    free(dent);
-	    throw;
+	stat(de.path().c_str(), &st);
+	DLOG(path);
+	if (_filterextn(extn_, de.path().c_str())) {
+	    const Img  img = metaparser_.parse(de.path().c_str(), st, thumbpath_);
+	    idx_[img.key].emplace_back(std::move(img.data));
 	}
     }
-    free(dent);
-    closedir(d);
 }
-
 
 
 struct _Task 
@@ -306,7 +232,7 @@ struct _Task
     ~_Task()
     { delete task; }
 };
-typedef std::list<_Task*>  Tasks;
+using Tasks = std::list<_Task*>;
 
 
 
