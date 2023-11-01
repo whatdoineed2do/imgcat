@@ -11,10 +11,6 @@
 #include <getopt.h>
 #include <errno.h>
 
-typedef unsigned int  uint_t;
-typedef long long  longlong_t;
-
-
 #include <iostream>
 #include <iomanip>
 #include <stdexcept>
@@ -365,7 +361,7 @@ int main(int argc, char **argv)
 	if (src)
 	{
 	    char*  e = strcpy(new char[strlen(extns)+1], src);
-	    uint_t  n = 0;
+	    unsigned  n = 0;
 
 	    const char*  e1 = e;
 	    while (*e1) {
@@ -389,7 +385,7 @@ int main(int argc, char **argv)
 		char*  tok = NULL;
 		while ( (tok = strtok_r(pc == NULL ? e : NULL, ".;", &pc)) )
 		{
-		    const uint_t  n = strlen(tok);
+		    const unsigned  n = strlen(tok);
 		    *eptr++ = strcpy(new char[n+1], tok);
 		}
 	    }
@@ -438,12 +434,12 @@ int main(int argc, char **argv)
     ImgAVFmtParser  avfmtparser;
 
     std::list<_Ignored>  ignored;
-    uint_t  ttlfiles = 0;
+    unsigned  ttlfiles = 0;
     std::cout << "initial dir scan" << std::endl;
     while (optind < argc)
     {
 	char*  dir = argv[optind++];
-	const uint_t  dirlen = strlen(dir);
+	const unsigned  dirlen = strlen(dir);
 	if ( dir[dirlen-1] == '/' ) {
 	    dir[dirlen-1] = (char)NULL;
 	}
