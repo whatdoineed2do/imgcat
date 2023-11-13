@@ -59,7 +59,6 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
     }
 #endif
 
-    imgdata.metavid.duration = avfmt->duration/AV_TIME_BASE;
 
     avformat_find_stream_info(avfmt, NULL);
     int  vidstream = -1;
@@ -69,12 +68,15 @@ const Img  ImgAVFmtParser::_parse(const char* filename_, const struct stat& st_,
 	    break;
 	}
     }
+
     if (vidstream < 0) {
 	avformat_close_input(&avfmt);
 	std::ostringstream  err;
 	err << "failed avformat_open_input - " << filename_ << " - " << _averr;
 	throw std::underflow_error(err.str());
     }
+
+    imgdata.metavid.duration = avfmt->duration/AV_TIME_BASE;
 
     avcodec = avfmt->streams[vidstream]->codecpar;
     {
