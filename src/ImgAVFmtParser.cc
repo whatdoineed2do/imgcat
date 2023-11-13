@@ -15,10 +15,17 @@ extern "C" {
 
 bool  ImgAVFmtParser::_initd = false;
 
+static void  _avlog_callback_null(void *ptr, int level, const char *fmt, va_list vl)
+{ }
+
+
 ImgAVFmtParser::ImgAVFmtParser()
 {
     if (!ImgAVFmtParser::_initd) {
 	ImgAVFmtParser::_initd = true;
+
+	av_log_set_flags(AV_LOG_SKIP_REPEATED);
+	av_log_set_callback(_avlog_callback_null);
     }
 }
 
