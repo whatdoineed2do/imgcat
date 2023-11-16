@@ -12,6 +12,7 @@
 #include <iostream>
 #include <cassert>
 #include <array>
+#include <algorithm>
 
 #include <fstream>
 #include <sstream>
@@ -223,23 +224,26 @@ std::ostream& operator<<(std::ostream& os_, const PrvInfo& obj_)
 PrvInfo::PrvInfo(const Exiv2::Image& img_) : seperator(nullptr)
 {
     typedef Exiv2::ExifData::const_iterator (*EasyAccessFct)(const Exiv2::ExifData& ed);
-    const struct _EasyAccess {
+    struct _EasyAccess {
 	EasyAccessFct find;
-	std::string*  target;
-    } eatags[] = {
-	{ Exiv2::make,         &mftr   },
-	{ Exiv2::model,        &camera },
-	{ Exiv2::serialNumber, &sn     },
-	{ NULL, NULL }
+	std::string&  target;
     };
 
-    const struct _MiscTags {
+    std::array  eatags {
+	_EasyAccess{ Exiv2::make,         mftr   },
+	_EasyAccess{ Exiv2::model,        camera },
+	_EasyAccess{ Exiv2::serialNumber, sn     }
+    };
+
+
+    struct _MiscTags {
         const char*  tag;
-        std::string*  s;
-    } misctags[] = {
-        { "Exif.Photo.DateTimeOriginal", &dateorig },
-        { "Exif.Nikon3.ShutterCount",    &shuttercnt },
-        { NULL, NULL }
+        std::string&  s;
+    };
+
+    std::array  misctags {
+        _MiscTags{ "Exif.Photo.DateTimeOriginal", dateorig },
+        _MiscTags{ "Exif.Nikon3.ShutterCount",    shuttercnt }
     };
 
     const Exiv2::ExifData&  ed = img_.exifData();
@@ -248,14 +252,11 @@ PrvInfo::PrvInfo(const Exiv2::Image& img_) : seperator(nullptr)
     }
 
     Exiv2::ExifData::const_iterator  exif;
-    const _EasyAccess*  ep = eatags;
-    while (ep->target)
-    {
-	if ( (exif = ep->find(ed)) != ed.end())  {
-	    *ep->target = exif->print(&ed);
+    std::for_each(eatags.begin(), eatags.end(), [&ed, &exif](auto& ep) {
+	if ( (exif = ep.find(ed)) != ed.end())  {
+	    ep.target = exif->print(&ed);
 	}
-	++ep;
-    }
+    });
 
     if (mftr == "NIKON CORPORATION") {
         mftr.clear();  // the model has "NIKON ..."
@@ -266,14 +267,11 @@ PrvInfo::PrvInfo(const Exiv2::Image& img_) : seperator(nullptr)
         }
     }
 
-    const _MiscTags*  mp = misctags;
-    while (mp->tag)
-    {
-        if ( (exif = ed.findKey(Exiv2::ExifKey(mp->tag)) ) != ed.end()) {
-            *mp->s = exif->print(&ed);
-        }
-        ++mp;
-    }
+    std::for_each(misctags.begin(), misctags.end(), [&ed, &exif](auto& mp) {
+        if ( (exif = ed.findKey(Exiv2::ExifKey(mp.tag)) ) != ed.end()) {
+            mp.s = exif->print(&ed);
+	}
+    });
 }
 
 
