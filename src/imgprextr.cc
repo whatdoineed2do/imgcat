@@ -277,8 +277,8 @@ PrvInfo::PrvInfo(const Exiv2::Image& img_) : seperator(nullptr)
 
 bool  _extractICCinfo(const void* data_, const size_t datasz_, std::string& desc_, std::string& cprt_)
 {
-    CIccProfile*  icc = OpenIccProfile((icUInt8Number*)data_, datasz_);
-    if (icc == NULL) {
+    std::unique_ptr<CIccProfile>  icc(OpenIccProfile((icUInt8Number*)data_, datasz_));
+    if (icc.get() == NULL) {
 	return false;
     }
 
@@ -298,7 +298,6 @@ bool  _extractICCinfo(const void* data_, const size_t datasz_, std::string& desc
 	}
     }
 
-    delete icc;
     return true;
 }
 
@@ -371,6 +370,7 @@ int main(int argc, char* const argv[])
 
     const ICCprofiles*  tgtICC     = NULL;  // used to determine if ICC conversions req'd
     uchar_t*            nonSRGBicc = NULL;  // buf for non internal sRGB ICC
+    std::unique_ptr<uchar_t[]>  mgr {nonSRGBicc};
 
     Magick::InitializeMagick(NULL);
 
@@ -467,7 +467,6 @@ int main(int argc, char* const argv[])
 			    }
 			    else {
 				std::cerr << argv0 << ": unable to read ICC '" << optarg << "' - " << strerror(errno) << std::endl;
-				delete [] nonSRGBicc;
 				nonSRGBicc = NULL;
 			    }
 			}
@@ -599,7 +598,7 @@ thumbpatherr:
 #endif
     }
 
-    const Magick::Blob*  outicc = tgtICC ? new Magick::Blob(tgtICC->profile, tgtICC->length) : NULL;
+    std::unique_ptr<Magick::Blob>  outicc { tgtICC ? new Magick::Blob(tgtICC->profile, tgtICC->length) : NULL };
 
     std::mutex  mtx;
     std::condition_variable  cond;
@@ -960,8 +959,6 @@ thumbpatherr:
         std::cerr << argv0 << ": failed to clean up threads - " << ex.what() << std::endl;
     }
 
-    delete [] nonSRGBicc;
-    delete outicc;
     Magick::TerminateMagick();
 
     return 0;
