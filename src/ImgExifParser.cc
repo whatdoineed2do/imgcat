@@ -82,13 +82,21 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 
     try
     {
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+	Exiv2::Image::UniquePtr image;
+#else
 	Exiv2::Image::AutoPtr image;
+#endif
 	try
 	{
 	    image = Exiv2::ImageFactory::open(filename_);
 	
 	}
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+	catch (const Exiv2::Error&)
+#else
 	catch (const Exiv2::AnyError&)
+#endif
 	{
 	    std::ostringstream  err;
 	    err << "invalid image file " << filename_;
@@ -181,7 +189,12 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 	{
 	    if ( (exif = ed.findKey(Exiv2::ExifKey(mp->tag)) ) != ed.end()) {
 		if (mp->target)    *mp->target   = exif->print(&ed);
-		if (mp->tgtlong)   *mp->tgtlong  = exif->toLong();
+		if (mp->tgtlong)   *mp->tgtlong  = 
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+		    exif->toInt64();
+#else
+		    exif->toLong();
+#endif
 		if (mp->tgtfloat)  *mp->tgtfloat = exif->toFloat();
 	    }
 	    ++mp;
@@ -256,7 +269,11 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 
 	return Img(ImgKey(mftr.c_str(), data.metaimg.camera.c_str(), data.metaimg.sn.c_str(), dtorg.c_str(), dtorgsub.c_str()), data);
     }
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+    catch (const Exiv2::Error& e)
+#else
     catch (const Exiv2::AnyError& e)
+#endif
     {
 	std::ostringstream  err;
 	err << "unable to extract exif from " << filename_ << " - " << e;

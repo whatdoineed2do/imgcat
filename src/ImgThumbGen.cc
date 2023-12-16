@@ -1,6 +1,7 @@
 #include "ImgThumbGen.h"
 
 #include <unistd.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <string.h>
 
@@ -42,7 +43,12 @@ void  ImgThumbGen::generate()
              */
             try
             {
-                Exiv2::Image::AutoPtr  orig = Exiv2::ImageFactory::open(img.filename);
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+                Exiv2::Image::UniquePtr
+#else
+                Exiv2::Image::AutoPtr
+#endif
+		orig = Exiv2::ImageFactory::open(img.filename);
                 orig->readMetadata();
                 Exiv2::PreviewManager  prevldr(*orig);
                 Exiv2::PreviewPropertiesList  prevs = prevldr.getPreviewProperties();
@@ -57,7 +63,11 @@ void  ImgThumbGen::generate()
                     _genthumbnail(prevpath, img.filename, preview, orig->exifData(), thumbsize, img.metaimg.rotate, img.metaimg.flop);
                 }
             }
-            catch (const Exiv2::AnyError& e)
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+	    catch (const Exiv2::Error& e)
+#else
+	    catch (const Exiv2::AnyError& e)
+#endif
             {
                 _error << "unable to extract thumbnail from " << img.filename << " - " << e;
             }
@@ -236,8 +246,15 @@ void  ImgThumbGen::_genthumbnail(const std::string& path_, const std::string& or
 	    /* found the nikon tag that tells us 0=srgb, 1=argb but need to check if
 	     * this is as-shot with no further mods (ie colorspace conv)
 	     */
-	    DLOG(origpath_ << "  colourspace=" << d->toLong());
-	    if (d->toLong() == 2)
+	    const long  l =
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+	    d->toInt64();
+#else
+	    d->toLong();
+#endif
+
+	    DLOG(origpath_ << "  colourspace=" << l);
+	    if (l == 2)
 	    {
 		// it was shot as aRGB - check the orig vs mod times
                 std::string  orig;

@@ -76,7 +76,13 @@ Exiv2::ExifData::iterator  _extractICC(ImgCat::_Buf& buf_, Exiv2::ExifData& exif
 	    /* found the nikon tag that tells us 0=srgb, 1=argb but need to check if
 	     * this is as-shot with no further mods (ie colorspace conv)
 	     */
-	    if (d->toLong() == 2)
+            const long  l =
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+		    d->toInt64();
+#else
+		    d->toLong();
+#endif
+	    if (l == 2)
 	    {
 		// it was shot as aRGB - check the orig vs mod times
 		std::string  orig;
@@ -650,7 +656,12 @@ thumbpatherr:
 
             try
             {
-                Exiv2::Image::AutoPtr  orig = Exiv2::ImageFactory::open(filename_);
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+                Exiv2::Image::UniquePtr
+#else
+                Exiv2::Image::AutoPtr
+#endif
+                orig = Exiv2::ImageFactory::open(filename_);
                 assert(orig.get() != 0);
 
 
@@ -704,8 +715,11 @@ thumbpatherr:
 
                 Exiv2::PreviewImage  preview = loader.getPreviewImage(*prevp);
 
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+                Exiv2::Image::UniquePtr  upd = Exiv2::ImageFactory::open( preview.pData(), preview.size() );
+#else
                 Exiv2::Image::AutoPtr  upd = Exiv2::ImageFactory::open( preview.pData(), preview.size() );
-
+#endif
                 if (!excludeMeta) {
                     upd->setByteOrder(orig->byteOrder());
 
@@ -867,7 +881,12 @@ thumbpatherr:
                             Magick::Blob  blob;
                             img.write(&blob);
 
-                            Exiv2::Image::AutoPtr  cnvrted = Exiv2::ImageFactory::open((const unsigned char*)blob.data(), blob.length());
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+                            Exiv2::Image::UniquePtr
+#else
+                            Exiv2::Image::AutoPtr
+#endif
+			    cnvrted = Exiv2::ImageFactory::open((const unsigned char*)blob.data(), blob.length());
                             cnvrted->readMetadata();
                             cnvrted->setByteOrder(orig->byteOrder());
                             cnvrted->setExifData(exif);
@@ -921,7 +940,11 @@ thumbpatherr:
                     close(fd);
                 }
             }
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+            catch (const Exiv2::Error& e)
+#else
             catch (const Exiv2::AnyError& e)
+#endif
             {
                 err << filename_ << ":  unable to extract preview/reset exif - " << e;
                 throw std::overflow_error(err.str());
