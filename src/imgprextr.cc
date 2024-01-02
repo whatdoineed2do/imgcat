@@ -902,9 +902,9 @@ thumbpatherr:
                             cnvrted->writeMetadata();
 
 #ifdef __MINGW32__
-                            if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
+                            if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
 #else
-                            if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
+                            if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
                                 err << LOG_FILE_INFO << ": failed to create converted preview - " << strerror(errno) << std::endl;
                                 throw std::system_error(errno, std::system_category(), err.str());
@@ -930,9 +930,9 @@ thumbpatherr:
                 {
                     strcat(path, preview.extension().c_str());
 #ifdef __MINGW32__
-                    if ( (fd = open(path, O_CREAT | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
+                    if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
 #else
-                    if ( (fd = open(path, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
+                    if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0666 & ~msk)) < 0) {
 #endif
                         err << LOG_FILE_INFO << ": failed to create preview - " << strerror(errno);
                         throw std::system_error(errno, std::system_category(), err.str());
