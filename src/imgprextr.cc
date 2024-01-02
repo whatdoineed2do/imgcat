@@ -372,6 +372,8 @@ int main(int argc, char* const argv[])
     short convert = 0;
 #define CONVERT_ICC 1
 #define CONVERT_OUTPUT_FMT 2
+#define CONVERT_QUALITY 4
+#define CONVERT_RESIZE 8
     std::string  outputfmt;
 
     const ICCprofiles*  tgtICC     = NULL;  // used to determine if ICC conversions req'd
@@ -403,7 +405,13 @@ int main(int argc, char* const argv[])
 		break;
 
 	    case 'q':
-		imgqual = atol(optarg);
+		imgqual = (unsigned)atol(optarg);
+		if (imgqual > 100) {
+		    imgqual = 100;
+		}
+		else {
+		    convert |= CONVERT_QUALITY;
+		}
 		break;
 
 	    case 'R':
@@ -502,6 +510,7 @@ int main(int argc, char* const argv[])
 		    const Magick::Geometry  g( (stdsz == std::end(stdImgSzs) ? optarg : stdsz->c_str()) );
 		    const std::string  s = g;
 		    target = s.c_str();
+		    convert |= CONVERT_RESIZE;
 		}
 		catch (...)
 		{ }
@@ -856,7 +865,7 @@ thumbpatherr:
                         std::cout << " from " << desc;
 #endif
                         std::cout << std::endl;
-                        if (target.isValid()) {
+                        if (convert & CONVERT_RESIZE && target.isValid()) {
 			    // figure out if need to flip bassed on img dimensions
 			    const auto  h = img.baseRows();
 			    const auto  w = img.columns();
