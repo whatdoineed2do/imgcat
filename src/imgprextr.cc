@@ -807,6 +807,7 @@ thumbpatherr:
                         rawio.seek(0, Exiv2::BasicIo::beg);
 
                         Magick::Image  img(Magick::Blob(rawio.mmap(), rawio.size()));
+                        const Magick::Blob  exifdata = img.profile("EXIF");
 
                         img.quality(imgqual);
 
@@ -882,44 +883,8 @@ thumbpatherr:
                             img.resize(imgtarget);
                         }
 
-                        if (excludeMeta) {
-                            img.write(path);
-                        }
-                        else {
-                            // because IM doesnt take across the Exif data, take the converted img back to Exiv2
-                            Magick::Blob  blob;
-                            img.write(&blob);
-
-#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
-                            Exiv2::Image::UniquePtr
-#else
-                            Exiv2::Image::AutoPtr
-#endif
-			    cnvrted = Exiv2::ImageFactory::open((const unsigned char*)blob.data(), blob.length());
-                            cnvrted->readMetadata();
-                            cnvrted->setByteOrder(orig->byteOrder());
-                            cnvrted->setExifData(exif);
-                            cnvrted->writeMetadata();
-
-#ifdef __MINGW32__
-                            if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666 & ~msk)) < 0) {
-#else
-                            if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0666 & ~msk)) < 0) {
-#endif
-                                err << LOG_FILE_INFO << ": failed to create converted preview - " << strerror(errno) << std::endl;
-                                throw std::system_error(errno, std::system_category(), err.str());
-                            }
-
-                            Exiv2::BasicIo&  rawio = cnvrted->io();
-                            rawio.seek(0, Exiv2::BasicIo::beg);
-
-                            if (write(fd, rawio.mmap(), rawio.size()) != rawio.size()) {
-                                close(fd);
-                                err << LOG_FILE_INFO << ": failed to write converted preview - " << strerror(errno) << std::endl;
-                                throw std::system_error(errno, std::system_category(), err.str());
-                            }
-                            close(fd);
-                        }
+			img.profile("EXIF", excludeMeta ? Magick::Blob() : exifdata);
+			img.write(path);
                     }
                     catch (const std::exception& ex)
                     {
