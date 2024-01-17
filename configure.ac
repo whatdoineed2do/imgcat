@@ -13,6 +13,8 @@ AC_PROG_INSTALL
 LT_INIT
 PKG_PROG_PKG_CONFIG
 
+AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+
 PKG_CHECK_MODULES(IMAGEMAGICK, [Magick++ >= 6.9.9])
 PKG_CHECK_MODULES(EXIV,        [exiv2 >= 0.25])
 PKG_CHECK_MODULES(AVFORMAT,    [libavformat >= 57.71.100])
@@ -32,6 +34,9 @@ fi
 AC_CONFIG_FILES([
 Makefile
 src/Makefile
+src/lib/Makefile
+src/cat/Makefile
+src/extract/Makefile
 tests/Makefile
 ])
 AC_OUTPUT
