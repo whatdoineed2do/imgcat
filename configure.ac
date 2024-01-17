@@ -33,6 +33,7 @@ fi
 
 AC_CONFIG_FILES([
 Makefile
+src/Makefile
 src/lib/Makefile
 src/cat/Makefile
 src/extract/Makefile
