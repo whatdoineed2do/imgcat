@@ -15,7 +15,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -yq \
-        build-essential autotools-dev autoconf libtool \
+        build-essential autotools-dev autoconf autoconf-archive libtool \
         libmagick++-6.q16-dev \
         libexiv2-dev \
         libavformat-dev libavutil-dev libavcodec-dev libavfilter-dev \
