@@ -517,7 +517,7 @@ int main(int argc, char* const argv[])
 		break;
 
 	    case 'o':
-		if (strcasecmp(optarg, "JPEG") == 0 || strcasecmp(optarg, "PNG") == 0) {
+		if (strcasecmp(optarg, "JPEG") == 0 || strcasecmp(optarg, "JPG") == 0 || strcasecmp(optarg, "PNG") == 0) {
 		    convert |= CONVERT_OUTPUT_FMT;
 		    outputfmt = optarg;
 		    std::transform(outputfmt.begin(), outputfmt.end(), outputfmt.begin(), ::toupper);
