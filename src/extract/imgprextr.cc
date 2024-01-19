@@ -807,7 +807,6 @@ thumbpatherr:
                         rawio.seek(0, Exiv2::BasicIo::beg);
 
                         Magick::Image  img(Magick::Blob(rawio.mmap(), rawio.size()));
-                        const Magick::Blob  exifdata = img.profile("EXIF");
 
                         img.quality(imgqual);
 
@@ -883,7 +882,43 @@ thumbpatherr:
                             img.resize(imgtarget);
                         }
 
-			img.profile("EXIF", excludeMeta ? Magick::Blob() : exifdata);
+			if (excludeMeta) {
+			    img.profile("EXIF", Magick::Blob());
+			}
+			else if (convert & CONVERT_OUTPUT_FMT)
+			{
+			    /* when a image format change is performed, exifdata is lost EVEN though
+			     * we have set this via the `upd` object
+			     *
+			     * furthermore, exifProfile() returns an Blob that has 0 length; do it
+			     * the dirty way throuh Exiv buffer
+			     *
+			     * if NO image format chagne is perfromed, the exif data is carried over
+			     */
+			    Magick::Blob  ci;
+			    img.write(&ci);
+
+#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
+			    Exiv2::Image::UniquePtr
+#else
+			    Exiv2::Image::AutoPtr
+#endif
+				ce = Exiv2::ImageFactory::open( (Exiv2::byte*)ci.data(), ci.length() );
+			    ce->setByteOrder(orig->byteOrder());
+
+			    ce->setExifData(orig->exifData());
+			    ce->setIptcData(orig->iptcData());
+			    ce->setXmpData(orig->xmpData());
+
+			    ce->writeMetadata();
+			    ce->io().seek(0, Exiv2::BasicIo::beg);
+
+			    ci.update(ce->io().mmap(), ce->io().size());
+std::cout << "resetting exif\n";
+
+			    img.read(ci);
+                            img.magick(outputfmt);
+			}
 			img.write(path);
                     }
                     catch (const std::exception& ex)
