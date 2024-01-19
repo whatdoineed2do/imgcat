@@ -814,20 +814,14 @@ int main(int argc, char* const argv[])
                         }
 
                         /* grab hold of underlying and updated data */
-                        Exiv2::BasicIo&  rawio = upd->io();
-                        rawio.seek(0, Exiv2::BasicIo::beg);
-
-                        Magick::Image  img(Magick::Blob(rawio.mmap(), rawio.size()));
+                        Magick::Image  img(Magick::Blob(upd->io().mmap(), upd->io().size()));
 
                         img.quality(imgqual);
 
-                        if (convert & CONVERT_OUTPUT_FMT) {
-                            strcat(path, outputfmtExtn.c_str());
-                            img.magick(outputfmt);
-                        }
-                        else {
-                            strcat(path, preview.extension().c_str());
-                        }
+			strcat(path,
+			       convert & CONVERT_OUTPUT_FMT ?
+			           outputfmtExtn.c_str() :
+                                   preview.extension().c_str());
 
 			if (access(path, F_OK) == 0 && !overwrite) {
 			    err << filename_ << ":  not overwritting existing output";
@@ -918,7 +912,6 @@ int main(int argc, char* const argv[])
 			    ce->setXmpData(orig->xmpData());
 
 			    ce->writeMetadata();
-			    ce->io().seek(0, Exiv2::BasicIo::beg);
 
 			    ci.update(ce->io().mmap(), ce->io().size());
 
