@@ -361,6 +361,34 @@ const std::array   stdImgSzs {
     ImgSize{ "24mp", 6048, 4024 }
 };
 
+const auto  maxtpsz = std::thread::hardware_concurrency()*3;
+const auto  dflttpsz = ceil(std::thread::hardware_concurrency()/2);
+
+void  _usage(const char* argv0_)
+{
+		std::cout << argv0_ << " " << Imgcat::version() << "\n"
+		     << "usage: " << argv0_ << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R|-M] [-f]   file0 file1 .. fileN" << std::endl
+		     << "         -p    extract preview images to location=./" << std::endl
+		     << "         -f    overwrite existing preview images (default no)" << std::endl
+		     << "         -c    perform ICC conversion if possible: srgb for internal sRGB or file location of target ICC" << std::endl
+		     << "         -x    exclude metadata" << std::endl
+		     << "         -I    dump ICC to disk for each image" << std::endl
+		     << "         -O    target (re)size" << std::endl
+		     << "         -o    target output format" << std::endl
+		     << "         -q    quality" << std::endl
+		     << "         -R    random 16 byte hex for filename output (not incl extn)" << std::endl
+		     << "         -M    meta info used for filename output (not incl extn)" << std::endl
+		     << "         -T    threads to use (h/w=" << std::thread::hardware_concurrency() << " max=" << maxtpsz << ')' << std::endl
+		     << "  internal ICC profiles: ";
+
+		const ICCprofiles*  p = theSRGBICCprofiles;
+		while (p->profile) {
+		    std::cout << " '" << p->name << "' (" << p->length << "bytes)";
+		    ++p;
+		}
+		std::cout << std::endl;
+exit(1);
+}
 
 int main(int argc, char* const argv[])
 {
@@ -369,12 +397,14 @@ int main(int argc, char* const argv[])
     const char*  thumbpath = "./";
     bool  dumpICC = false;
     bool  excludeMeta = false;
+    unsigned  tpsz = dflttpsz;
     short convert = 0;
 #define CONVERT_ICC 1
 #define CONVERT_OUTPUT_FMT 2
 #define CONVERT_QUALITY 4
 #define CONVERT_RESIZE 8
     std::string  outputfmt;
+    std::string  outputfmtExtn;
 
     const ICCprofiles*  tgtICC     = NULL;  // used to determine if ICC conversions req'd
     uchar_t*            nonSRGBicc = NULL;  // buf for non internal sRGB ICC
@@ -386,9 +416,6 @@ int main(int argc, char* const argv[])
     enum FilenameType { FNT_FILE, FNT_RAND, FNT_META };
     FilenameType  fnt = FNT_FILE;
     int  imgqual = 100;
-    const auto  maxtpsz = std::thread::hardware_concurrency()*3;
-    const auto  dflttpsz = ceil(std::thread::hardware_concurrency()/2);
-    unsigned  tpsz = dflttpsz;
     std::list<std::future<void>>  futures;
     bool  overwrite = false;
 
@@ -488,7 +515,7 @@ int main(int argc, char* const argv[])
 		    }
 
 		    if (tgtICC == NULL) {
-			goto usage;
+			_usage(argv0);
 		    }
 		    convert |= CONVERT_ICC;
 		}
@@ -517,7 +544,21 @@ int main(int argc, char* const argv[])
 		break;
 
 	    case 'o':
-		if (strcasecmp(optarg, "JPEG") == 0 || strcasecmp(optarg, "JPG") == 0 || strcasecmp(optarg, "PNG") == 0) {
+	    {
+		auto  validOutputFmt = [&outputfmtExtn](const char*) {
+		    outputfmtExtn.clear();
+		    if (strcasecmp(optarg, "JPEG") == 0 || strcasecmp(optarg, "JPG") == 0) {
+			outputfmtExtn = ".jpg";
+		    }
+
+		    if (strcasecmp(optarg, "PNG") == 0) {
+			outputfmtExtn = ".png";
+		    }
+
+		    return !outputfmtExtn.empty();
+		};
+
+		if (validOutputFmt(optarg)) {
 		    convert |= CONVERT_OUTPUT_FMT;
 		    outputfmt = optarg;
 		    std::transform(outputfmt.begin(), outputfmt.end(), outputfmt.begin(), ::toupper);
@@ -527,33 +568,11 @@ int main(int argc, char* const argv[])
 			std::cerr << argv0 << ": unsupported output format '" << optarg << "', will not convert output" << std::endl;
 		    }
 		}
-		break;
+	    } break;
 
 	    case 'h':
 	    default:
-usage:
-		std::cout << argv0 << " " << Imgcat::version() << "\n"
-		     << "usage: " << argv0 << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R|-M] [-f]   file0 file1 .. fileN" << std::endl
-		     << "         -p    extract preview images to location=./" << std::endl
-		     << "         -f    overwrite existing preview images (default no)" << std::endl
-		     << "         -c    perform ICC conversion if possible: srgb for internal sRGB or file location of target ICC" << std::endl
-		     << "         -x    exclude metadata" << std::endl
-		     << "         -I    dump ICC to disk for each image" << std::endl
-		     << "         -O    target (re)size" << std::endl
-		     << "         -o    target output format" << std::endl
-		     << "         -q    quality" << std::endl
-		     << "         -R    random 16 byte hex for filename output (not incl extn)" << std::endl
-		     << "         -M    meta info used for filename output (not incl extn)" << std::endl
-		     << "         -T    threads to use (default=" << tpsz << " h/w=" << std::thread::hardware_concurrency() << " max=" << maxtpsz << ')' << std::endl
-		     << "  internal ICC profiles: ";
-
-		const ICCprofiles*  p = theSRGBICCprofiles;
-		while (p->profile) {
-		    std::cout << " '" << p->name << "' (" << p->length << "bytes)";
-		    ++p;
-		}
-		std::cout << std::endl;
-		return 1;
+		_usage(argv0);
 	}
     }
     mode_t  msk = umask(0);
@@ -569,18 +588,14 @@ usage:
     if (access(thumbpath, X_OK | W_OK) != 0)
     {
 	if (errno == ENOENT) {
-#ifdef __MINGW32__
-	    if (mkdir(thumbpath) < 0) {
-#else
+	    errno = 0;
 	    mode_t  umsk = umask(0);
 	    umask(umsk);
-	    if (mkdir(thumbpath, 0777 & ~umsk) < 0) {
-#endif
-		goto thumbpatherr;
-	    }
+	    mkdir(thumbpath, 0777 & ~umsk);
 	}
-	else {
-thumbpatherr:
+
+
+	if (errno != 0) {
 	    std::cerr << argv0 << ": invalid thumbpath '" << thumbpath << "' - " << strerror(errno) << std::endl;
 	    return 1;
 	}
@@ -589,7 +604,7 @@ thumbpatherr:
 
     if (optind == argc) {
 	std::cerr << argv0 << ": no input files" << std::endl;
-	goto usage;
+	_usage(argv0);
     }
 
     if (tgtICC == NULL) {
@@ -811,11 +826,7 @@ thumbpatherr:
                         img.quality(imgqual);
 
                         if (convert & CONVERT_OUTPUT_FMT) {
-                            char  extn[5];
-                            if      (strcasecmp(outputfmt.c_str(), "JPEG") == 0) sprintf(extn, ".jpg");
-                            else if (strcasecmp(outputfmt.c_str(), "PNG")  == 0) sprintf(extn, ".png");
-                            else abort();
-                            strcat(path, extn);
+                            strcat(path, outputfmtExtn.c_str());
                             img.magick(outputfmt);
                         }
                         else {
