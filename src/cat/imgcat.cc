@@ -257,7 +257,7 @@ int main(int argc, char **argv)
     const std::chrono::time_point<std::chrono::system_clock>  start = std::chrono::system_clock::now();
 
     int  c;
-    while ( (c = getopt(argc, argv, "I:V:t:T:ns:w:H:hv")) != EOF)
+    while ( (c = getopt(argc, argv, "I:V:t:T:ns:w:H:hv")) != -1)
     {
 	switch (c)
 	{

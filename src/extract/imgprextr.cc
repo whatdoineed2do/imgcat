@@ -423,7 +423,7 @@ int main(int argc, char* const argv[])
     bool  strict = false;
 
     int  c;
-    while ( (c=getopt(argc, argv, "fp:Ic:xhO:o:q:RMT:s")) != EOF) {
+    while ( (c=getopt(argc, argv, "fp:Ic:xhO:o:q:RMT:s")) != -1) {
 	switch (c)
 	{
 	    case 'f':
