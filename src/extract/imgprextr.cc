@@ -23,6 +23,7 @@
 #include <future>
 #include <chrono>
 #include <exception>
+#include <typeinfo>
 
 #include <exiv2/exiv2.hpp>
 #include <Magick++.h>
@@ -744,15 +745,12 @@ int main(int argc, char* const argv[])
 #else
                 Exiv2::Image::AutoPtr  upd = Exiv2::ImageFactory::open( preview.pData(), preview.size() );
 #endif
-                if (!excludeMeta) {
-                    upd->setByteOrder(orig->byteOrder());
+		// clear down metadata, some ImageMagick decoders bail if it encounters (valid) metadata it doesn't recognise, see libtiff:TIFFReadDirectory() for example - 
+		upd->clearExifData();
+                upd->clearIptcData();
+                upd->clearXmpData();
 
-                    upd->setExifData(orig->exifData());
-                    upd->setIptcData(orig->iptcData());
-                    upd->setXmpData(orig->xmpData());
-
-                    upd->writeMetadata();
-                }
+                upd->writeMetadata();
 
                 Exiv2::ExifData&  exif = orig->exifData();
                 Exiv2::ExifData::iterator  iccavail = _extractICC(buf, exif);
@@ -851,7 +849,7 @@ int main(int argc, char* const argv[])
                             }
                             catch (const Magick::Exception& ex)
                             {
-                                std::cout << "failed to convert ICC, ignoring - " << ex.what() << "\n";
+                                std::cout << filename_ << ": failed to convert ICC, ignoring - " << ex.what() << "\n";
                             }
                         }
                         // exif not maintained!!!
@@ -883,11 +881,13 @@ int main(int argc, char* const argv[])
                             img.resize(imgtarget);
                         }
 
+
 			if (excludeMeta) {
 			    img.profile("EXIF", Magick::Blob());
 			}
-			else if (convert & CONVERT_OUTPUT_FMT)
+			else
 			{
+
 			    /* when a image format change is performed, exifdata is lost EVEN though
 			     * we have set this via the `upd` object
 			     *
@@ -897,7 +897,9 @@ int main(int argc, char* const argv[])
 			     * if NO image format chagne is perfromed, the exif data is carried over
 			     */
 			    Magick::Blob  ci;
+			    Magick::Blob  cidup;
 			    img.write(&ci);
+			    cidup = ci;
 
 #if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
 			    Exiv2::Image::UniquePtr
@@ -915,8 +917,53 @@ int main(int argc, char* const argv[])
 
 			    ci.update(ce->io().mmap(), ce->io().size());
 
-			    img.read(ci);
-                            img.magick(outputfmt);
+			    try {
+				img.read(ci);
+			    }
+			    catch (const Magick::WarningCoder&)
+			    {
+                                // this is because the exif contains stuff that the coder doesnt like.. do it the ugly way
+				// rescue what we can from exif...
+				std::cout << filename_ << ":  remapping metadata\n";
+				Exiv2::ExifData  slim;
+				static const std::array  slimexif = {
+				    std::string{"Exif.Image.ImageWidth"},
+				    std::string{"Exif.Image.ImageLength"},
+				    std::string{"Exif.Image.BitsPerSample"},
+				    std::string{"Exif.Image.Compression"},
+				    std::string{"Exif.Image.PhotometricInterpretation"},
+				    std::string{"Exif.Image.FillOrder"},
+				    std::string{"Exif.Image.StripOffsets"},
+				    std::string{"Exif.Image.Orientation"},
+				    std::string{"Exif.Image.SamplesPerPixel"},
+				    std::string{"Exif.Image.RowsPerStrip"},
+				    std::string{"Exif.Image.StripByteCounts"},
+				    std::string{"Exif.Image.PlanarConfiguration"},
+				    std::string{"Exif.Image.PageNumber"},
+				    std::string{"Exif.Image.WhitePoint"}
+				};
+				const Exiv2::ExifData&  origexif = orig->exifData();
+				std::for_each(slimexif.begin(), slimexif.end(), [&slim, &origexif](const auto& key) {
+				    auto  e = origexif.findKey(Exiv2::ExifKey(key));
+				    if (e != origexif.end()) {
+					slim[key] = *e;
+				    }
+				});
+				ce = Exiv2::ImageFactory::open( (Exiv2::byte*)cidup.data(), cidup.length() );
+				ce->setExifData(slim);
+#if 0
+std::for_each(ce->exifData().begin(), ce->exifData().end(), [](const auto& e) {
+    std::cout << e.key() << "=" << e.toString() << "\n";
+});
+#endif
+				ce->setIptcData(orig->iptcData());
+				ce->setXmpData(orig->xmpData());
+				ce->writeMetadata();
+				ci.update(ce->io().mmap(), ce->io().size());
+
+				img.read(ci);
+			    }
+			    img.magick(outputfmt);
 			}
 			img.write(path);
                     }
