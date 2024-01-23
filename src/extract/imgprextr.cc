@@ -645,6 +645,7 @@ int main(int argc, char* const argv[])
     std::streambuf*  erros = std::cerr.rdbuf(devnull.rdbuf());
 
     int  a = optind;
+    const int  N = argc - a;
     while (a < argc)
     {
 	const char* const  filename = argv[a++];
@@ -1024,6 +1025,7 @@ std::for_each(ce->exifData().begin(), ce->exifData().end(), [](const auto& e) {
     }
 
     // wait for all threads to finish
+    unsigned  success = 0;
     try
     {
         std::unique_lock<std::mutex>  lck(mtx);
@@ -1033,6 +1035,7 @@ std::for_each(ce->exifData().begin(), ce->exifData().end(), [](const auto& e) {
         for (auto& f : futures) {
             try {
                 f.get();
+		++success;
             }
             catch (const std::exception& ex) {
                 std::cerr << argv0 << ": " << ex.what() << std::endl;
@@ -1044,6 +1047,7 @@ std::for_each(ce->exifData().begin(), ce->exifData().end(), [](const auto& e) {
     }
 
     Magick::TerminateMagick();
+    std::cout << argv0 << ": processed " << success << "/" << N << "\n";
 
-    return 0;
+    return success == N ? 0 : 1;
 }
