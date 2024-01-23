@@ -380,6 +380,7 @@ void  _usage(const char* argv0_)
 		     << "         -R    random 16 byte hex for filename output (not incl extn)" << std::endl
 		     << "         -M    meta info used for filename output (not incl extn)" << std::endl
 		     << "         -T    threads to use (h/w=" << std::thread::hardware_concurrency() << " max=" << maxtpsz << ')' << std::endl
+		     << "         -s    strict (warnings treated as errors, no attempted workarounds)\n"
 		     << "  internal ICC profiles: ";
 
 		const ICCprofiles*  p = theSRGBICCprofiles;
@@ -419,13 +420,18 @@ int main(int argc, char* const argv[])
     int  imgqual = 100;
     std::list<std::future<void>>  futures;
     bool  overwrite = false;
+    bool  strict = false;
 
     int  c;
-    while ( (c=getopt(argc, argv, "fp:Ic:xhO:o:q:RMT:")) != EOF) {
+    while ( (c=getopt(argc, argv, "fp:Ic:xhO:o:q:RMT:s")) != EOF) {
 	switch (c)
 	{
 	    case 'f':
 		overwrite = true;
+		break;
+
+	    case 's':
+		strict = true;
 		break;
 
 	    case 'p':
@@ -924,6 +930,10 @@ int main(int argc, char* const argv[])
 			    {
                                 // this is because the exif contains stuff that the coder doesnt like.. do it the ugly way
 				// rescue what we can from exif...
+				if (strict) {
+				    throw;
+				}
+
 				std::cout << filename_ << ":  remapping metadata\n";
 				Exiv2::ExifData  slim;
 				static const std::array  slimexif = {
