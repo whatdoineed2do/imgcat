@@ -688,26 +688,25 @@ int main(int argc, char* const argv[])
 
                 Exiv2::ExifData&  exif = orig->exifData();
                 Exiv2::ExifData::iterator  iccavail = _extractICC(buf, exif);
+		if (iccavail != exif.end() && dumpICC)
+		{
+		    char  iccpath[PATH_MAX];
+		    sprintf(iccpath, "%s/%s.icc", thumbpath, basename(outputFilename));
+
+		    if ( (fd = open(iccpath, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
+			std::cout << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << std::endl;
+		    }
+		    else
+		    {
+			if (write(fd, buf.buf, buf.bufsz) != buf.bufsz) {
+			    std::cout << LOG_FILE_INFO << ": failed to write ICC - " << strerror(errno) << std::endl;
+			}
+			close(fd);
+		    }
+		}
 
                 if (iccavail != exif.end() && tgtICC)
                 {
-                    if (dumpICC)
-                    {
-                        char  iccpath[PATH_MAX];
-                        sprintf(iccpath, "%s/%s.icc", thumbpath, basename(outputFilename));
-
-                        if ( (fd = open(iccpath, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
-                            std::cout << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << std::endl;
-                        }
-                        else
-                        {
-                            if (write(fd, buf.buf, buf.bufsz) != buf.bufsz) {
-                                std::cout << LOG_FILE_INFO << ": failed to write ICC - " << strerror(errno) << std::endl;
-                            }
-                            close(fd);
-                        }
-                    }
-
                     if (nonSRGBicc == NULL)
                     {
                         /* is this ICC profile sRGB - covnert only if not; the
