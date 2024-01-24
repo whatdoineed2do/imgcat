@@ -689,12 +689,7 @@ int main(int argc, char* const argv[])
 
             try
             {
-#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
-                Exiv2::Image::UniquePtr
-#else
-                Exiv2::Image::AutoPtr
-#endif
-                orig = Exiv2::ImageFactory::open(filename_);
+                auto  orig = Exiv2::ImageFactory::open(filename_);
                 assert(orig.get() != 0);
 
 
@@ -748,11 +743,8 @@ int main(int argc, char* const argv[])
 
                 Exiv2::PreviewImage  preview = loader.getPreviewImage(*prevp);
 
-#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
-                Exiv2::Image::UniquePtr  upd = Exiv2::ImageFactory::open( preview.pData(), preview.size() );
-#else
-                Exiv2::Image::AutoPtr  upd = Exiv2::ImageFactory::open( preview.pData(), preview.size() );
-#endif
+                auto  upd = Exiv2::ImageFactory::open( preview.pData(), preview.size() );
+
 		// clear down metadata, some ImageMagick decoders bail if it encounters (valid) metadata it doesn't recognise, see libtiff:TIFFReadDirectory() for example - 
 		upd->clearExifData();
                 upd->clearIptcData();
@@ -912,12 +904,7 @@ int main(int argc, char* const argv[])
 			    Magick::Blob  ci;
 			    img.write(&ci);
 
-#if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
-			    Exiv2::Image::UniquePtr
-#else
-			    Exiv2::Image::AutoPtr
-#endif
-				ce = Exiv2::ImageFactory::open( (Exiv2::byte*)ci.data(), ci.length() );
+			    auto  ce = Exiv2::ImageFactory::open( (Exiv2::byte*)ci.data(), ci.length() );
 			    ce->setMetadata(*orig.get());
 			    ce->writeMetadata();
 			    int  fd;
