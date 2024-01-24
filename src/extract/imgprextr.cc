@@ -552,14 +552,17 @@ int main(int argc, char* const argv[])
 
 	    case 'o':
 	    {
-		auto  validOutputFmt = [&outputfmtExtn](const char*) {
+		auto  validOutputFmt = [&outputfmtExtn, &outputfmt](const char*) {
 		    outputfmtExtn.clear();
 		    if (strcasecmp(optarg, "JPEG") == 0 || strcasecmp(optarg, "JPG") == 0) {
 			outputfmtExtn = ".jpg";
+			outputfmt = "JPEG";
+
 		    }
 
 		    if (strcasecmp(optarg, "PNG") == 0) {
 			outputfmtExtn = ".png";
+			outputfmt = "PNG";
 		    }
 
 		    return !outputfmtExtn.empty();
@@ -567,8 +570,6 @@ int main(int argc, char* const argv[])
 
 		if (validOutputFmt(optarg)) {
 		    convert |= CONVERT_OUTPUT_FMT;
-		    outputfmt = optarg;
-		    std::transform(outputfmt.begin(), outputfmt.end(), outputfmt.begin(), ::toupper);
 		}
 		else {
 		    if (strcasecmp(optarg, "DEFAULT") != 0) {
@@ -821,6 +822,10 @@ int main(int argc, char* const argv[])
                         /* grab hold of underlying and updated data */
                         Magick::Image  img(Magick::Blob(upd->io().mmap(), upd->io().size()));
 
+			if (convert & CONVERT_OUTPUT_FMT) {
+			    img.magick(outputfmt);
+			}
+
                         img.quality(imgqual);
 
 			strcat(path,
@@ -974,7 +979,6 @@ std::for_each(ce->exifData().begin(), ce->exifData().end(), [](const auto& e) {
 
 				img.read(ci);
 			    }
-			    img.magick(outputfmt);
 			}
 			img.write(path);
                     }
