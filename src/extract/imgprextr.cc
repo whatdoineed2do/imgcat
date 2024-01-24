@@ -896,6 +896,7 @@ int main(int argc, char* const argv[])
 
 			if (excludeMeta) {
 			    img.profile("EXIF", Magick::Blob());
+			    img.write(path);
 			}
 			else
 			{
@@ -909,9 +910,7 @@ int main(int argc, char* const argv[])
 			     * if NO image format chagne is perfromed, the exif data is carried over
 			     */
 			    Magick::Blob  ci;
-			    Magick::Blob  cidup;
 			    img.write(&ci);
-			    cidup = ci;
 
 #if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,28,0)
 			    Exiv2::Image::UniquePtr
@@ -919,68 +918,19 @@ int main(int argc, char* const argv[])
 			    Exiv2::Image::AutoPtr
 #endif
 				ce = Exiv2::ImageFactory::open( (Exiv2::byte*)ci.data(), ci.length() );
-			    ce->setByteOrder(orig->byteOrder());
-
-			    ce->setExifData(orig->exifData());
-			    ce->setIptcData(orig->iptcData());
-			    ce->setXmpData(orig->xmpData());
-
+			    ce->setMetadata(*orig.get());
 			    ce->writeMetadata();
-
-			    ci.update(ce->io().mmap(), ce->io().size());
-
-			    try {
-				img.read(ci);
+			    int  fd;
+			    if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0666 & ~msk)) < 0) {
+			        throw std::system_error(errno, std::system_category(), std::string{"failed to create "} + path);
 			    }
-			    catch (const Magick::WarningCoder&)
-			    {
-                                // this is because the exif contains stuff that the coder doesnt like.. do it the ugly way
-				// rescue what we can from exif...
-				if (strict) {
-				    throw;
-				}
 
-				std::cout << filename_ << ":  remapping metadata\n";
-				Exiv2::ExifData  slim;
-				static const std::array  slimexif = {
-				    std::string{"Exif.Image.ImageWidth"},
-				    std::string{"Exif.Image.ImageLength"},
-				    std::string{"Exif.Image.BitsPerSample"},
-				    std::string{"Exif.Image.Compression"},
-				    std::string{"Exif.Image.PhotometricInterpretation"},
-				    std::string{"Exif.Image.FillOrder"},
-				    std::string{"Exif.Image.StripOffsets"},
-				    std::string{"Exif.Image.Orientation"},
-				    std::string{"Exif.Image.SamplesPerPixel"},
-				    std::string{"Exif.Image.RowsPerStrip"},
-				    std::string{"Exif.Image.StripByteCounts"},
-				    std::string{"Exif.Image.PlanarConfiguration"},
-				    std::string{"Exif.Image.PageNumber"},
-				    std::string{"Exif.Image.WhitePoint"}
-				};
-				const Exiv2::ExifData&  origexif = orig->exifData();
-				std::for_each(slimexif.begin(), slimexif.end(), [&slim, &origexif](const auto& key) {
-				    auto  e = origexif.findKey(Exiv2::ExifKey(key));
-				    if (e != origexif.end()) {
-					slim[key] = *e;
-				    }
-				});
-				ce = Exiv2::ImageFactory::open( (Exiv2::byte*)cidup.data(), cidup.length() );
-				ce->setExifData(slim);
-#if 0
-std::for_each(ce->exifData().begin(), ce->exifData().end(), [](const auto& e) {
-    std::cout << e.key() << "=" << e.toString() << "\n";
-});
-#endif
-				ce->setIptcData(orig->iptcData());
-				ce->setXmpData(orig->xmpData());
-				ce->writeMetadata();
-				ci.update(ce->io().mmap(), ce->io().size());
-
-				img.read(ci);
+			    if (write(fd, ce->io().mmap(), ce->io().size()) != ce->io().size()) {
+			        close(fd);
+			        throw std::system_error(errno, std::system_category(), std::string("failed to write ") + path);
 			    }
+			    close(fd);
 			}
-			img.write(path);
                     }
                     catch (const std::exception& ex)
                     {
