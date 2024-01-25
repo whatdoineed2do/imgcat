@@ -1,122 +1,70 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <strings.h>
-#include <limits.h>
-
-#include <string>
 #include <iostream>
-#include <cassert>
+#include <array>
 
-using namespace  std;
-
-#include <exiv2/exiv2.hpp>
 #include <Magick++.h>
-
-#include "ICCprofiles.h"
+#include <exiv2/exiv2.hpp>
 
 
 int main(int argc, char* const argv[])
 {
-    if (argc != 2) {
-	cerr << "what file?" << endl;
-	return 1;
-    }
-
-    int  fd;
-    if ( (fd = open(argv[1], O_RDONLY)) <0) {
-	cerr << "unable to open data file - " << strerror(errno) << endl;
-    }
-    struct stat  st;
-    fstat(fd, &st);
-    const size_t&  datasz_ = st.st_size;
-    char*  data_ = new char[datasz_];
-    read(fd, data_, datasz_);
-
-
     try
     {
-#if 0
-	Magick::Blob   blob(data_, datasz_);
-	Magick::Image  magick(blob);
-#else
-	Magick::Image  magick(argv[1]);
-#endif
+	Magick::InitializeMagick(nullptr);
+	std::cout << "using " << MagickCore::GetMagickVersion(nullptr) << "\n";
 
-#if 0
-	Magick::Blob   profile = magick.iccColorProfile();
-	cout << "data size = " << datasz_ << endl;
-	cout << "profile size = " << profile.length() << endl;
-	if (profile.length() == 0) {
-	    // ??? lets be trying ICC/ICM
-	    const Magick::Blob   icc  = magick.profile("ICC");
-	    const Magick::Blob   icm  = magick.profile("ICM");
-
-	    cout << "  explicit icc len=" << icc.length() << endl
-	         << "  explicit icm len=" << icm.length() << endl;
-
-	mode_t  msk = umask(0);
-	umask(msk);
-	int  fd;
-	if ( (fd = open("icc.icc", O_CREAT | O_TRUNC, 0666 & ~msk)) < 0) {
-	    cerr << "  failed to create icc profile - " << strerror(errno) << endl;
+	Magick::Image  img;
+	if (argc == 2) {
+	    img.read(argv[1]);
+	    std::cout << "make=" << img.attribute("EXIF:Make") << "\n";
 	}
-	else 
+	else {
+	    img = Magick::Image("640x400", "blue");
+	}
+
+	img.attribute("EXIF:Make",  "Foo Inc");
+	img.attribute("EXIF:Model", "D9000");
+	std::cout << "updated make=" << img.attribute("EXIF:Make") << "\n";
+
+	constexpr std::array  output {
+	    "exif.png",
+	    "exif.jpg"
+	};
+	std::for_each(output.begin(), output.end(), [&img](const auto& path) {
+	    Magick::Image(img).write(path);
+	});
+
 	{
-	    if ( write(fd, icc.data(), icc.length()) != profile.length()) {
-		cerr << "  failed to write profile data - " << strerror(errno) << endl;
+
+	    img.magick("PNG");
+	    Magick::Blob  blob;
+	    img.write(&blob);
+
+	    try
+	    {
+		std::cout << "creating meta via exiv2" << std::endl;
+		auto  exiv = Exiv2::ImageFactory::open((const Exiv2::byte*)blob.data(), blob.length());
+
+		Exiv2::ExifData  exif;
+		exif["Exif.Image.Orientation"] = 2;
+
+		exiv->setExifData(exif);
+		//exiv->exifData()["Exif.Image.PageNumber"] = 1; // also ok
+		exiv->writeMetadata();
+
+		blob.update(exiv->io().mmap(), exiv->io().size());
+		img.read(blob);
+		img.magick("JPEG");
+		img.write("exiv2.jpg");
+	    }
+	    catch (const Exiv2::Error& ex) {
+		std::cerr << "failed to exiv2 - " << ex.what() << "\n";
 	    }
 	}
-	close(fd);
-
-	if ( (fd = open("icm.icc", O_CREAT | O_TRUNC, 0666 & ~msk)) < 0) {
-	    cerr << "  failed to create icm profile - " << strerror(errno) << endl;
-	}
-	else 
-	{
-	    if ( write(fd, icm.data(), icm.length()) != profile.length()) {
-		cerr << "  failed to write profile data - " << strerror(errno) << endl;
-	    }
-	}
-	close(fd);
-	    return 1;
-	}
-
-	mode_t  msk = umask(0);
-	umask(msk);
-	int  fd;
-	if ( (fd = open("profile.icc", O_CREAT | O_TRUNC, 0666 & ~msk)) < 0) {
-	    cerr << "  failed to create profile - " << strerror(errno) << endl;
-	    return 1;
-	}
-
-	if ( write(fd, profile.data(), profile.length()) != profile.length()) {
-	    cerr << "  failed to write profile data - " << strerror(errno) << endl;
-	}
-	close(fd);
-#endif
-
-	magick.profile("ICC", Magick::Blob(NULL, 0) );
-
-	magick.renderingIntent(Magick::PerceptualIntent);
-
-	magick.profile("ICC", Magick::Blob(NKAdobe, sizeof(NKAdobe)) );
-
-	const Magick::Blob  targetICC(NKsRGB, sizeof(NKsRGB));
-	magick.profile("ICC", targetICC);
-	magick.iccColorProfile(targetICC);
-
-	//magick.quality(100);
-	char  path[1024];
-	sprintf(path, "%s-converted.jpg", argv[1]);
-	magick.write(path);
     }
     catch (const std::exception& ex)
     {
-	cerr << "failed to magick - " << ex.what() << endl;
+	std::cerr << "failed to magick - " << ex.what() << std::endl;
     }
 
-    delete []  data_;
     return 0;
 }
