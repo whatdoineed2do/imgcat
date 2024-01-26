@@ -722,7 +722,7 @@ int main(int argc, char* const argv[])
                         }
 
                         if (p->profile) {
-                            std::cout << argv0 << ": " << LOG_FILE_INFO << ": already sRGB (" << p->name << ") - not converting" << std::endl;
+                            std::cout << LOG_FILE_INFO << ": already sRGB (" << p->name << ") - not converting" << std::endl;
                             convert &= ~CONVERT_ICC;
                         }
                         else
@@ -759,7 +759,7 @@ int main(int argc, char* const argv[])
                                    preview.extension().c_str());
 
 			if (access(path, F_OK) == 0 && !overwrite) {
-			    err << filename_ << ":  not overwritting existing output";
+			    err << LOG_FILE_INFO << ":  not overwritting existing output";
 			    throw std::underflow_error(err.str());
 			}
 
@@ -786,7 +786,7 @@ int main(int argc, char* const argv[])
                             }
                             catch (const Magick::Exception& ex)
                             {
-                                std::cout << filename_ << ": failed to convert ICC, ignoring - " << ex.what() << "\n";
+                                std::cout << LOG_FILE_INFO << ": failed to convert ICC, ignoring - " << ex.what() << "\n";
                             }
                         }
                         // exif not maintained!!!
@@ -882,7 +882,7 @@ int main(int argc, char* const argv[])
             catch (const Exiv2::AnyError& e)
 #endif
             {
-                err << filename_ << ":  unable to extract preview/reset exif - " << e;
+                err << filename_ << ": unable to extract preview/reset exif - " << e;
                 throw std::overflow_error(err.str());
             }
         };
@@ -912,16 +912,16 @@ int main(int argc, char* const argv[])
 		++success;
             }
             catch (const std::exception& ex) {
-                std::cerr << argv0 << ": " << ex.what() << std::endl;
+                std::cerr << ex.what() << std::endl;
             }
         }
     }
     catch (const std::system_error& ex) {
-        std::cerr << argv0 << ": failed to clean up threads - " << ex.what() << std::endl;
+        std::cerr << "failed to clean up threads - " << ex.what() << std::endl;
     }
 
     Magick::TerminateMagick();
-    std::cout << argv0 << ": processed " << success << "/" << N << "\n";
+    std::cout << "processed " << success << "/" << N << "\n";
 
     return success == N ? 0 : 1;
 }
