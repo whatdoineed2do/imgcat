@@ -554,7 +554,7 @@ int main(int argc, char* const argv[])
     }
     else
     {
-	std::cout << argv0 << ": ICC target=" << (nonSRGBicc ? "external" : "internal") << " '" << tgtICC->name << "'";
+	std::cout << argv0 << ": ICC conversions to " << (nonSRGBicc ? "external" : "internal") << " '" << tgtICC->name << "'";
 
 #ifdef HAVE_SAMPLE_ICC
 	std::string  tgtICCdesc = "<no internal desc>";
@@ -783,6 +783,16 @@ int main(int argc, char* const argv[])
                                         std::this_thread::sleep_for(std::chrono::milliseconds(333));
                                     }
                                 }
+#ifdef HAVE_SAMPLE_ICC
+				std::string  desc = "<unknown>", cprt;
+				_extractICCinfo(buf.buf, buf.bufsz, desc, cprt);
+#endif
+
+				std::cout << LOG_FILE_INFO << ": ICC converted";
+#ifdef HAVE_SAMPLE_ICC
+				std::cout << " from " << desc;
+#endif
+				std::cout << std::endl;
                             }
                             catch (const Magick::Exception& ex)
                             {
@@ -791,16 +801,6 @@ int main(int argc, char* const argv[])
                         }
                         // exif not maintained!!!
 
-#ifdef HAVE_SAMPLE_ICC
-                        std::string  desc = "<unknown>", cprt;
-                        _extractICCinfo(buf.buf, buf.bufsz, desc, cprt);
-#endif
-
-                        std::cout << LOG_FILE_INFO << ": ICC converted";
-#ifdef HAVE_SAMPLE_ICC
-                        std::cout << " from " << desc;
-#endif
-                        std::cout << std::endl;
                         if (convert & CONVERT_RESIZE && target.isValid()) {
 			    // figure out if need to flip bassed on img dimensions
 			    const auto  h = img.baseRows();
