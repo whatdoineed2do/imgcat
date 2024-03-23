@@ -90,7 +90,7 @@ void  ImgThumbGen::generate()
                 videoThumbnailer.generateThumbnail(img.filename.c_str(), Jpeg, hack);
             }
             else {
-                _error << "unknown source file type, not attempting to generate thumbnail - " << img.filename;
+                _error << "unknown source file type (" << img.type << "), not attempting to generate thumbnail - " << img.filename;
             }
         }
     }
