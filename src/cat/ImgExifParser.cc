@@ -110,6 +110,7 @@ const Img  ImgExifParser::_parse(const char* filename_, const struct stat& st_, 
 #if EXIV2_VERSION >= EXIV2_MAKE_VERSION(0,26,0)
 	switch (image->imageType())
 	{
+	    case Exiv2::ImageType::tiff:  // some NEFs still identified as tiffs?
 	    case Exiv2::ImageType::nef:
 	    case Exiv2::ImageType::cr2:
 	    case Exiv2::ImageType::raf:
