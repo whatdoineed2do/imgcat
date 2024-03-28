@@ -302,11 +302,12 @@ const auto  dflttpsz = ceil(std::thread::hardware_concurrency()/2);
 void  _usage(const char* argv0_)
 {
 		std::cout << argv0_ << " " << Imgcat::version() << "\n"
-		     << "usage: " << argv0_ << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R|-M] [-f]   file0 file1 .. fileN" << std::endl
+		     << "usage: " << argv0_ << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-r] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R|-M] [-f]   file0 file1 .. fileN" << std::endl
 		     << "         -p    extract preview images to location=./" << std::endl
 		     << "         -f    overwrite existing preview images (default no)" << std::endl
 		     << "         -c    perform ICC conversion if possible: srgb for internal sRGB or file location of target ICC" << std::endl
 		     << "         -x    exclude metadata" << std::endl
+		     << "         -r    reset orientation (no orientation tag)" << std::endl
 		     << "         -I    dump ICC to disk for each image" << std::endl
 		     << "         -O    target (re)size" << std::endl
 		     << "         -o    target output format" << std::endl
@@ -339,6 +340,7 @@ int main(int argc, char* const argv[])
 #define CONVERT_OUTPUT_FMT 2
 #define CONVERT_QUALITY 4
 #define CONVERT_RESIZE 8
+#define CONVERT_RESET_ORIENTATION 16
     std::string  outputfmt;
     std::string  outputfmtExtn;
 
@@ -357,7 +359,7 @@ int main(int argc, char* const argv[])
     bool  strict = false;
 
     int  c;
-    while ( (c=getopt(argc, argv, "fp:Ic:xhO:o:q:RMT:s")) != -1) {
+    while ( (c=getopt(argc, argv, "fp:Ic:xhO:o:q:rRMT:s")) != -1) {
 	switch (c)
 	{
 	    case 'f':
@@ -380,6 +382,10 @@ int main(int argc, char* const argv[])
 		else {
 		    convert |= CONVERT_QUALITY;
 		}
+		break;
+
+	    case 'r':
+	        convert |= CONVERT_RESET_ORIENTATION;
 		break;
 
 	    case 'R':
@@ -838,7 +844,14 @@ int main(int argc, char* const argv[])
 			    img.write(&ci);
 
 			    auto  ce = Exiv2::ImageFactory::open( (Exiv2::byte*)ci.data(), ci.length() );
+
+			    /* check portrait images - the original image may arleady have the orientation set, if we extract and copy of the exif, image viewers will have incorrect rotatation
+			     */
 			    ce->setMetadata(*orig.get());
+			    if (convert & CONVERT_RESET_ORIENTATION) {
+				auto&  cem = ce->exifData();
+				cem["Exif.Image.Orientation"] = 1;  // std, top right orientation
+			    }
 			    ce->writeMetadata();
 			    int  fd;
 			    if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0666 & ~msk)) < 0) {
