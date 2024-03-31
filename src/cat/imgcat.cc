@@ -463,7 +463,7 @@ int main(int argc, char **argv)
 	if ( dir[dirlen-1] == '/' ) {
 	    dir[dirlen-1] = (char)NULL;
 	}
-	std::cout << "  working on " << dir << "  " << std::flush;
+	std::cout << "  examing " << dir << "  " << std::flush;
 	idxs.emplace_back(ImgIdx(dir));
 
 	try
