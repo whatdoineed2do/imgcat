@@ -4,7 +4,7 @@ AM_CPPFLAGS = -DHAVE_SAMPLE_ICC -DNEED_UCHAR_UINT_T
 AM_CXXFLAGS = -Wno-deprecated -fpermissive
 AM_LDFLAGS = 
 
-bin_PROGRAMS = imagickICCconvert avinfo exiv mag
+check_PROGRAMS = imagickICCconvert avinfo exiv mag
 
 imagickICCconvert_CPPFLAGS = $(AM_CPPFLAGS)
 imagickICCconvert_CXXFLAGS = $(AM_CXXFLAGS) $(IMAGEMAGICK_CFLAGS)
