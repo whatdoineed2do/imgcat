@@ -7,6 +7,7 @@
 #include <strings.h>
 #include <limits.h>
 #include <libgen.h>
+#include <getopt.h>
 
 #include <string>
 #include <iostream>
@@ -303,19 +304,19 @@ void  _usage(const char* argv0_)
 {
 		std::cout << argv0_ << " " << Imgcat::version() << "\n"
 		     << "usage: " << argv0_ << " [ -p path ] [-c <target ICC profile location> | srgb] [-x] [-r] [-I] [-O <output size>] [-o JPEG | PNG | ORIG] [-q quality] [-R|-M] [-f]   file0 file1 .. fileN" << std::endl
-		     << "         -p    extract preview images to location=./" << std::endl
-		     << "         -f    overwrite existing preview images (default no)" << std::endl
-		     << "         -c    perform ICC conversion if possible: srgb for internal sRGB or file location of target ICC" << std::endl
-		     << "         -x    exclude metadata" << std::endl
-		     << "         -r    reset orientation (no orientation tag)" << std::endl
-		     << "         -I    dump ICC to disk for each image" << std::endl
-		     << "         -O    target (re)size" << std::endl
-		     << "         -o    target output format" << std::endl
-		     << "         -q    quality" << std::endl
-		     << "         -R    random 16 byte hex for filename output (not incl extn)" << std::endl
-		     << "         -M    meta info used for filename output (not incl extn)" << std::endl
-		     << "         -T    threads to use (h/w=" << std::thread::hardware_concurrency() << " max=" << maxtpsz << ')' << std::endl
-		     << "         -s    strict (warnings treated as errors, no attempted workarounds)\n"
+		     << "  -p, --output-dir           extract preview images to location=./\n"
+		     << "  -f, --force                overwrite existing preview images (default no)\n"
+		     << "  -c, --colorspace           perform ICC conversion if possible: srgb for internal sRGB or file location of target ICC\n"
+		     << "  -x, --exclude-meta         exclude metadata\n"
+		     << "  -r, --reset-orientation    reset orientation (no orientation tag)\n"
+		     << "  -I, --dump-icc             dump ICC to disk for each image\n"
+		     << "  -O, --output-size          target (re)size\n"
+		     << "  -o, --output-format        target output format\n"
+		     << "  -q, --output-quality       quality\n"
+		     << "  -R, --output-name-rand     random 16 byte hex for filename output (not incl extn)\n"
+		     << "  -M, --output-name-meta     meta info used for filename output (not incl extn)\n"
+		     << "  -T, --threads              concurrent extract (h/w=" << std::thread::hardware_concurrency() << " max=" << maxtpsz << ")\n"
+		     << "  -s, --strict               strict (warnings treated as errors, no attempted workarounds)\n"
 		     << "  internal ICC profiles: ";
 
 		const ICCprofiles*  p = theSRGBICCprofiles;
@@ -358,8 +359,42 @@ int main(int argc, char* const argv[])
     bool  overwrite = false;
     bool  strict = false;
 
+    const struct option  long_opts[] = {
+        { "output-dir",        1, 0, 'p' },
+        { "force",             0, 0, 'f' },
+        { "colorspace",        1, 0, 'c' },
+        { "exclude-meta",      0, 0, 'x' },
+        { "reset-orientation", 0, 0, 'r' },
+
+        { "output-size",       1, 0, 'O' },
+        { "output-format",     1, 0, 'o' },
+        { "output-quality",    1, 0, 'q' },
+        { "output-name-rand",  0, 0, 'R' },
+        { "output-name-meta",  0, 0, 'M' },
+
+        { "dump-icc",          0, 0, 'I' },
+
+        { "threads",           1, 0, 'T' },
+        { "strict",            0, 0, 's' },
+
+        { "help",              0, 0, 'h' },
+        { 0, 0, 0, 0 }
+    };
+    char  opt_args[1+ sizeof(long_opts)*2] = { 0 };
+    {
+        char*  og = opt_args;
+        const struct option* op = long_opts;
+        while (op->name) {
+            *og++ = op->val;
+            if (op->has_arg != no_argument) {
+                *og++ = ':';
+            }
+            ++op;
+        }
+    }
+
     int  c;
-    while ( (c=getopt(argc, argv, "fp:Ic:xhO:o:q:rRMT:s")) != -1) {
+    while ( (c=getopt_long(argc, argv, opt_args, long_opts, NULL)) != -1) {
 	switch (c)
 	{
 	    case 'f':
