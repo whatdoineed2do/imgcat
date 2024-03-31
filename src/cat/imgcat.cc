@@ -245,10 +245,10 @@ int main(int argc, char **argv)
 
     const char*  thumbpath = ".thumbs";
     unsigned  thumbsize = 640;
-    int  width = 8;
     char*  p = NULL;
 
     bool  verbosetime = false;
+    const unsigned  MAX_THREAD_POOL_SIZE = std::thread::hardware_concurrency()*3;
     unsigned  tpsz = std::thread::hardware_concurrency();
     bool  generate = true;
 
@@ -256,8 +256,34 @@ int main(int argc, char **argv)
 
     const std::chrono::time_point<std::chrono::system_clock>  start = std::chrono::system_clock::now();
 
+    const struct option  long_opts[] = {
+        { "image-extns", 1, 0, 'I' },
+        { "video-extns", 1, 0, 'V' },
+        { "no-thumbs",   0, 0, 'n' },
+        { "thumb-path",  1, 0, 't' },
+        { "thumb-size",  1, 0, 's' },
+        { "output",      1, 0, 'H' },
+
+        { "threads",     1, 0, 'T' },
+        { "verbose",     0, 0, 'v' },
+        { "help",        0, 0, 'h' },
+        { 0, 0, 0, 0 }
+    };
+    char  opt_args[1+ sizeof(long_opts)*2] = { 0 };
+    {
+        char*  og = opt_args;
+        const struct option* op = long_opts;
+        while (op->name) {
+            *og++ = op->val;
+            if (op->has_arg != no_argument) {
+                *og++ = ':';
+            }
+            ++op;
+        }
+    }
+
     int  c;
-    while ( (c = getopt(argc, argv, "I:V:t:T:ns:w:H:hv")) != -1)
+    while ( (c=getopt_long(argc, argv, opt_args, long_opts, NULL)) != -1)
     {
 	switch (c)
 	{
@@ -279,19 +305,14 @@ int main(int argc, char **argv)
 	    case 'T':
 	    {
 		tpsz = (unsigned)atol(optarg);
-		if (tpsz > 128) {
-		    tpsz = 128;
+		if (tpsz > MAX_THREAD_POOL_SIZE) {
+		    tpsz = MAX_THREAD_POOL_SIZE;
 		}
 	    } break;
 
 	    case 's':
 	    {
 		thumbsize = (unsigned)atol(optarg);
-	    } break;
-
-	    case 'w':
-	    {
-		width = (short)atoi(optarg);
 	    } break;
 
 	    case 'v':
@@ -317,15 +338,14 @@ int main(int argc, char **argv)
 		const char*  argv0 = basename(argv[0]);
 
 		std::cout << argv0 << " " << Imgcat::version() << "\n\n"
-		          << "usage: " << argv0 << "\n"
-			  << "           [-I " << DFLT_EXTNS << "]\t\timage extns\n"
-			  << "           [-V " << DFLT_VEXTNS << "]\t\tvideo extns\n"
-			  << "           [-n]\t\tdo NOT generate thumbs\n"
-			  << "           [-t <thumbpath=.thumbs>]\t\tlocation of thumbpath\n"
-			  << "           [-s <thumbsize=" << thumbsize << ">]\t\tgenerated thumb size\n"
-			  << "           [-T <max threads=" << tpsz << ">]\t\tthread pool size\n"
-			  << "           [-H <output, try 'help']\t\toutput type\n"
-			  << "           <dir0> <dir1> <...>" << std::endl
+		          << "usage: " << argv0 << "[OPTIONS] <dir0, dir1 ..>\n"
+			  << "  -I, --image-extns <extensions>    image extns: " << DFLT_EXTNS << "\n"
+			  << "  -V, --video-extns <extensions>    video extns: " << DFLT_VEXTNS << "\n"
+			  << "  -n, --no-thumbs                   do NOT generate thumbs\n"
+			  << "  -t. --thumb-path <path>           location of generated thumbnails\n"
+			  << "  -s, --thumb-size <size>           generated thumbnail size: " << thumbsize << "\n"
+			  << "  -T, --threads <thread pool size>  max threads=" << tpsz << "\n"
+			  << "  -H, --output <generator>          try 'help' for output type\n"
                      << "\n"
                      << "use MAGICK_TMPDIR= to are suitably free disk if default /tmp or /var/tmp dirs get full" << std::endl;
 		return 1;
