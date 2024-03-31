@@ -297,8 +297,8 @@ const std::array   stdImgSzs {
     ImgSize{ "24mp", 6048, 4024 }
 };
 
-const auto  maxtpsz = std::thread::hardware_concurrency()*3;
-const auto  dflttpsz = ceil(std::thread::hardware_concurrency()/2);
+const auto  MAX_THREAD_POOL_SIZE = std::thread::hardware_concurrency()*3;
+const auto  DEFAULT_THREAD_POOL_SIZE = ceil(std::thread::hardware_concurrency()/2);
 
 void  _usage(const char* argv0_)
 {
@@ -315,7 +315,7 @@ void  _usage(const char* argv0_)
 		     << "  -q, --output-quality       quality\n"
 		     << "  -R, --output-name-rand     random 16 byte hex for filename output (not incl extn)\n"
 		     << "  -M, --output-name-meta     meta info used for filename output (not incl extn)\n"
-		     << "  -T, --threads              concurrent extract (h/w=" << std::thread::hardware_concurrency() << " max=" << maxtpsz << ")\n"
+		     << "  -T, --threads              concurrent extract (h/w=" << std::thread::hardware_concurrency() << " max=" << MAX_THREAD_POOL_SIZE << ")\n"
 		     << "  -s, --strict               strict (warnings treated as errors, no attempted workarounds)\n"
 		     << "  internal ICC profiles: ";
 
@@ -335,7 +335,7 @@ int main(int argc, char* const argv[])
     const char*  thumbpath = "./";
     bool  dumpICC = false;
     bool  excludeMeta = false;
-    unsigned  tpsz = dflttpsz;
+    unsigned  tpsz = DEFAULT_THREAD_POOL_SIZE;
     short convert = 0;
 #define CONVERT_ICC 1
 #define CONVERT_OUTPUT_FMT 2
@@ -434,8 +434,8 @@ int main(int argc, char* const argv[])
             case 'T':
             {
                 tpsz = (unsigned)atol(optarg);
-                if (tpsz > maxtpsz) {
-                    tpsz = maxtpsz;
+                if (tpsz > MAX_THREAD_POOL_SIZE) {
+                    tpsz = MAX_THREAD_POOL_SIZE;
                 }
             } break;
 
@@ -562,7 +562,7 @@ int main(int argc, char* const argv[])
     umask(msk);
 
     if (tpsz < 1) {
-        tpsz = dflttpsz;
+        tpsz = DEFAULT_THREAD_POOL_SIZE;
     }
 
 
