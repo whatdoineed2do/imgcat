@@ -229,6 +229,16 @@ void  _usage(const char* argv0_)
 exit(1);
 }
 
+
+enum ConvertOps {
+    CONVERT_UNDEF	      = 0,
+    CONVERT_ICC		      = 1 << 0,
+    CONVERT_OUTPUT_FMT	      = 1 << 1,
+    CONVERT_QUALITY	      = 1 << 2,
+    CONVERT_RESIZE	      = 1 << 3,
+    CONVERT_RESET_ORIENTATION = 1 << 4
+};
+
 int main(int argc, char* const argv[])
 {
     const char*  argv0 = basename(argv[0]);
@@ -237,12 +247,8 @@ int main(int argc, char* const argv[])
     bool  dumpICC = false;
     bool  excludeMeta = false;
     unsigned  tpsz = DEFAULT_THREAD_POOL_SIZE;
-    short convert = 0;
-#define CONVERT_ICC 1
-#define CONVERT_OUTPUT_FMT 2
-#define CONVERT_QUALITY 4
-#define CONVERT_RESIZE 8
-#define CONVERT_RESET_ORIENTATION 16
+    unsigned  convert = CONVERT_UNDEF;
+
     std::string  outputfmt;
     std::string  outputfmtExtn;
 
