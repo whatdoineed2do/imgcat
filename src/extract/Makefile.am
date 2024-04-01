@@ -12,4 +12,4 @@ imgprextr_CPPFLAGS = $(AM_CPPFLAGS)
 imgprextr_CXXFLAGS = $(AM_CXXFLAGS)
 imgprextr_LDFLAGS = $(AM_LDFLAGS)
 imgprextr_LDADD = $(SAMPLEICC_LIBS) -limgcat_helper
-imgprextr_SOURCES = imgprextr.cc
+imgprextr_SOURCES = PreviewInfo.cc imgprextr.cc
