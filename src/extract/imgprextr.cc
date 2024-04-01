@@ -518,7 +518,7 @@ int main(int argc, char* const argv[])
 #endif
     }
 
-    std::unique_ptr<Magick::Blob>  outicc { tgtICC ? new Magick::Blob(tgtICC->profile, tgtICC->length) : NULL };
+    const std::unique_ptr<Magick::Blob>  outicc { tgtICC ? new Magick::Blob(tgtICC->profile, tgtICC->length) : NULL };
 
     std::mutex  mtx;
     std::condition_variable  cond;
@@ -568,6 +568,7 @@ int main(int argc, char* const argv[])
 
             ImgCat::_Buf  buf(1024);
             int  fd;
+	    const int  oflags = O_CREAT | O_TRUNC | O_WRONLY | (overwrite ? 0 : O_EXCL);
 
             try
             {
@@ -641,8 +642,8 @@ int main(int argc, char* const argv[])
 		    char  iccpath[PATH_MAX];
 		    sprintf(iccpath, "%s/%s.icc", thumbpath, basename(outputFilename));
 
-		    if ( (fd = open(iccpath, O_CREAT | O_WRONLY, 0666 & ~msk)) < 0) {
-			std::cout << LOG_FILE_INFO << ": failed to create ICC - " << strerror(errno) << std::endl;
+		    if ( (fd = open(iccpath, oflags, 0666 & ~msk)) < 0) {
+			std::cout << LOG_FILE_INFO << ": failed to create ICC '" << iccpath << "' - " << strerror(errno) << std::endl;
 		    }
 		    else
 		    {
@@ -707,7 +708,7 @@ int main(int argc, char* const argv[])
                                    preview.extension().c_str());
 
 			if (access(path, F_OK) == 0 && !overwrite) {
-			    err << LOG_FILE_INFO << ":  not overwritting existing output";
+			    err << LOG_FILE_INFO << ": failed to create '" << path << "' - " << strerror(EEXIST);
 			    throw std::underflow_error(err.str());
 			}
 
@@ -796,7 +797,7 @@ int main(int argc, char* const argv[])
 			    }
 			    ce->writeMetadata();
 			    int  fd;
-			    if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0666 & ~msk)) < 0) {
+			    if ( (fd = open(path, oflags, 0666 & ~msk)) < 0) {
 			        throw std::system_error(errno, std::system_category(), std::string{"failed to create "} + path);
 			    }
 
@@ -815,8 +816,8 @@ int main(int argc, char* const argv[])
                 else
                 {
                     strcat(path, preview.extension().c_str());
-                    if ( (fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0666 & ~msk)) < 0) {
-                        err << LOG_FILE_INFO << ": failed to create preview - " << strerror(errno);
+                    if ( (fd = open(path, oflags, 0666 & ~msk)) < 0) {
+                        err << LOG_FILE_INFO << ": failed to create preview '" << path << "' - " << strerror(errno);
                         throw std::system_error(errno, std::system_category(), err.str());
                     }
 
