@@ -37,6 +37,7 @@ src/Makefile
 src/lib/Makefile
 src/cat/Makefile
 src/extract/Makefile
+data/Makefile
 tests/Makefile
 ])
 AC_OUTPUT
