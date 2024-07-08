@@ -195,7 +195,7 @@ $(document).ready(function() {
 	    $("#total").text(imgs_ttl + ' images');
             for (var j=0; j<block.images.length; j++) {
               var obj = block.images[j];
-	      var caption = '<div class="caption">' + obj.datetime;
+	      var caption = '<div class="jg-caption">' + obj.datetime;
 	      if (obj.comment && obj.comment.length > 0) {
 	        caption += '<p>' + obj.comment;
 	      }
